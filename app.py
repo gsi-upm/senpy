@@ -22,7 +22,7 @@ This class shows how to use the nif_server module to create custom services.
 import config
 import re
 from flask import Flask
-from random import random
+import random
 from nif_server import *
 
 app = Flask(__name__)
@@ -31,13 +31,16 @@ rgx = re.compile("(\w[\w']*\w|\w)", re.U)
 
 def hard_analysis(params):
     response = basic_analysis(params)
-    response["analysis"][0]["marl:algorithm"] = "SimpleAlgorithm"
+    response["analysis"][0].update({ "marl:algorithm": "SimpleAlgorithm",
+                                     "marl:minPolarityValue": -1,
+                                     "marl:maxPolarityValue": 1})
     for i in response["entries"]:
         contextid = i["@id"]
-        polValue = random()
-        if polValue > 0.5:
+        random.seed(str(params))
+        polValue = 2*random.random()-1
+        if polValue > 0:
             pol = "marl:Positive"
-        elif polValue == 0.5:
+        elif polValue == 0:
             pol = "marl:Neutral"
         else:
             pol = "marl:Negative"
