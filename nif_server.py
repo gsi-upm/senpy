@@ -24,25 +24,31 @@ import json
 nif_server = Blueprint("NIF Sentiment Analysis Server", __name__)
 
 PARAMS = {"input": {"aliases": ["i", "input"],
+                    "required": True,
                     "help": "Input text"
                     },
           "informat": {"aliases": ["f", "informat"],
+                       "required": False,
                        "default": "text",
                        "options": ["turtle", "text"],
                        },
           "intype": {"aliases": ["intype", "t"],
+                     "required": False,
                      "default": "direct",
                      "options": ["direct", "url", "file"],
                      },
           "outformat": {"aliases": ["outformat", "o"],
                         "default": "json-ld",
+                        "required": False,
                         "options": ["json-ld"],
                         },
           "language": {"aliases": ["language", "l"],
-                        "default": None,
-                        "options": ["es", "en"],
-                        },
+                       "default": None,
+                       "required": False,
+                       "options": ["es", "en"],
+                       },
           "urischeme": {"aliases": ["urischeme", "u"],
+                        "required": False,
                         "default": "RFC5147String",
                         "options": "RFC5147String"
                         },
@@ -59,20 +65,25 @@ def get_params(req):
         raise ValueError("Invalid data")
 
     outdict = {}
-    missingParams = []
+    wrongParams = {}
     for param, options in PARAMS.iteritems():
         for alias in options["aliases"]:
             if alias in indict:
                 outdict[param] = indict[alias]
         if param not in outdict:
-            if "default" in options:
-                if options["default"]:
-                    outdict[param] = options["default"]
+            if options.get("required", False):
+                wrongParams[param] = PARAMS[param]
             else:
-                missingParams.append(param)
-    if missingParams:
-        message = {"status": "failed", "message": "Missing parameters"}
-        message["parameters"] = {param:PARAMS[param] for param in missingParams}
+                if "default" in options:
+                    outdict[param] = options["default"]
+        else:
+            if "options" in PARAMS[param] and \
+                outdict[param] not in PARAMS[param]["options"]:
+                wrongParams[param] = PARAMS[param]
+    if wrongParams:
+        message = {"status": "failed", "message": "Missing or invalid parameters"}
+        message["parameters"] = outdict
+        message["errors"] = {param:error for param, error in wrongParams.iteritems()}
         raise ValueError(json.dumps(message))
     return outdict
 
