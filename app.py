@@ -16,6 +16,8 @@
 #    limitations under the License.
 '''
 Simple Sentiment Analysis server for EUROSENTIMENT
+
+This class shows how to use the nif_server module to create custom services.
 '''
 from flask import Flask
 from random import random
