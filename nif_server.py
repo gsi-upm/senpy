@@ -43,7 +43,6 @@ PARAMS = {"input": {"aliases": ["i", "input"],
                         "options": ["json-ld"],
                         },
           "language": {"aliases": ["language", "l"],
-                       "default": None,
                        "required": False,
                        "options": ["es", "en"],
                        },
@@ -88,7 +87,11 @@ def get_params(req):
     return outdict
 
 def basic_analysis(params):
-    response = {"@context": "http://demos.gsi.dit.upm.es/eurosentiment/static/context.jsonld",
+    response = {"@context": ["http://demos.gsi.dit.upm.es/eurosentiment/static/context.jsonld",
+                             {
+                                 "@base": "{}#".format(request.url.encode('utf-8'))
+                             }
+                             ],
                 "analysis": [{
                     "@type": "marl:SentimentAnalysis"
                 }],
@@ -96,8 +99,9 @@ def basic_analysis(params):
                 }
     if "language" in params:
         response["language"] = params["language"]
-    for sentence in params["input"].split("."):
+    for idx, sentence in enumerate(params["input"].split(".")):
         response["entries"].append({
+            "@id": "Sentence{}".format(idx),
             "nif:isString": sentence
         })
     return response
