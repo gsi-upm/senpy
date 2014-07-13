@@ -58,7 +58,7 @@ def get_params(req):
     indict = None
     if req.method == 'POST':
         indict = req.form
-    if req.method == 'GET':
+    elif req.method == 'GET':
         indict = req.args
     else:
         raise ValueError("Invalid data")
