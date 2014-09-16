@@ -23,7 +23,7 @@ import config
 import re
 from flask import Flask
 import random
-from nif_server import *
+from senpy.nif_server import *
 
 app = Flask(__name__)
 

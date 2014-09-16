@@ -1,5 +1,5 @@
 ![GSI Logo](http://gsi.dit.upm.es/templates/jgsi/images/logo.png)
-[EUROSENTIMETN Endpoint example](http://eurosentiment-resources.herokuapp.com) 
+[Senpy](http://senpy.herokuapp.com) 
 =========================================
 Example endpoint that yields results compatible with the EUROSENTIMENT format and exposes the NIF API.
 It can be used as a template to adapt existing services to EUROSENTIMENT or to create new services.
