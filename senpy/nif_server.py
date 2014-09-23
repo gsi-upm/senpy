@@ -15,7 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 '''
-Simple Sentiment Analysis server for EUROSENTIMENT
+Simple Sentiment Analysis server
 '''
 from flask import Blueprint, render_template, request, jsonify, current_app
 import config
@@ -41,6 +41,9 @@ PARAMS = {"input": {"aliases": ["i", "input"],
                         "default": "json-ld",
                         "required": False,
                         "options": ["json-ld"],
+                        },
+          "algorithm": {"aliases": ["algorithm", "a"],
+                        "required": False,
                         },
           "language": {"aliases": ["language", "l"],
                        "required": False,
