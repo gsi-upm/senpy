@@ -10,7 +10,7 @@ extendable, so new algorithms and sources can be used.
   author = 'J. Fernando Sanchez',
   author_email = 'balkian@gmail.com',
   url = 'https://github.com/balkian/senpy', # use the URL to the github repo
-  download_url = 'https://github.com/balkian/senpy/tarball/0.1', # I'll explain this in a second
+  download_url = 'https://github.com/balkian/senpy/archive/0.1.tar.gz', # I'll explain this in a second
   keywords = ['eurosentiment', 'sentiment', 'emotions', 'nif'], # arbitrary keywords
   classifiers = [],
 )
