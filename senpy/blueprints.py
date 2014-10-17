@@ -18,10 +18,9 @@
 Simple Sentiment Analysis server
 '''
 from flask import Blueprint, render_template, request, jsonify, current_app
-import config
 import json
 
-nif_server = Blueprint("NIF Sentiment Analysis Server", __name__)
+nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
 
 PARAMS = {"input": {"aliases": ["i", "input"],
                     "required": True,
@@ -42,7 +41,7 @@ PARAMS = {"input": {"aliases": ["i", "input"],
                         "required": False,
                         "options": ["json-ld"],
                         },
-          "algorithm": {"aliases": ["algorithm", "a"],
+          "algorithm": {"aliases": ["algorithm", "a", "algo"],
                         "required": False,
                         },
           "language": {"aliases": ["language", "l"],
@@ -109,18 +108,40 @@ def basic_analysis(params):
         })
     return response
 
-@nif_server.route('/', methods=['POST', 'GET'])
+@nif_blueprint.route('/', methods=['POST', 'GET'])
 def home(entries=None):
     try:
         params = get_params(request)
     except ValueError as ex:
         return ex.message
-    response = current_app.analyse(params)
+    response = current_app.senpy.analyse(**params)
     return jsonify(response)
 
+@nif_blueprint.route('/plugins/', methods=['POST', 'GET'])
+@nif_blueprint.route('/plugins/<plugin>', methods=['POST', 'GET'])
+@nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
+def plugins(plugin=None, action="list"):
+    print current_app.senpy.plugins.keys()
+    if plugin:
+        plugs = {plugin:current_app.senpy.plugins[plugin]}
+    else:
+        plugs = current_app.senpy.plugins
+    if action == "list":
+        dic = {plug:plugs[plug].enabled for plug in plugs}
+        return jsonify(dic)
+    elif action == "disable":
+        plugs[plugin].enabled = False
+        return "Ok"
+    elif action == "enable":
+        plugs[plugin].enabled = True
+        return "Ok"
+    else:
+        return "action '{}' not allowed".format(action), 404
+
 if __name__ == '__main__':
+    import config
     from flask import Flask
     app = Flask(__name__)
-    app.register_blueprint(nif_server)
+    app.register_blueprint(nif_blueprint)
     app.debug = config.DEBUG
     app.run()

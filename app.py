@@ -20,47 +20,13 @@ Simple Sentiment Analysis server for EUROSENTIMENT
 This class shows how to use the nif_server module to create custom services.
 '''
 import config
-import re
 from flask import Flask
-import random
-from senpy.nif_server import *
+from senpy import Senpy
 
 app = Flask(__name__)
 
-rgx = re.compile("(\w[\w']*\w|\w)", re.U)
-
-def hard_analysis(params):
-    response = basic_analysis(params)
-    response["analysis"][0].update({ "marl:algorithm": "SimpleAlgorithm",
-                                     "marl:minPolarityValue": -1,
-                                     "marl:maxPolarityValue": 1})
-    for i in response["entries"]:
-        contextid = i["@id"]
-        random.seed(str(params))
-        polValue = 2*random.random()-1
-        if polValue > 0:
-            pol = "marl:Positive"
-        elif polValue == 0:
-            pol = "marl:Neutral"
-        else:
-            pol = "marl:Negative"
-        i["opinions"] = [{"marl:polarityValue": polValue,
-                          "marl:hasPolarity": pol
-
-                          }]
-        i["strings"] = []
-        for m in rgx.finditer(i["nif:isString"]):
-            i["strings"].append({
-                "@id": "{}#char={},{}".format(contextid, m.start(), m.end()),
-                "nif:beginIndex": m.start(),
-                "nif:endIndex": m.end(),
-                "nif:anchorOf": m.group(0)
-            })
-
-    return response
-
-app.analyse = hard_analysis
-app.register_blueprint(nif_server)
+sp = Senpy()
+sp.init_app(app)
 
 if __name__ == '__main__':
     app.debug = config.DEBUG
