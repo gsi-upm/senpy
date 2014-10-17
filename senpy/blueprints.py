@@ -55,8 +55,10 @@ PARAMS = {"input": {"aliases": ["i", "input"],
                         },
           }
 
+def get_algorithm(req):
+    return get_params(req, params={"algorithm": PARAMS["algorithm"]})
 
-def get_params(req):
+def get_params(req, params=PARAMS):
     indict = None
     if req.method == 'POST':
         indict = req.form
@@ -67,20 +69,20 @@ def get_params(req):
 
     outdict = {}
     wrongParams = {}
-    for param, options in PARAMS.iteritems():
+    for param, options in params.iteritems():
         for alias in options["aliases"]:
             if alias in indict:
                 outdict[param] = indict[alias]
         if param not in outdict:
             if options.get("required", False):
-                wrongParams[param] = PARAMS[param]
+                wrongParams[param] = params[param]
             else:
                 if "default" in options:
                     outdict[param] = options["default"]
         else:
-            if "options" in PARAMS[param] and \
-                outdict[param] not in PARAMS[param]["options"]:
-                wrongParams[param] = PARAMS[param]
+            if "options" in params[param] and \
+                outdict[param] not in params[param]["options"]:
+                wrongParams[param] = params[param]
     if wrongParams:
         message = {"status": "failed", "message": "Missing or invalid parameters"}
         message["parameters"] = outdict
@@ -111,7 +113,10 @@ def basic_analysis(params):
 @nif_blueprint.route('/', methods=['POST', 'GET'])
 def home(entries=None):
     try:
-        params = get_params(request)
+        algo = get_algorithm(request)["algorithm"]
+        specific_params = PARAMS.copy()
+        specific_params.update(current_app.senpy.parameters(algo))
+        params = get_params(request, specific_params)
     except ValueError as ex:
         return ex.message
     response = current_app.senpy.analyse(**params)
@@ -127,7 +132,7 @@ def plugins(plugin=None, action="list"):
     else:
         plugs = current_app.senpy.plugins
     if action == "list":
-        dic = {plug:plugs[plug].enabled for plug in plugs}
+        dic = {plug:plugs[plug].jsonable(True) for plug in plugs}
         return jsonify(dic)
     elif action == "disable":
         plugs[plugin].enabled = False

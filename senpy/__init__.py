@@ -18,13 +18,15 @@
 Sentiment analysis server in Python
 '''
 
-from blueprints import nif_blueprint
-from extensions import Senpy
+import extensions
+import blueprints
+import plugins
 
 
 if __name__ == '__main__':
     from flask import Flask
     app = Flask(__name__)
-    app.register_blueprint(nif_server)
+    sp = extensions.Senpy()
+    sp.init_app(app)
     app.debug = config.DEBUG
     app.run()

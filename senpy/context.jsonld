@@ -1,0 +1,38 @@
+{
+    "dc": "http://purl.org/dc/terms/",
+    "dc:subject": {
+        "@type": "@id"
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "marl": "http://www.gsi.dit.upm.es/ontologies/marl/ns#",
+    "nif": "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#",
+    "onyx": "http://www.gsi.dit.upm.es/ontologies/onyx/ns#",
+    "emotions": {
+        "@id": "onyx:hasEmotionSet",
+        "@type": "onyx:EmotionSet"
+    },
+    "opinions": {
+        "@container": "@list",
+        "@id": "marl:hasOpinion",
+        "@type": "marl:Opinion"
+    },
+    "prov": "http://www.w3.org/ns/prov#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "analysis": {
+        "@id": "prov:wasInformedBy"
+    },
+    "entries": {
+        "@id": "prov:generated"
+    },
+    "strings": {
+        "@reverse": "nif:hasContext",
+        "@type": "nif:String"
+    },
+    "date":
+    {
+        "@id": "dc:date",
+        "@type": "xsd:dateTime"
+    },
+    "wnaffect": "http://www.gsi.dit.upm.es/ontologies/wnaffect#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+}

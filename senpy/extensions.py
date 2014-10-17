@@ -44,13 +44,21 @@ class Senpy(object):
         if "algorithm" in params:
             algo = params["algorithm"]
             if algo in self.plugins and self.plugins[algo].enabled:
-                return self.plugins[algo].plugin.analyse(**params)
+                plug = self.plugins[algo]
+                resp = plug.analyse(**params)
+                resp.analysis.append(plug.jsonable())
+                return resp
         return {"status": 500, "message": "No valid algorithm"}
 
+    def parameters(self, algo):
+        if algo in self.plugins:
+            if hasattr(self.plugins[algo], "parameters"):
+                return self.plugins[algo].parameters
+        return {}
 
     def _load_plugin(self, plugin, search_folder, enabled=True):
         sys.path.append(search_folder)
-        tmp = importlib.import_module(plugin)
+        tmp = importlib.import_module(plugin).plugin
         sys.path.remove(search_folder)
         tmp.path = search_folder
         try:
@@ -95,7 +103,6 @@ class Senpy(object):
         if ctx is not None:
             if not hasattr(self, '_plugins'):
                 self._plugins = self._load_plugins()
-            print("Already plugins")
             return self._plugins
 
 if __name__ == '__main__':
