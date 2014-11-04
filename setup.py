@@ -1,9 +1,10 @@
 from setuptools import setup
+import senpy
 
 setup(
   name = 'senpy',
   packages = ['senpy'], # this must be the same as the name above
-  version = '0.2.3',
+  version = senpy.VERSION,
   description = '''
     A sentiment analysis server implementation. Designed to be \
 extendable, so new algorithms and sources can be used.

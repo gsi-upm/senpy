@@ -21,7 +21,7 @@ This class shows how to use the nif_server module to create custom services.
 '''
 import config
 from flask import Flask
-from senpy import Senpy
+from senpy.extensions import Senpy
 
 app = Flask(__name__)
 
@@ -30,4 +30,4 @@ sp.init_app(app)
 
 if __name__ == '__main__':
     app.debug = config.DEBUG
-    app.run()
+    app.run(use_reloader=False)

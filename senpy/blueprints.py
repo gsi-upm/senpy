@@ -22,43 +22,13 @@ import json
 
 nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
 
-PARAMS = {"input": {"aliases": ["i", "input"],
-                    "required": True,
-                    "help": "Input text"
-                    },
-          "informat": {"aliases": ["f", "informat"],
-                       "required": False,
-                       "default": "text",
-                       "options": ["turtle", "text"],
-                       },
-          "intype": {"aliases": ["intype", "t"],
-                     "required": False,
-                     "default": "direct",
-                     "options": ["direct", "url", "file"],
-                     },
-          "outformat": {"aliases": ["outformat", "o"],
-                        "default": "json-ld",
-                        "required": False,
-                        "options": ["json-ld"],
-                        },
-          "algorithm": {"aliases": ["algorithm", "a", "algo"],
-                        "required": False,
-                        },
-          "language": {"aliases": ["language", "l"],
-                       "required": False,
-                       "options": ["es", "en"],
-                       },
-          "urischeme": {"aliases": ["urischeme", "u"],
-                        "required": False,
-                        "default": "RFC5147String",
-                        "options": "RFC5147String"
-                        },
-          }
+BASIC_PARAMS = {
+    "algorithm": {"aliases": ["algorithm", "a", "algo"],
+                  "required": False,
+                  },
+}
 
-def get_algorithm(req):
-    return get_params(req, params={"algorithm": PARAMS["algorithm"]})
-
-def get_params(req, params=PARAMS):
+def get_params(req, params=BASIC_PARAMS):
     indict = None
     if req.method == 'POST':
         indict = req.form
@@ -113,35 +83,44 @@ def basic_analysis(params):
 @nif_blueprint.route('/', methods=['POST', 'GET'])
 def home(entries=None):
     try:
-        algo = get_algorithm(request)["algorithm"]
-        specific_params = PARAMS.copy()
-        specific_params.update(current_app.senpy.parameters(algo))
+        algo = get_params(request).get("algorithm", None)
+        specific_params = current_app.senpy.parameters(algo)
         params = get_params(request, specific_params)
     except ValueError as ex:
         return ex.message
     response = current_app.senpy.analyse(**params)
     return jsonify(response)
 
+@nif_blueprint.route("/default")
+def default():
+    return current_app.senpy.default_plugin
+    #return plugins(action="list", plugin=current_app.senpy.default_algorithm)
+
 @nif_blueprint.route('/plugins/', methods=['POST', 'GET'])
 @nif_blueprint.route('/plugins/<plugin>', methods=['POST', 'GET'])
 @nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 def plugins(plugin=None, action="list"):
-    print current_app.senpy.plugins.keys()
+    filt = {}
     if plugin:
-        plugs = {plugin:current_app.senpy.plugins[plugin]}
-    else:
-        plugs = current_app.senpy.plugins
+        filt["name"] = plugin
+    plugs = current_app.senpy.filter_plugins(**filt)
+    if plugin and not plugs:
+        return "Plugin not found", 400
     if action == "list":
-        dic = {plug:plugs[plug].jsonable(True) for plug in plugs}
+        with_params = request.args.get("params", "") == "1"
+        dic = {plug:plugs[plug].jsonable(with_params) for plug in plugs}
         return jsonify(dic)
-    elif action == "disable":
-        plugs[plugin].enabled = False
+    if action == "disable":
+        current_app.senpy.disable_plugin(plugin)
         return "Ok"
     elif action == "enable":
-        plugs[plugin].enabled = True
+        current_app.senpy.enable_plugin(plugin)
+        return "Ok"
+    elif action == "reload":
+        current_app.senpy.reload_plugin(plugin)
         return "Ok"
     else:
-        return "action '{}' not allowed".format(action), 404
+        return "action '{}' not allowed".format(action), 400
 
 if __name__ == '__main__':
     import config

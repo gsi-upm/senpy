@@ -1,24 +1,67 @@
+PARAMS = {"input": {"aliases": ["i", "input"],
+                    "required": True,
+                    "help": "Input text"
+                    },
+          "informat": {"aliases": ["f", "informat"],
+                       "required": False,
+                       "default": "text",
+                       "options": ["turtle", "text"],
+                       },
+          "intype": {"aliases": ["intype", "t"],
+                     "required": False,
+                     "default": "direct",
+                     "options": ["direct", "url", "file"],
+                     },
+          "outformat": {"aliases": ["outformat", "o"],
+                        "default": "json-ld",
+                        "required": False,
+                        "options": ["json-ld"],
+                        },
+          "language": {"aliases": ["language", "l"],
+                       "required": False,
+                       "options": ["es", "en"],
+                       },
+          "urischeme": {"aliases": ["urischeme", "u"],
+                        "required": False,
+                        "default": "RFC5147String",
+                        "options": "RFC5147String"
+                        },
+          }
+
 class SenpyPlugin(object):
-    def __init__(self, name=None, version=None, params=None):
+    def __init__(self, name=None, version=None, extraparams=None, params=None):
+        print("Initing {}".format(name))
         self.name = name
         self.version = version
-        self.params = params or []
+        if params:
+            self.params = params
+        else:
+            self.params = PARAMS.copy()
+            if extraparams:
+                self.params.update(extraparams)
+        self.extraparams = extraparams or {}
+        self.enabled = True
 
     def analyse(self, *args, **kwargs):
         pass
 
-    def activate(self):
-        pass
+    def enable(self):
+        self.enabled = True
 
-    def deactivate(self):
-        pass
+    def disable(self):
+        self.enabled = False
 
     def jsonable(self, parameters=False):
         resp =  {
             "@id": "{}_{}".format(self.name, self.version),
+            "enabled": self.enabled,
         }
+        if self.repo:
+            resp["repo"] = self.repo.remotes[0].url
         if parameters:
-            resp["parameters"] = self.params,
+            resp["parameters"] = self.params
+        elif self.extraparams:
+            resp["extra_parameters"] = self.extraparams
         return resp
 
 class SentimentPlugin(SenpyPlugin):

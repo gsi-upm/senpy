@@ -3,20 +3,20 @@ import json
 
 import sys
 
-print(sys.path)
 from senpy.plugins import SentimentPlugin
 from senpy.models import Response, Opinion, Entry
 
 class Sentiment140Plugin(SentimentPlugin):
-    parameters = {
+    EXTRA_PARAMS = {
         "language": {"aliases": ["language", "l"],
                      "required": False,
                      "options": ["es", "en", "auto"],
                      }
     }
     def __init__(self, **kwargs):
-        super(Sentiment140Plugin, self).__init__(name="Sentiment140",
-                                                 version="1.0",
+        super(Sentiment140Plugin, self).__init__(name="sentiment140",
+                                                 version="2.0",
+                                                 extraparams=self.EXTRA_PARAMS,
                                                  **kwargs)
 
     def analyse(self, **params):
@@ -43,6 +43,5 @@ class Sentiment140Plugin(SentimentPlugin):
         entry.language = lang
         response.entries.append(entry)
         return response
-
 
 plugin = Sentiment140Plugin()
