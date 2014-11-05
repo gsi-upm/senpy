@@ -30,4 +30,4 @@ sp.init_app(app)
 
 if __name__ == '__main__':
     app.debug = config.DEBUG
-    app.run(use_reloader=False)
+    app.run(host="0.0.0.0", use_reloader=False)
