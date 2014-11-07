@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 PARAMS = {"input": {"aliases": ["i", "input"],
                     "required": True,
                     "help": "Input text"
@@ -30,7 +34,7 @@ PARAMS = {"input": {"aliases": ["i", "input"],
 
 class SenpyPlugin(object):
     def __init__(self, name=None, version=None, extraparams=None, params=None):
-        print("Initing {}".format(name))
+        logger.debug("Initialising {}".format(name))
         self.name = name
         self.version = version
         if params:

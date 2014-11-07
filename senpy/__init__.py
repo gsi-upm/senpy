@@ -18,7 +18,7 @@
 Sentiment analysis server in Python
 '''
 
-VERSION = "0.2.5"
+VERSION = "0.2.6"
 
 import extensions
 import blueprints

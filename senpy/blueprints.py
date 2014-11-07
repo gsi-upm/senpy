@@ -17,8 +17,11 @@
 '''
 Simple Sentiment Analysis server
 '''
-from flask import Blueprint, render_template, request, jsonify, current_app
 import json
+import logging
+logger = logging.getLogger(__name__)
+
+from flask import Blueprint, render_template, request, jsonify, current_app
 
 nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
 
@@ -86,10 +89,12 @@ def home(entries=None):
         algo = get_params(request).get("algorithm", None)
         specific_params = current_app.senpy.parameters(algo)
         params = get_params(request, specific_params)
+        response = current_app.senpy.analyse(**params)
+        return jsonify(response)
     except ValueError as ex:
         return ex.message
-    response = current_app.senpy.analyse(**params)
-    return jsonify(response)
+    except Exception as ex:
+        return jsonify(status="400", message=ex.message)
 
 @nif_blueprint.route("/default")
 def default():
