@@ -1,3 +1,5 @@
+"""
+"""
 import os
 import sys
 import imp
@@ -55,7 +57,6 @@ class Senpy(object):
         else:
             return False
 
-
     def analyse(self, **params):
         algo = None
         logger.debug("analysing with params: {}".format(params))
@@ -69,12 +70,12 @@ class Senpy(object):
             resp.analysis.append(plug.jsonable())
             return resp
         else:
-            return {"status": 400, "message": "The algorithm '{}' is not valid".format(algo) }
+            return {"status": 400, "message": "The algorithm '{}' is not valid".format(algo)}
 
     @property
     def default_plugin(self):
         candidates = self.filter_plugins(enabled=True)
-        if len(candidates)>1:
+        if len(candidates) > 1:
             candidate = candidates.keys()[0]
             logger.debug("Default: {}".format(candidate))
             return candidate
@@ -97,7 +98,8 @@ class Senpy(object):
         del self.plugins[plugin]
         self.plugins[nplug.name] = nplug
 
-    def _load_plugin(self, plugin, search_folder, enabled=True):
+    @staticmethod
+    def _load_plugin(plugin, search_folder, enabled=True):
         logger.debug("Loading plugins")
         sys.path.append(search_folder)
         (fp, pathname, desc) = imp.find_module(plugin)
@@ -118,14 +120,14 @@ class Senpy(object):
             logger.debug("Exception importing {}: {}".format(plugin, ex))
         return tmp
 
-
     def _load_plugins(self):
         plugins = {}
         for search_folder in self._search_folders:
             for item in os.listdir(search_folder):
                 if os.path.isdir(os.path.join(search_folder, item)) \
-                        and os.path.exists(
-                            os.path.join(search_folder, item, "__init__.py")):
+                        and os.path.exists(os.path.join(search_folder,
+                                                        item,
+                                                        "__init__.py")):
                     plugin = self._load_plugin(item, search_folder)
                     if plugin:
                         plugins[plugin.name] = plugin
@@ -140,12 +142,6 @@ class Senpy(object):
         for plugin in self.plugins:
             self.enable_plugin(plugin)
 
-    def enable_plugin(self, item):
-        self.plugins[item].enabled = True
-
-    def disable_plugin(self, item):
-        self.plugins[item].enabled = False
-
     @property
     def plugins(self):
         """ Return the plugins registered for a given application.  """
@@ -157,27 +153,20 @@ class Senpy(object):
 
     def filter_plugins(self, **kwargs):
         """ Filter plugins by different criteria """
+
         def matches(plug):
             res = all(getattr(plug, k, None) == v for (k, v) in kwargs.items())
             logger.debug("matching {} with {}: {}".format(plug.name,
                                                           kwargs,
                                                           res))
             return res
+
         if not kwargs:
             return self.plugins
         else:
-            return {n:p for n, p in self.plugins.items() if matches(p)}
+            return {n: p for n, p in self.plugins.items() if matches(p)}
 
     def sentiment_plugins(self):
         """ Return only the sentiment plugins """
-        return {p:plugin for p, plugin in self.plugins.items() if
+        return {p: plugin for p, plugin in self.plugins.items() if
                 isinstance(plugin, SentimentPlugin)}
-
-
-if __name__ == '__main__':
-    from flask import Flask
-    app = Flask(__name__)
-    sp = Senpy()
-    sp.init_app(APP)
-    with APP.app_context():
-        sp._load_plugins()

@@ -32,6 +32,7 @@ PARAMS = {"input": {"aliases": ["i", "input"],
                         },
           }
 
+
 class SenpyPlugin(object):
     def __init__(self, name=None, version=None, extraparams=None, params=None):
         logger.debug("Initialising {}".format(name))
@@ -56,11 +57,11 @@ class SenpyPlugin(object):
         self.enabled = False
 
     def jsonable(self, parameters=False):
-        resp =  {
+        resp = {
             "@id": "{}_{}".format(self.name, self.version),
             "enabled": self.enabled,
         }
-        if self.repo:
+        if hasattr(self, "repo") and self.repo:
             resp["repo"] = self.repo.remotes[0].url
         if parameters:
             resp["parameters"] = self.params
@@ -68,14 +69,15 @@ class SenpyPlugin(object):
             resp["extra_parameters"] = self.extraparams
         return resp
 
+
 class SentimentPlugin(SenpyPlugin):
     def __init__(self,
-                 minPolarityValue=0,
-                 maxPolarityValue=1,
+                 min_polarity_value=0,
+                 max_polarity_value=1,
                  **kwargs):
         super(SentimentPlugin, self).__init__(**kwargs)
-        self.minPolarityValue = minPolarityValue
-        self.maxPolarityValue = maxPolarityValue
+        self.minPolarityValue = min_polarity_value
+        self.maxPolarityValue = max_polarity_value
 
     def jsonable(self, *args, **kwargs):
         resp = super(SentimentPlugin, self).jsonable(*args, **kwargs)
@@ -83,16 +85,17 @@ class SentimentPlugin(SenpyPlugin):
         resp["marl:minPolarityValue"] = self.minPolarityValue
         return resp
 
+
 class EmotionPlugin(SenpyPlugin):
     def __init__(self,
-                 minEmotionValue=0,
-                 maxEmotionValue=1,
-                 emotionCategory=None,
+                 min_emotion_value=0,
+                 max_emotion_value=1,
+                 emotion_category=None,
                  **kwargs):
         super(EmotionPlugin, self).__init__(**kwargs)
-        self.minEmotionValue = minEmotionValue
-        self.maxEmotionValue = maxEmotionValue
-        self.emotionCategory = emotionCategory
+        self.minEmotionValue = min_emotion_value
+        self.maxEmotionValue = max_emotion_value
+        self.emotionCategory = emotion_category
 
     def jsonable(self, *args, **kwargs):
         resp = super(EmotionPlugin, self).jsonable(*args, **kwargs)

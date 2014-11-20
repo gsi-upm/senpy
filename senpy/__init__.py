@@ -14,21 +14,12 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-'''
+"""
 Sentiment analysis server in Python
-'''
+"""
 
-VERSION = "0.2.6"
+VERSION = "0.2.7"
 
 import extensions
 import blueprints
 import plugins
-
-
-if __name__ == '__main__':
-    from flask import Flask
-    app = Flask(__name__)
-    sp = extensions.Senpy()
-    sp.init_app(app)
-    app.debug = config.DEBUG
-    app.run()

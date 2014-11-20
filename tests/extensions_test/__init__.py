@@ -1,5 +1,6 @@
 import os
 import logging
+
 try:
     import unittest.mock as mock
 except ImportError:
@@ -9,7 +10,7 @@ from flask import Flask
 from flask.ext.testing import TestCase
 
 
-class Extensions_Test(TestCase):
+class ExtensionsTest(TestCase):
     def create_app(self):
         self.app = Flask("test_extensions")
         self.senpy = Senpy()
@@ -22,15 +23,15 @@ class Extensions_Test(TestCase):
         """ Initialising the app with the extension.  """
         assert hasattr(self.app, "senpy")
         tapp = Flask("temp app")
-        tsen = Senpy(tapp)
+        self.senpy.init_app(tapp)
         assert hasattr(tapp, "senpy")
 
     def test_discovery(self):
         """ Discovery of plugins in given folders.  """
+        # noinspection PyProtectedMember
         assert self.dir in self.senpy._search_folders
         print self.senpy.plugins
         assert "dummy" in self.senpy.plugins
-
 
     def test_enabling(self):
         """ Enabling a plugin """
@@ -41,7 +42,7 @@ class Extensions_Test(TestCase):
         """ Disabling a plugin """
         self.senpy.enable_plugin("dummy")
         self.senpy.disable_plugin("dummy")
-        assert self.senpy.plugins["dummy"].enabled == False
+        assert not self.senpy.plugins["dummy"].enabled
 
     def test_default(self):
         """ Default plugin should be set """
@@ -63,7 +64,7 @@ class Extensions_Test(TestCase):
 
     def test_filtering(self):
         """ Filtering plugins """
-        assert len(self.senpy.filter_plugins(name="dummy"))>0
+        assert len(self.senpy.filter_plugins(name="dummy")) > 0
         assert not len(self.senpy.filter_plugins(name="notdummy"))
         assert self.senpy.filter_plugins(name="dummy", enabled=True)
         self.senpy.disable_plugin("dummy")
