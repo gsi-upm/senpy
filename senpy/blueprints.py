@@ -120,10 +120,10 @@ def plugins(plugin=None, action="list"):
         dic = {plug: plugs[plug].jsonable(with_params) for plug in plugs}
         return jsonify(dic)
     if action == "disable":
-        current_app.senpy.disable_plugin(plugin)
+        current_app.senpy.deactivate_plugin(plugin)
         return "Ok"
     elif action == "enable":
-        current_app.senpy.enable_plugin(plugin)
+        current_app.senpy.activate_plugin(plugin)
         return "Ok"
     elif action == "reload":
         current_app.senpy.reload_plugin(plugin)

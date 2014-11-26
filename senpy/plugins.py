@@ -1,4 +1,5 @@
 import logging
+from yapsy.IPlugin import IPlugin
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ PARAMS = {"input": {"aliases": ["i", "input"],
           }
 
 
-class SenpyPlugin(object):
+class SenpyPlugin(IPlugin):
     def __init__(self, name=None, version=None, extraparams=None, params=None):
         logger.debug("Initialising {}".format(name))
         self.name = name
@@ -45,21 +46,16 @@ class SenpyPlugin(object):
             if extraparams:
                 self.params.update(extraparams)
         self.extraparams = extraparams or {}
-        self.enabled = True
+        self.is_activated = True
 
     def analyse(self, *args, **kwargs):
+        logger.debug("Analysing with: {} {}".format(self.name, self.version))
         pass
-
-    def enable(self):
-        self.enabled = True
-
-    def disable(self):
-        self.enabled = False
 
     def jsonable(self, parameters=False):
         resp = {
             "@id": "{}_{}".format(self.name, self.version),
-            "enabled": self.enabled,
+            "is_activated": self.is_activated,
         }
         if hasattr(self, "repo") and self.repo:
             resp["repo"] = self.repo.remotes[0].url

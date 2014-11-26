@@ -29,5 +29,7 @@ sp = Senpy()
 sp.init_app(app)
 
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=config.DEBUG)
     app.debug = config.DEBUG
     app.run(host="0.0.0.0", use_reloader=False)

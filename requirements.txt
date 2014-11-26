@@ -2,3 +2,4 @@ Flask==0.10.1
 gunicorn==19.0.0
 requests==2.4.1
 GitPython==0.3.2.RC1
+Yapsy>=1.10.423

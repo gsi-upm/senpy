@@ -8,6 +8,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .plugins import SentimentPlugin, EmotionPlugin
+from yapsy.PluginFileLocator import PluginFileLocator, PluginFileAnalyzerWithInfoFile
+from yapsy.PluginManager import PluginManager
 
 try:
     from flask import _app_ctx_stack as stack
@@ -50,11 +52,13 @@ class Senpy(object):
         app.register_blueprint(nif_blueprint)
 
     def add_folder(self, folder):
+        logger.debug("Adding folder: %s", folder)
         if os.path.isdir(folder):
             self._search_folders.add(folder)
             self._outdated = True
             return True
         else:
+            logger.debug("Not a folder: %s", folder)
             return False
 
     def analyse(self, **params):
@@ -64,18 +68,25 @@ class Senpy(object):
             algo = params["algorithm"]
         elif self.plugins:
             algo = self.default_plugin
-        if algo in self.plugins and self.plugins[algo].enabled:
-            plug = self.plugins[algo]
-            resp = plug.analyse(**params)
-            resp.analysis.append(plug.jsonable())
-            return resp
+        if algo in self.plugins:
+            if self.plugins[algo].is_activated:
+                plug = self.plugins[algo]
+                resp = plug.analyse(**params)
+                resp.analysis.append(plug.jsonable())
+                return resp
+            logger.debug("Plugin not activated: {}".format(algo))
         else:
+            logger.debug("The algorithm '{}' is not valid\nValid algorithms: {}".format(algo, self.plugins.keys()))
             return {"status": 400, "message": "The algorithm '{}' is not valid".format(algo)}
+
+    def activate_all(self):
+        for plug in self.plugins.values():
+            plug.activate()
 
     @property
     def default_plugin(self):
-        candidates = self.filter_plugins(enabled=True)
-        if len(candidates) > 1:
+        candidates = self.filter_plugins(is_activated=True)
+        if len(candidates) > 0:
             candidate = candidates.keys()[0]
             logger.debug("Default: {}".format(candidate))
             return candidate
@@ -85,11 +96,11 @@ class Senpy(object):
     def parameters(self, algo):
         return getattr(self.plugins.get(algo or self.default_plugin), "params", {})
 
-    def enable_plugin(self, plugin):
-        self.plugins[plugin].enable()
+    def activate_plugin(self, plugin):
+        self.plugins[plugin].activate()
 
-    def disable_plugin(self, plugin):
-        self.plugins[plugin].disable()
+    def deactivate_plugin(self, plugin):
+        self.plugins[plugin].deactivate()
 
     def reload_plugin(self, plugin):
         logger.debug("Reloading {}".format(plugin))
@@ -99,7 +110,7 @@ class Senpy(object):
         self.plugins[nplug.name] = nplug
 
     @staticmethod
-    def _load_plugin(plugin, search_folder, enabled=True):
+    def _load_plugin(plugin, search_folder, is_activated=True):
         logger.debug("Loading plugins")
         sys.path.append(search_folder)
         (fp, pathname, desc) = imp.find_module(plugin)
@@ -112,8 +123,8 @@ class Senpy(object):
                 tmp.repo = Repo(repo_path)
             except InvalidGitRepositoryError:
                 tmp.repo = None
-            if not hasattr(tmp, "enabled"):
-                tmp.enabled = enabled
+            if not hasattr(tmp, "is_activated"):
+                tmp.is_activated = is_activated
             tmp.module = plugin
         except Exception as ex:
             tmp = None
@@ -140,7 +151,20 @@ class Senpy(object):
 
     def enable_all(self):
         for plugin in self.plugins:
-            self.enable_plugin(plugin)
+            self.activate_plugin(plugin)
+
+    @property
+    def manager(self):
+        ctx = stack.top
+        if ctx is not None:
+            if not hasattr(ctx, 'senpy_manager'):
+                logger.debug("Loading manager: %s", self._search_folders)
+                ctx.senpy_manager = PluginManager(plugin_info_ext="senpy")
+                ctx.senpy_manager.getPluginLocator().setPluginPlaces(self._search_folders)
+                ctx.senpy_manager.locatePlugins()
+                ctx.senpy_manager.loadPlugins()
+                self.activate_all()
+            return ctx.senpy_manager
 
     @property
     def plugins(self):
@@ -148,7 +172,7 @@ class Senpy(object):
         ctx = stack.top
         if ctx is not None:
             if not hasattr(ctx, 'senpy_plugins') or self._outdated:
-                ctx.senpy_plugins = self._load_plugins()
+                ctx.senpy_plugins = {p.name:p.plugin_object for p in self.manager.getAllPlugins()}
             return ctx.senpy_plugins
 
     def filter_plugins(self, **kwargs):

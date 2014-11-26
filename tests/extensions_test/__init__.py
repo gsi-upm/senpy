@@ -13,10 +13,9 @@ from flask.ext.testing import TestCase
 class ExtensionsTest(TestCase):
     def create_app(self):
         self.app = Flask("test_extensions")
-        self.senpy = Senpy()
-        self.senpy.init_app(self.app)
         self.dir = os.path.join(os.path.dirname(__file__), "..")
-        self.senpy.add_folder(self.dir)
+        self.senpy = Senpy(plugin_folder=self.dir)
+        self.senpy.init_app(self.app)
         return self.app
 
     def test_init(self):
@@ -35,14 +34,14 @@ class ExtensionsTest(TestCase):
 
     def test_enabling(self):
         """ Enabling a plugin """
-        self.senpy.enable_plugin("dummy")
-        assert self.senpy.plugins["dummy"].enabled
+        self.senpy.activate_plugin("dummy")
+        assert self.senpy.plugins["dummy"].is_activated
 
     def test_disabling(self):
         """ Disabling a plugin """
-        self.senpy.enable_plugin("dummy")
-        self.senpy.disable_plugin("dummy")
-        assert not self.senpy.plugins["dummy"].enabled
+        self.senpy.activate_plugin("dummy")
+        self.senpy.deactivate_plugin("dummy")
+        assert not self.senpy.plugins["dummy"].is_activated
 
     def test_default(self):
         """ Default plugin should be set """
@@ -57,7 +56,7 @@ class ExtensionsTest(TestCase):
         mocked.assert_any_call(input="tupni", output="tuptuo", algorithm="dummy")
         mocked.assert_any_call(input="tupni", output="tuptuo")
         for plug in self.senpy.plugins:
-            self.senpy.disable_plugin(plug)
+            self.senpy.deactivate_plugin(plug)
         resp = self.senpy.analyse(input="tupni")
         logging.debug("Response: {}".format(resp))
         assert resp["status"] == 400
@@ -66,6 +65,6 @@ class ExtensionsTest(TestCase):
         """ Filtering plugins """
         assert len(self.senpy.filter_plugins(name="dummy")) > 0
         assert not len(self.senpy.filter_plugins(name="notdummy"))
-        assert self.senpy.filter_plugins(name="dummy", enabled=True)
-        self.senpy.disable_plugin("dummy")
-        assert not len(self.senpy.filter_plugins(name="dummy", enabled=True))
+        assert self.senpy.filter_plugins(name="dummy", is_activated=True)
+        self.senpy.deactivate_plugin("dummy")
+        assert not len(self.senpy.filter_plugins(name="dummy", is_activated=True))

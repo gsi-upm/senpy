@@ -1,0 +1,8 @@
+[Core]
+Name = Test plugin of Yapsy
+Module = prueba
+[Documentation]
+Description = What my plugin broadly does
+Author = My very own name
+Version = 0.1
+Website = My very own website
