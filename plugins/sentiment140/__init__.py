@@ -36,7 +36,7 @@ class Sentiment140Plugin(SentimentPlugin):
         elif polarity_value < 50:
             polarity = "marl:Negative"
         entry = Entry(text=params["input"])
-        opinion = Opinion(polarity=polarity, polarity_value=polarity_value)
+        opinion = Opinion(hasPolarity=polarity, polarityValue=polarity_value)
         entry.opinions.append(opinion)
         entry.language = lang
         response.entries.append(entry)

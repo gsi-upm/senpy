@@ -75,7 +75,7 @@ class Senpy(object):
     @property
     def default_plugin(self):
         candidates = self.filter_plugins(enabled=True)
-        if len(candidates) > 1:
+        if len(candidates) > 0:
             candidate = candidates.keys()[0]
             logger.debug("Default: {}".format(candidate))
             return candidate

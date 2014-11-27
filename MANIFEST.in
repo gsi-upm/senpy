@@ -1,3 +1,4 @@
 include requirements.txt
 include README.md
 include senpy/context.jsonld
+recursive-include *.senpy

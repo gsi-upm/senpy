@@ -22,6 +22,8 @@ This class shows how to use the nif_server module to create custom services.
 import config
 from flask import Flask
 from senpy.extensions import Senpy
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 

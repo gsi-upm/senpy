@@ -8,25 +8,26 @@
     "nif": "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#",
     "onyx": "http://www.gsi.dit.upm.es/ontologies/onyx/ns#",
     "emotions": {
-        "@id": "onyx:hasEmotionSet",
-        "@type": "onyx:EmotionSet"
+        "@container": "@set",
+        "@id": "onyx:hasEmotionSet"
     },
     "opinions": {
-        "@container": "@list",
-        "@id": "marl:hasOpinion",
-        "@type": "marl:Opinion"
+        "@container": "@set",
+        "@id": "marl:hasOpinion"
     },
     "prov": "http://www.w3.org/ns/prov#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "analysis": {
+        "@container": "@set",
         "@id": "prov:wasInformedBy"
     },
     "entries": {
+        "@container": "@set",
         "@id": "prov:generated"
     },
     "strings": {
-        "@reverse": "nif:hasContext",
-        "@type": "nif:String"
+        "@container": "@set",
+        "@reverse": "nif:hasContext"
     },
     "date":
     {
