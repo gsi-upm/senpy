@@ -23,12 +23,13 @@ import config
 from flask import Flask
 from senpy.extensions import Senpy
 import logging
+import os
+
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-
-sp = Senpy()
-sp.init_app(app)
+mypath = os.path.dirname(os.path.realpath(__file__))
+sp = Senpy(app, os.path.join(mypath, "plugins"))
 
 if __name__ == '__main__':
     app.debug = config.DEBUG

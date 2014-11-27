@@ -4,22 +4,39 @@ from collections import defaultdict
 
 
 class Leaf(defaultdict):
-    def __init__(self, context=None, ofclass=list):
+    _prefix = None
+
+    def __init__(self, context=None, prefix=None, ofclass=list):
         super(Leaf, self).__init__(ofclass)
         if context:
             self.context = context
+        self._prefix = prefix
 
-    def __getattr__(self, name):
-        if name is not "context":
-            return super(Leaf, self).__getitem__(name)
-        return self["@context"]
+    def __getattr__(self, key):
+        return super(Leaf, self).__getitem__(self._get_key(key))
 
-    def __setattr__(self, name, value):
-        name = "@context" if name is "context" else name
-        self[name] = self.get_context(value)
+    def __setattr__(self, key, value):
+        try:
+            object.__getattr__(self, key)
+            object.__setattr__(self, key, value)
+        except AttributeError:
+            key = self._get_key(key)
+            value = self.get_context(value) if key == "@context" else value
+            if key[0] == "_":
+                object.__setattr__(self, key, value)
+            else:
+                super(Leaf, self).__setitem__(key, value)
 
-    def __delattr__(self, name):
-        return super(Leaf, self).__delitem__(name)
+    def __delattr__(self, key):
+        return super(Leaf, self).__delitem__(self._get_key(key))
+
+    def _get_key(self, key):
+        if key is "context":
+            return "@context"
+        elif self._prefix:
+            return "{}:{}".format(self._prefix, key)
+        else:
+            return key
 
     @staticmethod
     def get_context(context):
@@ -65,6 +82,7 @@ class Opinion(Leaf):
     }
     def __init__(self, polarityValue=None, hasPolarity=None, *args, **kwargs):
         super(Opinion, self).__init__(context=self.opinionContext,
+                                      prefix="marl",
                                       *args,
                                       **kwargs)
         if polarityValue is not None:
@@ -74,13 +92,12 @@ class Opinion(Leaf):
 
 
 class EmotionSet(Leaf):
-    emotionContext = {
-        "@vocab": "http://www.gsi.dit.upm.es/ontologies/onyx/ns#"
-    }
+    emotionContext = {}
     def __init__(self, emotions=None, *args, **kwargs):
         if not emotions:
             emotions = []
         super(EmotionSet, self).__init__(context=self.emotionContext,
+                                         prefix="onyx",
                                          *args,
                                          **kwargs)
         self.emotions = emotions or []
