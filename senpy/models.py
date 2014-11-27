@@ -77,9 +77,7 @@ class Entry(Leaf):
 
 
 class Opinion(Leaf):
-    opinionContext = {
-        "@vocab": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"
-    }
+    opinionContext = {}
     def __init__(self, polarityValue=None, hasPolarity=None, *args, **kwargs):
         super(Opinion, self).__init__(context=self.opinionContext,
                                       prefix="marl",
