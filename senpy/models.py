@@ -80,7 +80,6 @@ class Opinion(Leaf):
     opinionContext = {}
     def __init__(self, polarityValue=None, hasPolarity=None, *args, **kwargs):
         super(Opinion, self).__init__(context=self.opinionContext,
-                                      prefix="marl",
                                       *args,
                                       **kwargs)
         if polarityValue is not None:
@@ -95,7 +94,6 @@ class EmotionSet(Leaf):
         if not emotions:
             emotions = []
         super(EmotionSet, self).__init__(context=self.emotionContext,
-                                         prefix="onyx",
                                          *args,
                                          **kwargs)
         self.emotions = emotions or []

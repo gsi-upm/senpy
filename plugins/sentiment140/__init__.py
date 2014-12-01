@@ -35,8 +35,12 @@ class Sentiment140Plugin(SentimentPlugin):
             polarity = "marl:Positive"
         elif polarity_value < 50:
             polarity = "marl:Negative"
-        entry = Entry(text=params["input"])
-        opinion = Opinion(hasPolarity=polarity, polarityValue=polarity_value)
+        entry = Entry(text=params["input"],
+                      prefix=params.get("prefix", ""))
+        opinion = Opinion(hasPolarity=polarity,
+                          polarityValue=polarity_value,
+                          prefix=params.get("prefix", ""))
+        opinion["prov:wasGeneratedBy"] = self.id
         entry.opinions.append(opinion)
         entry.language = lang
         response.entries.append(entry)

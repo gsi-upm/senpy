@@ -48,7 +48,7 @@ def get_params(req, params=BASIC_PARAMS):
             if alias in indict:
                 outdict[param] = indict[alias]
         if param not in outdict:
-            if options.get("required", False):
+            if options.get("required", False) and "default" not in options:
                 wrong_params[param] = params[param]
             else:
                 if "default" in options:

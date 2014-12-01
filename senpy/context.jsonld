@@ -34,6 +34,7 @@
         "@id": "dc:date",
         "@type": "xsd:dateTime"
     },
+    "text": { "@id": "nif:isString" },
     "wnaffect": "http://www.gsi.dit.upm.es/ontologies/wnaffect#",
     "xsd": "http://www.w3.org/2001/XMLSchema#"
 }

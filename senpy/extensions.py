@@ -9,11 +9,6 @@ logger = logging.getLogger(__name__)
 
 from .plugins import SentimentPlugin, EmotionPlugin
 
-try:
-    from flask import _app_ctx_stack as stack
-except ImportError:
-    from flask import _request_ctx_stack as stack
-
 from .blueprints import nif_blueprint
 from git import Repo, InvalidGitRepositoryError
 
@@ -145,11 +140,9 @@ class Senpy(object):
     @property
     def plugins(self):
         """ Return the plugins registered for a given application.  """
-        ctx = stack.top
-        if ctx is not None:
-            if not hasattr(ctx, 'senpy_plugins') or self._outdated:
-                ctx.senpy_plugins = self._load_plugins()
-            return ctx.senpy_plugins
+        if not hasattr(self, 'senpy_plugins') or self._outdated:
+            self.senpy_plugins = self._load_plugins()
+        return self.senpy_plugins
 
     def filter_plugins(self, **kwargs):
         """ Filter plugins by different criteria """

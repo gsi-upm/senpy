@@ -25,6 +25,10 @@ PARAMS = {"input": {"aliases": ["i", "input"],
                        "required": False,
                        "options": ["es", "en"],
                        },
+          "prefix": {"aliases": ["prefix", "p"],
+                     "required": True,
+                     "default": "",
+          },
           "urischeme": {"aliases": ["urischeme", "u"],
                         "required": False,
                         "default": "RFC5147String",
@@ -56,9 +60,13 @@ class SenpyPlugin(object):
     def disable(self):
         self.enabled = False
 
+    @property
+    def id(self):
+        return "{}_{}".format(self.name, self.version)
+
     def jsonable(self, parameters=False):
         resp = {
-            "@id": "{}_{}".format(self.name, self.version),
+            "@id": self.id,
             "enabled": self.enabled,
         }
         if hasattr(self, "repo") and self.repo:
