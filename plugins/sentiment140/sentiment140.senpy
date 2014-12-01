@@ -1,0 +1,15 @@
+{
+    "name": "sentiment140",
+    "module": "sentiment140",
+    "description": "What my plugin broadly does",
+    "author": "@balkian",
+    "version": "0.1",
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": false,
+            "options": ["es", "en", "auto"]
+        }
+     },
+     "requirements": {}
+}

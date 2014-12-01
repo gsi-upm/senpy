@@ -1,0 +1,8 @@
+{
+    "name": "Sleep",
+    "module": "sleep",
+    "description": "I am dummy",
+    "author": "@balkian",
+    "version": "0.1",
+    "timeout": "2"
+}

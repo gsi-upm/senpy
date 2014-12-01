@@ -13,10 +13,10 @@ from flask.ext.testing import TestCase
 class ExtensionsTest(TestCase):
     def create_app(self):
         self.app = Flask("test_extensions")
-        self.senpy = Senpy()
-        self.senpy.init_app(self.app)
         self.dir = os.path.join(os.path.dirname(__file__), "..")
-        self.senpy.add_folder(self.dir)
+        self.senpy = Senpy(plugin_folder=self.dir)
+        self.senpy.init_app(self.app)
+        self.senpy.activate_plugin("Dummy", sync=True)
         return self.app
 
     def test_init(self):
@@ -31,41 +31,42 @@ class ExtensionsTest(TestCase):
         # noinspection PyProtectedMember
         assert self.dir in self.senpy._search_folders
         print self.senpy.plugins
-        assert "dummy" in self.senpy.plugins
+        assert "Dummy" in self.senpy.plugins
 
     def test_enabling(self):
         """ Enabling a plugin """
-        self.senpy.enable_plugin("dummy")
-        assert self.senpy.plugins["dummy"].enabled
+        self.senpy.activate_all(sync=True)
+        assert len(self.senpy.plugins) == 2
+        assert self.senpy.plugins["Sleep"].is_activated
 
     def test_disabling(self):
         """ Disabling a plugin """
-        self.senpy.enable_plugin("dummy")
-        self.senpy.disable_plugin("dummy")
-        assert not self.senpy.plugins["dummy"].enabled
+        self.senpy.deactivate_all(sync=True)
+        assert self.senpy.plugins["Dummy"].is_activated == False
+        assert self.senpy.plugins["Sleep"].is_activated == False
 
     def test_default(self):
         """ Default plugin should be set """
         assert self.senpy.default_plugin
-        assert self.senpy.default_plugin == "dummy"
+        assert self.senpy.default_plugin == "Dummy"
 
     def test_analyse(self):
         """ Using a plugin """
-        with mock.patch.object(self.senpy.plugins["dummy"], "analyse") as mocked:
-            self.senpy.analyse(algorithm="dummy", input="tupni", output="tuptuo")
+        with mock.patch.object(self.senpy.plugins["Dummy"], "analyse") as mocked:
+            self.senpy.analyse(algorithm="Dummy", input="tupni", output="tuptuo")
             self.senpy.analyse(input="tupni", output="tuptuo")
-        mocked.assert_any_call(input="tupni", output="tuptuo", algorithm="dummy")
+        mocked.assert_any_call(input="tupni", output="tuptuo", algorithm="Dummy")
         mocked.assert_any_call(input="tupni", output="tuptuo")
         for plug in self.senpy.plugins:
-            self.senpy.disable_plugin(plug)
+            self.senpy.deactivate_plugin(plug, sync=True)
         resp = self.senpy.analyse(input="tupni")
         logging.debug("Response: {}".format(resp))
         assert resp["status"] == 400
 
     def test_filtering(self):
         """ Filtering plugins """
-        assert len(self.senpy.filter_plugins(name="dummy")) > 0
+        assert len(self.senpy.filter_plugins(name="Dummy")) > 0
         assert not len(self.senpy.filter_plugins(name="notdummy"))
-        assert self.senpy.filter_plugins(name="dummy", enabled=True)
-        self.senpy.disable_plugin("dummy")
-        assert not len(self.senpy.filter_plugins(name="dummy", enabled=True))
+        assert self.senpy.filter_plugins(name="Dummy", is_activated=True)
+        self.senpy.deactivate_plugin("Dummy", sync=True)
+        assert not len(self.senpy.filter_plugins(name="Dummy", is_activated=True))

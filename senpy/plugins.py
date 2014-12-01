@@ -1,4 +1,5 @@
 import logging
+import ConfigParser
 
 logger = logging.getLogger(__name__)
 
@@ -38,27 +39,28 @@ PARAMS = {"input": {"aliases": ["i", "input"],
 
 
 class SenpyPlugin(object):
-    def __init__(self, name=None, version=None, extraparams=None, params=None):
-        logger.debug("Initialising {}".format(name))
-        self.name = name
-        self.version = version
-        if params:
-            self.params = params
-        else:
-            self.params = PARAMS.copy()
-            if extraparams:
-                self.params.update(extraparams)
-        self.extraparams = extraparams or {}
-        self.enabled = True
+    def __init__(self, info=None):
+        if not info:
+            raise ValueError("You need to provide configuration information for the plugin.")
+        logger.debug("Initialising {}".format(info))
+        self.name = info["name"]
+        self.version = info["version"]
+        self.params = info.get("params", PARAMS.copy())
+        self.extra_params = info.get("extra_params", {})
+        self.params.update(self.extra_params)
+        self.is_activated = False
+        self.info = info
 
     def analyse(self, *args, **kwargs):
+        logger.debug("Analysing with: {} {}".format(self.name, self.version))
         pass
 
-    def enable(self):
-        self.enabled = True
+    def activate(self):
+        pass
 
-    def disable(self):
-        self.enabled = False
+    def deactivate(self):
+        pass
+
 
     @property
     def id(self):
@@ -66,15 +68,15 @@ class SenpyPlugin(object):
 
     def jsonable(self, parameters=False):
         resp = {
-            "@id": self.id,
-            "enabled": self.enabled,
+            "@id": "{}_{}".format(self.name, self.version),
+            "is_activated": self.is_activated,
         }
         if hasattr(self, "repo") and self.repo:
             resp["repo"] = self.repo.remotes[0].url
         if parameters:
             resp["parameters"] = self.params
-        elif self.extraparams:
-            resp["extra_parameters"] = self.extraparams
+        elif self.extra_params:
+            resp["extra_parameters"] = self.extra_params
         return resp
 
 

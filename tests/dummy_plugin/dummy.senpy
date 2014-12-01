@@ -1,0 +1,7 @@
+{
+    "name": "Dummy",
+    "module": "dummy",
+    "description": "I am dummy",
+    "author": "@balkian",
+    "version": "0.1"
+}

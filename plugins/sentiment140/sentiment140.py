@@ -6,19 +6,6 @@ from senpy.models import Response, Opinion, Entry
 
 
 class Sentiment140Plugin(SentimentPlugin):
-    EXTRA_PARAMS = {
-        "language": {"aliases": ["language", "l"],
-                     "required": False,
-                     "options": ["es", "en", "auto"],
-                     }
-    }
-
-    def __init__(self, **kwargs):
-        super(Sentiment140Plugin, self).__init__(name="sentiment140",
-                                                 version="2.0",
-                                                 extraparams=self.EXTRA_PARAMS,
-                                                 **kwargs)
-
     def analyse(self, **params):
         lang = params.get("language", "auto")
         res = requests.post("http://www.sentiment140.com/api/bulkClassifyJson",
@@ -45,5 +32,3 @@ class Sentiment140Plugin(SentimentPlugin):
         entry.language = lang
         response.entries.append(entry)
         return response
-
-plugin = Sentiment140Plugin()

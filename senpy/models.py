@@ -77,7 +77,7 @@ class Entry(Leaf):
 
 
 class Opinion(Leaf):
-    opinionContext = {}
+    opinionContext = {"@vocab": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"}
     def __init__(self, polarityValue=None, hasPolarity=None, *args, **kwargs):
         super(Opinion, self).__init__(context=self.opinionContext,
                                       *args,
@@ -93,7 +93,14 @@ class EmotionSet(Leaf):
     def __init__(self, emotions=None, *args, **kwargs):
         if not emotions:
             emotions = []
-        super(EmotionSet, self).__init__(context=self.emotionContext,
+        super(EmotionSet, self).__init__(context=EmotionSet.emotionContext,
                                          *args,
                                          **kwargs)
         self.emotions = emotions or []
+
+class Emotion(Leaf):
+    emotionContext = {}
+    def __init__(self, emotions=None, *args, **kwargs):
+        super(EmotionSet, self).__init__(context=Emotion.emotionContext,
+                                         *args,
+                                         **kwargs)

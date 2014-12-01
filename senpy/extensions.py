@@ -1,16 +1,21 @@
 """
 """
 import os
+import fnmatch
+import inspect
 import sys
 import imp
 import logging
+import gevent
+import json
 
 logger = logging.getLogger(__name__)
 
-from .plugins import SentimentPlugin, EmotionPlugin
+from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
 
 from .blueprints import nif_blueprint
 from git import Repo, InvalidGitRepositoryError
+from functools import partial
 
 
 class Senpy(object):
@@ -45,11 +50,13 @@ class Senpy(object):
         app.register_blueprint(nif_blueprint)
 
     def add_folder(self, folder):
+        logger.debug("Adding folder: %s", folder)
         if os.path.isdir(folder):
             self._search_folders.add(folder)
             self._outdated = True
             return True
         else:
+            logger.debug("Not a folder: %s", folder)
             return False
 
     def analyse(self, **params):
@@ -59,17 +66,20 @@ class Senpy(object):
             algo = params["algorithm"]
         elif self.plugins:
             algo = self.default_plugin
-        if algo in self.plugins and self.plugins[algo].enabled:
-            plug = self.plugins[algo]
-            resp = plug.analyse(**params)
-            resp.analysis.append(plug.jsonable())
-            return resp
+        if algo in self.plugins:
+            if self.plugins[algo].is_activated:
+                plug = self.plugins[algo]
+                resp = plug.analyse(**params)
+                resp.analysis.append(plug.jsonable())
+                return resp
+            logger.debug("Plugin not activated: {}".format(algo))
         else:
+            logger.debug("The algorithm '{}' is not valid\nValid algorithms: {}".format(algo, self.plugins.keys()))
             return {"status": 400, "message": "The algorithm '{}' is not valid".format(algo)}
 
     @property
     def default_plugin(self):
-        candidates = self.filter_plugins(enabled=True)
+        candidates = self.filter_plugins(is_activated=True)
         if len(candidates) > 0:
             candidate = candidates.keys()[0]
             logger.debug("Default: {}".format(candidate))
@@ -80,11 +90,38 @@ class Senpy(object):
     def parameters(self, algo):
         return getattr(self.plugins.get(algo or self.default_plugin), "params", {})
 
-    def enable_plugin(self, plugin):
-        self.plugins[plugin].enable()
+    def activate_all(self, sync=False):
+        ps = []
+        for plug in self.plugins.keys():
+            ps.append(self.activate_plugin(plug, sync=sync))
+        return ps
 
-    def disable_plugin(self, plugin):
-        self.plugins[plugin].disable()
+    def deactivate_all(self, sync=False):
+        ps = []
+        for plug in self.plugins.keys():
+            ps.append(self.deactivate_plugin(plug, sync=sync))
+        return ps
+
+    def _set_active_plugin(self, plugin_name, active=True, *args, **kwargs):
+        self.plugins[plugin_name].is_activated = active
+
+    def activate_plugin(self, plugin_name, sync=False):
+        plugin = self.plugins[plugin_name]
+        th = gevent.spawn(plugin.activate)
+        th.link_value(partial(self._set_active_plugin, plugin_name, True))
+        if sync:
+            th.join()
+        else:
+            return th
+
+    def deactivate_plugin(self, plugin_name, sync=False):
+        plugin = self.plugins[plugin_name]
+        th = gevent.spawn(plugin.deactivate)
+        th.link_value(partial(self._set_active_plugin, plugin_name, False))
+        if sync:
+            th.join()
+        else:
+            return th
 
     def reload_plugin(self, plugin):
         logger.debug("Reloading {}".format(plugin))
@@ -94,48 +131,53 @@ class Senpy(object):
         self.plugins[nplug.name] = nplug
 
     @staticmethod
-    def _load_plugin(plugin, search_folder, enabled=True):
-        logger.debug("Loading plugins")
-        sys.path.append(search_folder)
-        (fp, pathname, desc) = imp.find_module(plugin)
+    def _load_plugin(root, filename):
+        logger.debug("Loading plugin: {}".format(filename))
+        fpath = os.path.join(root, filename)
+        with open(fpath,'r') as f:
+            info = json.load(f)
+        logger.debug("Info: {}".format(info))
+        sys.path.append(root)
+        module = info["module"]
+        name = info["name"]
+        (fp, pathname, desc) = imp.find_module(module, [root,])
         try:
-            tmp = imp.load_module(plugin, fp, pathname, desc).plugin
-            sys.path.remove(search_folder)
-            tmp.path = search_folder
+            tmp = imp.load_module(module, fp, pathname, desc)
+            sys.path.remove(root)
+            candidate = None
+            for _, obj in inspect.getmembers(tmp):
+                if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
+                    logger.debug("Found plugin class: {}@{}".format(obj, inspect.getmodule(obj)))
+                    candidate = obj
+                    break
+            if not candidate:
+                logger.debug("No valid plugin for: {}".format(filename))
+                return
+            module = candidate(info=info)
             try:
-                repo_path = os.path.join(search_folder, plugin)
-                tmp.repo = Repo(repo_path)
+                repo_path = root
+                module.repo = Repo(repo_path)
             except InvalidGitRepositoryError:
-                tmp.repo = None
-            if not hasattr(tmp, "enabled"):
-                tmp.enabled = enabled
-            tmp.module = plugin
+                module.repo = None
         except Exception as ex:
-            tmp = None
-            logger.debug("Exception importing {}: {}".format(plugin, ex))
-        return tmp
+            logger.debug("Exception importing {}: {}".format(filename, ex))
+            return None, None
+        return name, module
 
     def _load_plugins(self):
         plugins = {}
         for search_folder in self._search_folders:
-            for item in os.listdir(search_folder):
-                if os.path.isdir(os.path.join(search_folder, item)) \
-                        and os.path.exists(os.path.join(search_folder,
-                                                        item,
-                                                        "__init__.py")):
-                    plugin = self._load_plugin(item, search_folder)
+            for root, dirnames, filenames in os.walk(search_folder):
+                for filename in fnmatch.filter(filenames, '*.senpy'):
+                    name, plugin = self._load_plugin(root, filename)
                     if plugin:
-                        plugins[plugin.name] = plugin
+                        plugins[name] = plugin
 
         self._outdated = False
         return plugins
 
     def teardown(self, exception):
         pass
-
-    def enable_all(self):
-        for plugin in self.plugins:
-            self.enable_plugin(plugin)
 
     @property
     def plugins(self):

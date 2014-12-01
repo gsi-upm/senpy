@@ -110,23 +110,22 @@ def default():
 @nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 def plugins(plugin=None, action="list"):
     filt = {}
+    sp = current_app.senpy
     if plugin:
         filt["name"] = plugin
-    plugs = current_app.senpy.filter_plugins(**filt)
+    plugs = sp.filter_plugins(**filt)
     if plugin and not plugs:
         return "Plugin not found", 400
     if action == "list":
         with_params = request.args.get("params", "") == "1"
-        dic = {plug: plugs[plug].jsonable(with_params) for plug in plugs}
+        if plugin:
+            dic = plugs[plugin].jsonable(with_params)
+        else:
+            dic = {plug: plugs[plug].jsonable(with_params) for plug in plugs}
         return jsonify(dic)
-    if action == "disable":
-        current_app.senpy.disable_plugin(plugin)
-        return "Ok"
-    elif action == "enable":
-        current_app.senpy.enable_plugin(plugin)
-        return "Ok"
-    elif action == "reload":
-        current_app.senpy.reload_plugin(plugin)
+    method = "{}_plugin".format(action)
+    if(hasattr(sp, method)):
+        getattr(sp, method)(plugin)
         return "Ok"
     else:
         return "action '{}' not allowed".format(action), 400

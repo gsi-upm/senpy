@@ -19,18 +19,25 @@ Simple Sentiment Analysis server for EUROSENTIMENT
 
 This class shows how to use the nif_server module to create custom services.
 """
+from gevent.monkey import patch_all; patch_all()
+import gevent
 import config
 from flask import Flask
 from senpy.extensions import Senpy
 import logging
 import os
+from gevent.wsgi import WSGIServer
 
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 mypath = os.path.dirname(os.path.realpath(__file__))
 sp = Senpy(app, os.path.join(mypath, "plugins"))
+sp.activate_all()
 
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=config.DEBUG)
     app.debug = config.DEBUG
-    app.run(host="0.0.0.0", use_reloader=False)
+    http_server = WSGIServer(('', 5000), app)
+    http_server.serve_forever()
