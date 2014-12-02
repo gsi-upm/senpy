@@ -15,18 +15,17 @@ class Sentiment140Plugin(SentimentPlugin):
                                        )
                             )
 
-        response = Response()
+        response = Response(base=params.get("prefix", None))
         polarity_value = int(res.json()["data"][0]["polarity"]) * 25
         polarity = "marl:Neutral"
         if polarity_value > 50:
             polarity = "marl:Positive"
         elif polarity_value < 50:
             polarity = "marl:Negative"
-        entry = Entry(text=params["input"],
-                      prefix=params.get("prefix", ""))
-        opinion = Opinion(hasPolarity=polarity,
-                          polarityValue=polarity_value,
-                          prefix=params.get("prefix", ""))
+        entry = Entry(id="Entry0", text=params["input"])
+        opinion = Opinion(id="Opinion0",
+                          hasPolarity=polarity,
+                          polarityValue=polarity_value)
         opinion["prov:wasGeneratedBy"] = self.id
         entry.opinions.append(opinion)
         entry.language = lang

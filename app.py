@@ -15,9 +15,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 """
-Simple Sentiment Analysis server for EUROSENTIMENT
+This is a helper for development. If you want to run Senpy use:
 
-This class shows how to use the nif_server module to create custom services.
+    python -m senpy
 """
 from gevent.monkey import patch_all; patch_all()
 import gevent
@@ -39,5 +39,5 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(level=config.DEBUG)
     app.debug = config.DEBUG
-    http_server = WSGIServer(('', 5000), app)
+    http_server = WSGIServer(('', config.SERVER_PORT), app)
     http_server.serve_forever()

@@ -6,10 +6,12 @@ from collections import defaultdict
 class Leaf(defaultdict):
     _prefix = None
 
-    def __init__(self, context=None, prefix=None, ofclass=list):
+    def __init__(self, id=None, context=None, prefix=None, ofclass=list):
         super(Leaf, self).__init__(ofclass)
         if context:
             self.context = context
+        if id:
+            self.id = id
         self._prefix = prefix
 
     def __getattr__(self, key):
@@ -31,8 +33,8 @@ class Leaf(defaultdict):
         return super(Leaf, self).__delitem__(self._get_key(key))
 
     def _get_key(self, key):
-        if key is "context":
-            return "@context"
+        if key in ["context", "id"]:
+            return "@{}".format(key)
         elif self._prefix:
             return "{}:{}".format(self._prefix, key)
         else:
@@ -56,11 +58,13 @@ class Leaf(defaultdict):
 
 
 class Response(Leaf):
-    def __init__(self, context=None, *args, **kwargs):
+    def __init__(self, context=None, base=None, *args, **kwargs):
         if context is None:
             context = "{}/context.jsonld".format(os.path.dirname(
                 os.path.realpath(__file__)))
         super(Response, self).__init__(*args, context=context, **kwargs)
+        if base:
+            self.context["@base"] = base
         self["analysis"] = []
         self["entries"] = []
 
@@ -77,9 +81,9 @@ class Entry(Leaf):
 
 
 class Opinion(Leaf):
-    opinionContext = {"@vocab": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"}
+    #opinionContext = {"@vocab": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"}
     def __init__(self, polarityValue=None, hasPolarity=None, *args, **kwargs):
-        super(Opinion, self).__init__(context=self.opinionContext,
+        super(Opinion, self).__init__( prefix="marl",
                                       *args,
                                       **kwargs)
         if polarityValue is not None:
