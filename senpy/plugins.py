@@ -1,5 +1,6 @@
 import logging
 import ConfigParser
+from .models import Leaf
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +39,24 @@ PARAMS = {"input": {"aliases": ["i", "input"],
           }
 
 
-class SenpyPlugin(object):
+class SenpyPlugin(Leaf):
+    _context = {"@vocab": "http://www.gsi.dit.upm.es/ontologies/senpy/ns#",
+                "info": None}
+    _frame = { "@context": _context,
+              "name": {},
+              "@explicit": False,
+              "version": {},
+              "repo": None,
+              "info": None,
+              }
     def __init__(self, info=None):
         if not info:
             raise ValueError("You need to provide configuration information for the plugin.")
         logger.debug("Initialising {}".format(info))
+        super(SenpyPlugin, self).__init__()
         self.name = info["name"]
         self.version = info["version"]
+        self.id="{}_{}".format(self.name, self.version)
         self.params = info.get("params", PARAMS.copy())
         self.extra_params = info.get("extra_params", {})
         self.params.update(self.extra_params)
@@ -66,49 +78,15 @@ class SenpyPlugin(object):
     def id(self):
         return "{}_{}".format(self.name, self.version)
 
-    def jsonable(self, parameters=False):
-        resp = {
-            "@id": "{}_{}".format(self.name, self.version),
-            "is_activated": self.is_activated,
-        }
-        if hasattr(self, "repo") and self.repo:
-            resp["repo"] = self.repo.remotes[0].url
-        if parameters:
-            resp["parameters"] = self.params
-        elif self.extra_params:
-            resp["extra_parameters"] = self.extra_params
-        return resp
-
 
 class SentimentPlugin(SenpyPlugin):
-    def __init__(self,
-                 min_polarity_value=0,
-                 max_polarity_value=1,
-                 **kwargs):
-        super(SentimentPlugin, self).__init__(**kwargs)
-        self.minPolarityValue = min_polarity_value
-        self.maxPolarityValue = max_polarity_value
-
-    def jsonable(self, *args, **kwargs):
-        resp = super(SentimentPlugin, self).jsonable(*args, **kwargs)
-        resp["marl:maxPolarityValue"] = self.maxPolarityValue
-        resp["marl:minPolarityValue"] = self.minPolarityValue
-        return resp
-
+    def __init__(self, info, *args, **kwargs):
+        super(SentimentPlugin, self).__init__(info, *args, **kwargs)
+        self.minPolarityValue = float(info.get("minPolarityValue", 0))
+        self.maxPolarityValue = float(info.get("maxPolarityValue", 1))
 
 class EmotionPlugin(SenpyPlugin):
-    def __init__(self,
-                 min_emotion_value=0,
-                 max_emotion_value=1,
-                 emotion_category=None,
-                 **kwargs):
-        super(EmotionPlugin, self).__init__(**kwargs)
-        self.minEmotionValue = min_emotion_value
-        self.maxEmotionValue = max_emotion_value
-        self.emotionCategory = emotion_category
-
-    def jsonable(self, *args, **kwargs):
-        resp = super(EmotionPlugin, self).jsonable(*args, **kwargs)
-        resp["onyx:minEmotionValue"] = self.minEmotionValue
-        resp["onyx:maxEmotionValue"] = self.maxEmotionValue
-        return resp
+    def __init__(self, info, *args, **kwargs):
+        resp = super(EmotionPlugin, self).__init__(info, *args, **kwargs)
+        self.minEmotionValue = float(info.get("minEmotionValue", 0))
+        self.maxEmotionValue = float(info.get("maxEmotionValue", 0))

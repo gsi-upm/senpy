@@ -12,6 +12,7 @@ import json
 logger = logging.getLogger(__name__)
 
 from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
+from .models import Error
 
 from .blueprints import nif_blueprint
 from git import Repo, InvalidGitRepositoryError
@@ -70,12 +71,14 @@ class Senpy(object):
             if self.plugins[algo].is_activated:
                 plug = self.plugins[algo]
                 resp = plug.analyse(**params)
-                resp.analysis.append(plug.jsonable())
+                resp.analysis.append(plug)
                 return resp
-            logger.debug("Plugin not activated: {}".format(algo))
+            else:
+                logger.debug("Plugin not activated: {}".format(algo))
+                return Error(status=400, message="The algorithm '{}' is not activated yet".format(algo))
         else:
             logger.debug("The algorithm '{}' is not valid\nValid algorithms: {}".format(algo, self.plugins.keys()))
-            return {"status": 400, "message": "The algorithm '{}' is not valid".format(algo)}
+            return Error(status=400, message="The algorithm '{}' is not valid".format(algo))
 
     @property
     def default_plugin(self):
@@ -156,9 +159,9 @@ class Senpy(object):
             module = candidate(info=info)
             try:
                 repo_path = root
-                module.repo = Repo(repo_path)
+                module._repo = Repo(repo_path)
             except InvalidGitRepositoryError:
-                module.repo = None
+                module._repo = None
         except Exception as ex:
             logger.debug("Exception importing {}: {}".format(filename, ex))
             return None, None

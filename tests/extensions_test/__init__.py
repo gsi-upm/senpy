@@ -52,11 +52,12 @@ class ExtensionsTest(TestCase):
 
     def test_analyse(self):
         """ Using a plugin """
-        with mock.patch.object(self.senpy.plugins["Dummy"], "analyse") as mocked:
-            self.senpy.analyse(algorithm="Dummy", input="tupni", output="tuptuo")
-            self.senpy.analyse(input="tupni", output="tuptuo")
-        mocked.assert_any_call(input="tupni", output="tuptuo", algorithm="Dummy")
-        mocked.assert_any_call(input="tupni", output="tuptuo")
+        # I was using mock until plugin started inheriting Leaf (defaultdict with
+        # __setattr__ and __getattr__.
+        r1 = self.senpy.analyse(algorithm="Dummy", input="tupni", output="tuptuo")
+        r2 = self.senpy.analyse(input="tupni", output="tuptuo")
+        assert r1.analysis[0].id[:5] == "Dummy"
+        assert r2.analysis[0].id[:5] == "Dummy"
         for plug in self.senpy.plugins:
             self.senpy.deactivate_plugin(plug, sync=True)
         resp = self.senpy.analyse(input="tupni")

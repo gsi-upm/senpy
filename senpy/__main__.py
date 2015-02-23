@@ -38,8 +38,7 @@ if __name__ == '__main__':
                         help='Logging level')
     parser.add_argument('--debug',
                         "-d",
-                        metavar="debug",
-                        type=bool,
+                        action='store_true',
                         default=False,
                         help='Run the application in debug mode')
     parser.add_argument('--host',

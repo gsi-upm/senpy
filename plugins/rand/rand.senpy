@@ -1,6 +1,6 @@
 {
-    "name": "sentiment140",
-    "module": "sentiment140",
+    "name": "rand",
+    "module": "rand",
     "description": "What my plugin broadly does",
     "author": "@balkian",
     "version": "0.1",
@@ -12,6 +12,6 @@
         }
      },
      "requirements": {},
-     "maxPolarityValue": "1",
-     "minPolarityValue": "0"
+     "marl:maxPolarityValue": "1",
+     "marl:minPolarityValue": "-1"
 }

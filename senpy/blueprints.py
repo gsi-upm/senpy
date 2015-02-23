@@ -62,7 +62,7 @@ def get_params(req, params=BASIC_PARAMS):
                    "parameters": outdict,
                    "errors": {param: error for param, error in wrong_params.iteritems()}
                    }
-        raise ValueError(json.dumps(message))
+        raise ValueError(message)
     return outdict
 
 
@@ -88,13 +88,14 @@ def basic_analysis(params):
 @nif_blueprint.route('/', methods=['POST', 'GET'])
 def home():
     try:
-        algo = get_params(request).get("algorithm", None)
+        params = get_params(request)
+        algo = params.get("algorithm", None)
         specific_params = current_app.senpy.parameters(algo)
-        params = get_params(request, specific_params)
+        params.update(get_params(request, specific_params))
         response = current_app.senpy.analyse(**params)
         return jsonify(response)
     except ValueError as ex:
-        return ex.message
+        return jsonify(ex.message)
     except Exception as ex:
         return jsonify(status="400", message=ex.message)
 
