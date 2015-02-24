@@ -19,14 +19,17 @@ Senpy is a modular sentiment analysis server. This script runs an instance of
 the server.
 
 """
-from gevent.monkey import patch_all; patch_all(thread=False)
-import gevent
+
 from flask import Flask
 from senpy.extensions import Senpy
+from gevent.wsgi import WSGIServer
+from gevent.monkey import patch_all
+import gevent
 import logging
 import os
-from gevent.wsgi import WSGIServer
 import argparse
+
+patch_all(thread=False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a Senpy server')
@@ -43,20 +46,20 @@ if __name__ == '__main__':
                         help='Run the application in debug mode')
     parser.add_argument('--host',
                         type=str,
-                        default = "127.0.0.1",
+                        default="127.0.0.1",
                         help='Use 0.0.0.0 to accept requests from any host.')
     parser.add_argument('--port',
                         '-p',
                         type=int,
-                        default = 5000,
+                        default=5000,
                         help='Port to listen on.')
     parser.add_argument('--plugins-folder',
                         '-f',
                         type=str,
-                        default = "plugins",
+                        default="plugins",
                         help='Where to look for plugins.')
     args = parser.parse_args()
-    logging.basicConfig(level=getattr(logging,args.level))
+    logging.basicConfig(level=getattr(logging, args.level))
     app = Flask(__name__)
     app.debug = args.debug
     sp = Senpy(app, args.plugins_folder)

@@ -17,7 +17,8 @@ class Sentiment140Plugin(SentimentPlugin):
 
         p = params.get("prefix", None)
         response = Response(prefix=p)
-        polarity_value = self.maxPolarityValue*int(res.json()["data"][0]["polarity"]) * 0.25
+        polarity_value = self.maxPolarityValue*int(res.json()["data"][0]
+                                                   ["polarity"]) * 0.25
         polarity = "marl:Neutral"
         if polarity_value > 50:
             polarity = "marl:Positive"

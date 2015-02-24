@@ -8,7 +8,7 @@ install_reqs = parse_requirements("requirements.txt")
 # e.g. ['django==1.5.1', 'mezzanine==1.4.6']
 reqs = [str(ir.req) for ir in install_reqs]
 
-VERSION = "0.3.2"
+VERSION = "0.4.0"
 
 print(reqs)
 
@@ -23,9 +23,10 @@ extendable, so new algorithms and sources can be used.
     author='J. Fernando Sanchez',
     author_email='balkian@gmail.com',
     url='https://github.com/gsi-upm/senpy',  # use the URL to the github repo
-    download_url='https://github.com/gsi-upm/senpy/archive/{}.tar.gz'.format(VERSION),
-    keywords=['eurosentiment', 'sentiment', 'emotions', 'nif'],  # arbitrary keywords
+    download_url='https://github.com/gsi-upm/senpy/archive/{}.tar.gz'
+    .format(VERSION),
+    keywords=['eurosentiment', 'sentiment', 'emotions', 'nif'],
     classifiers=[],
     install_requires=reqs,
-    include_package_data = True,
+    include_package_data=True,
 )

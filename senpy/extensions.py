@@ -1,5 +1,12 @@
 """
 """
+from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
+from .models import Error
+from .blueprints import nif_blueprint
+
+from git import Repo, InvalidGitRepositoryError
+from functools import partial
+
 import os
 import fnmatch
 import inspect
@@ -11,15 +18,9 @@ import json
 
 logger = logging.getLogger(__name__)
 
-from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
-from .models import Error
-
-from .blueprints import nif_blueprint
-from git import Repo, InvalidGitRepositoryError
-from functools import partial
-
 
 class Senpy(object):
+
     """ Default Senpy extension for Flask """
 
     def __init__(self, app=None, plugin_folder="plugins"):
@@ -66,32 +67,45 @@ class Senpy(object):
         if "algorithm" in params:
             algo = params["algorithm"]
         elif self.plugins:
-            algo = self.default_plugin
+            algo = self.default_plugin and self.default_plugin.name
+            if not algo:
+                return Error(status=404,
+                             message=("No plugins found."
+                                      " Please install one.").format(algo))
         if algo in self.plugins:
             if self.plugins[algo].is_activated:
                 plug = self.plugins[algo]
                 resp = plug.analyse(**params)
                 resp.analysis.append(plug)
+                logger.debug("Returning analysis result: {}".format(resp))
                 return resp
             else:
                 logger.debug("Plugin not activated: {}".format(algo))
-                return Error(status=400, message="The algorithm '{}' is not activated yet".format(algo))
+                return Error(status=400,
+                             message=("The algorithm '{}'"
+                                      " is not activated yet").format(algo))
         else:
-            logger.debug("The algorithm '{}' is not valid\nValid algorithms: {}".format(algo, self.plugins.keys()))
-            return Error(status=400, message="The algorithm '{}' is not valid".format(algo))
+            logger.debug(("The algorithm '{}' is not valid\n"
+                          "Valid algorithms: {}").format(algo,
+                                                         self.plugins.keys()))
+            return Error(status=400,
+                         message="The algorithm '{}' is not valid"
+                                 .format(algo))
 
     @property
     def default_plugin(self):
         candidates = self.filter_plugins(is_activated=True)
         if len(candidates) > 0:
-            candidate = candidates.keys()[0]
+            candidate = candidates.values()[0]
             logger.debug("Default: {}".format(candidate))
             return candidate
         else:
             return None
 
     def parameters(self, algo):
-        return getattr(self.plugins.get(algo or self.default_plugin), "params", {})
+        return getattr(self.plugins.get(algo) or self.default_plugin,
+                       "params",
+                       {})
 
     def activate_all(self, sync=False):
         ps = []
@@ -137,20 +151,22 @@ class Senpy(object):
     def _load_plugin(root, filename):
         logger.debug("Loading plugin: {}".format(filename))
         fpath = os.path.join(root, filename)
-        with open(fpath,'r') as f:
+        with open(fpath, 'r') as f:
             info = json.load(f)
         logger.debug("Info: {}".format(info))
         sys.path.append(root)
         module = info["module"]
         name = info["name"]
-        (fp, pathname, desc) = imp.find_module(module, [root,])
+        (fp, pathname, desc) = imp.find_module(module, [root, ])
         try:
             tmp = imp.load_module(module, fp, pathname, desc)
             sys.path.remove(root)
             candidate = None
             for _, obj in inspect.getmembers(tmp):
                 if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
-                    logger.debug("Found plugin class: {}@{}".format(obj, inspect.getmodule(obj)))
+                    logger.debug(("Found plugin class:"
+                                  " {}@{}").format(obj, inspect.getmodule(obj))
+                                 )
                     candidate = obj
                     break
             if not candidate:

@@ -17,19 +17,35 @@
 """
 Blueprints for Senpy
 """
+from flask import Blueprint, request, current_app
+from .models import Error, Response
+
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
-from flask import Blueprint, request, jsonify, current_app
 
 nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
 
 BASIC_PARAMS = {
-    "algorithm": {"aliases": ["algorithm", "a", "algo"],
-                  "required": False,
-                  },
+    "algorithm": {
+        "aliases": ["algorithm", "a", "algo"],
+        "required": False,
+    },
+    "inHeaders": {
+        "aliases": ["inHeaders", "headers"],
+        "required": True,
+        "default": "0"
+    }
+}
+
+LIST_PARAMS = {
+    "params": {
+        "aliases": ["params", "with_params"],
+        "required": False,
+        "default": "0"
+    },
 }
 
 
@@ -44,34 +60,40 @@ def get_params(req, params=BASIC_PARAMS):
     outdict = {}
     wrong_params = {}
     for param, options in params.iteritems():
-        for alias in options["aliases"]:
-            if alias in indict:
-                outdict[param] = indict[alias]
-        if param not in outdict:
-            if options.get("required", False) and "default" not in options:
-                wrong_params[param] = params[param]
+        if param[0] != "@":  # Exclude json-ld properties
+            logger.debug("Param: %s - Options: %s", param, options)
+            for alias in options["aliases"]:
+                if alias in indict:
+                    outdict[param] = indict[alias]
+            if param not in outdict:
+                if options.get("required", False) and "default" not in options:
+                    wrong_params[param] = params[param]
+                else:
+                    if "default" in options:
+                        outdict[param] = options["default"]
             else:
-                if "default" in options:
-                    outdict[param] = options["default"]
-        else:
-            if "options" in params[param] and outdict[param] not in params[param]["options"]:
-                wrong_params[param] = params[param]
+                if "options" in params[param] and \
+                   outdict[param] not in params[param]["options"]:
+                    wrong_params[param] = params[param]
     if wrong_params:
-        message = {"status": "failed",
-                   "message": "Missing or invalid parameters",
-                   "parameters": outdict,
-                   "errors": {param: error for param, error in wrong_params.iteritems()}
-                   }
+        message = Error({"status": 404,
+                         "message": "Missing or invalid parameters",
+                         "parameters": outdict,
+                         "errors": {param: error for param, error in
+                                    wrong_params.iteritems()}
+                         })
         raise ValueError(message)
     return outdict
 
 
 def basic_analysis(params):
-    response = {"@context": ["http://demos.gsi.dit.upm.es/eurosentiment/static/context.jsonld",
-                             {
-                                 "@base": "{}#".format(request.url.encode('utf-8'))
-                             }
-                             ],
+    response = {"@context":
+                [("http://demos.gsi.dit.upm.es/"
+                  "eurosentiment/static/context.jsonld"),
+                 {
+                    "@base": "{}#".format(request.url.encode('utf-8'))
+                  }
+                 ],
                 "analysis": [{"@type": "marl:SentimentAnalysis"}],
                 "entries": []
                 }
@@ -91,19 +113,25 @@ def home():
         params = get_params(request)
         algo = params.get("algorithm", None)
         specific_params = current_app.senpy.parameters(algo)
+        logger.debug(
+            "Specific params: %s", json.dumps(specific_params, indent=4))
         params.update(get_params(request, specific_params))
         response = current_app.senpy.analyse(**params)
-        return jsonify(response)
+        in_headers = params["inHeaders"] != "0"
+        return response.flask(in_headers=in_headers)
     except ValueError as ex:
-        return jsonify(ex.message)
-    except Exception as ex:
-        return jsonify(status="400", message=ex.message)
+        return ex.message.flask()
 
 
 @nif_blueprint.route("/default")
 def default():
-    return current_app.senpy.default_plugin
-    #return plugins(action="list", plugin=current_app.senpy.default_algorithm)
+    # return current_app.senpy.default_plugin
+    plug = current_app.senpy.default_plugin
+    if plug:
+        return plugins(action="list", plugin=plug.name)
+    else:
+        error = Error(status=404, message="No plugins found")
+        return error.flask()
 
 
 @nif_blueprint.route('/plugins/', methods=['POST', 'GET'])
@@ -118,12 +146,15 @@ def plugins(plugin=None, action="list"):
     if plugin and not plugs:
         return "Plugin not found", 400
     if action == "list":
-        with_params = request.args.get("params", "") == "1"
+        with_params = get_params(request, LIST_PARAMS)["params"] == "1"
+        in_headers = get_params(request, BASIC_PARAMS)["inHeaders"] != "0"
         if plugin:
-            dic = plugs[plugin].jsonable(with_params)
+            dic = plugs[plugin]
         else:
-            dic = {plug: plugs[plug].jsonable(with_params) for plug in plugs}
-        return jsonify(dic)
+            dic = Response(
+                    {plug: plugs[plug].jsonld(with_params) for plug in plugs},
+                    frame={})
+        return dic.flask(in_headers=in_headers)
     method = "{}_plugin".format(action)
     if(hasattr(sp, method)):
         getattr(sp, method)(plugin)

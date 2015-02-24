@@ -19,7 +19,7 @@ This is a helper for development. If you want to run Senpy use:
 
     python -m senpy
 """
-from gevent.monkey import patch_all; patch_all()
+from gevent.monkey import patch_all patch_all()
 import gevent
 import config
 from flask import Flask
