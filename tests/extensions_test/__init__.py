@@ -75,6 +75,7 @@ class ExtensionsTest(TestCase):
         resp = self.senpy.analyse(input="tupni")
         logging.debug("Response: {}".format(resp))
         assert resp["status"] == 404
+        
 
     def test_filtering(self):
         """ Filtering plugins """

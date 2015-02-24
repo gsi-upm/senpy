@@ -68,10 +68,10 @@ class Senpy(object):
             algo = params["algorithm"]
         elif self.plugins:
             algo = self.default_plugin and self.default_plugin.name
-            if not algo:
-                return Error(status=404,
-                             message=("No plugins found."
-                                      " Please install one.").format(algo))
+        if not algo:
+            return Error(status=404,
+                         message=("No plugins found."
+                                  " Please install one.").format(algo))
         if algo in self.plugins:
             if self.plugins[algo].is_activated:
                 plug = self.plugins[algo]
@@ -88,7 +88,7 @@ class Senpy(object):
             logger.debug(("The algorithm '{}' is not valid\n"
                           "Valid algorithms: {}").format(algo,
                                                          self.plugins.keys()))
-            return Error(status=400,
+            return Error(status=404,
                          message="The algorithm '{}' is not valid"
                                  .format(algo))
 
