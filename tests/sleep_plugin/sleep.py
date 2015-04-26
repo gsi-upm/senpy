@@ -13,4 +13,5 @@ class SleepPlugin(SenpyPlugin):
         sleep(self.timeout)
 
     def analyse(self, *args, **kwargs):
+        sleep(float(kwargs.get("timeout", self.timeout)))
         return Response()
