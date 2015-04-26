@@ -53,8 +53,8 @@ For more options, see the `--help` page.
 TO-DO
 -----
 
-* Instalation instructions
-* Improve documentation and generate via Sphinx
+* Installation instructions
+* Improve documentation and generate it with Sphinx
 * ReadTheDocs
 * Improve README
 
