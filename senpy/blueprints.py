@@ -18,7 +18,7 @@
 Blueprints for Senpy
 """
 from flask import Blueprint, request, current_app
-from .models import Error, Response
+from .models import Error, Response, Leaf
 
 import json
 import logging
@@ -158,9 +158,9 @@ def plugins(plugin=None, action="list"):
     method = "{}_plugin".format(action)
     if(hasattr(sp, method)):
         getattr(sp, method)(plugin)
-        return "Ok"
+        return Leaf(message="Ok").flask()
     else:
-        return "action '{}' not allowed".format(action), 400
+        return Error("action '{}' not allowed".format(action)).flask()
 
 
 if __name__ == '__main__':

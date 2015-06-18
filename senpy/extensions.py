@@ -1,5 +1,9 @@
 """
 """
+import gevent
+from gevent import monkey
+monkey.patch_all()
+
 from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
 from .models import Error
 from .blueprints import nif_blueprint
@@ -23,15 +27,16 @@ class Senpy(object):
 
     """ Default Senpy extension for Flask """
 
-    def __init__(self, app=None, plugin_folder="plugins"):
+    def __init__(self, app=None, plugin_folder="plugins", base_plugins=True):
         self.app = app
-        base_folder = os.path.join(os.path.dirname(__file__), "plugins")
 
         self._search_folders = set()
         self._outdated = True
 
-        for folder in (base_folder, plugin_folder):
-            self.add_folder(folder)
+        self.add_folder(plugin_folder)
+        if base_plugins:
+            base_folder = os.path.join(os.path.dirname(__file__), "plugins")
+            self.add_folder(base_folder)
 
         if app is not None:
             self.init_app(app)
@@ -124,7 +129,13 @@ class Senpy(object):
 
     def activate_plugin(self, plugin_name, sync=False):
         plugin = self.plugins[plugin_name]
-        th = gevent.spawn(plugin.activate)
+        def act():
+            try:
+                plugin.activate()
+            except Exception as ex:
+                logger.error("Error activating plugin {}: {}".format(plugin.name,
+                                                                     ex))
+        th = gevent.spawn(act)
         th.link_value(partial(self._set_active_plugin, plugin_name, True))
         if sync:
             th.join()

@@ -239,7 +239,7 @@ class Emotion(Leaf):
     _context = {}
 
 
-class Error(Response):
+class Error(Leaf):
     # A better pattern would be this:
     # http://flask.pocoo.org/docs/0.10/patterns/apierrors/
     _frame = {}
