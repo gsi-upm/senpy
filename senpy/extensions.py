@@ -27,14 +27,14 @@ class Senpy(object):
 
     """ Default Senpy extension for Flask """
 
-    def __init__(self, app=None, plugin_folder="plugins", base_plugins=True):
+    def __init__(self, app=None, plugin_folder="plugins", default_plugins=False):
         self.app = app
 
         self._search_folders = set()
         self._outdated = True
 
         self.add_folder(plugin_folder)
-        if base_plugins:
+        if default_plugins:
             base_folder = os.path.join(os.path.dirname(__file__), "plugins")
             self.add_folder(base_folder)
 

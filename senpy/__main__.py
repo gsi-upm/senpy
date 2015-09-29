@@ -44,6 +44,10 @@ if __name__ == '__main__':
                         action='store_true',
                         default=False,
                         help='Run the application in debug mode')
+    parser.add_argument('--default-plugins',
+                        action='store_true',
+                        default=False,
+                        help='Run the application in debug mode')
     parser.add_argument('--host',
                         type=str,
                         default="127.0.0.1",
@@ -62,14 +66,14 @@ if __name__ == '__main__':
     logging.basicConfig(level=getattr(logging, args.level))
     app = Flask(__name__)
     app.debug = args.debug
-    sp = Senpy(app, args.plugins_folder)
+    sp = Senpy(app, args.plugins_folder, default_plugins=args.default_plugins)
     sp.activate_all()
     import logging
     http_server = WSGIServer((args.host, args.port), app)
     try:
-        print "Server running on port %s:%d. Ctrl+C to quit" % (args.host,
-                                                                args.port)
+        print("Server running on port %s:%d. Ctrl+C to quit" % (args.host,
+                                                                args.port))
         http_server.serve_forever()
     except KeyboardInterrupt:
         http_server.stop()
-        print "Bye!"
+        print("Bye!")

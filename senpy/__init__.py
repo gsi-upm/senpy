@@ -17,7 +17,3 @@
 """
 Sentiment analysis server in Python
 """
-
-import extensions
-import blueprints
-import plugins

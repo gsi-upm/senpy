@@ -15,7 +15,7 @@ except AttributeError:
 install_reqs = [str(ir.req) for ir in install_reqs]
 test_reqs = [str(ir.req) for ir in test_reqs]
 
-VERSION = "0.4.6"
+VERSION = "0.4.7"
 
 setup(
     name='senpy',
@@ -34,5 +34,6 @@ extendable, so new algorithms and sources can be used.
     classifiers=[],
     install_requires=install_reqs,
     tests_require=test_reqs,
+    test_suite="nose.collector",
     include_package_data=True,
 )

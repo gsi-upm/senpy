@@ -15,7 +15,7 @@ class ExtensionsTest(TestCase):
     def create_app(self):
         self.app = Flask("test_extensions")
         self.dir = os.path.join(os.path.dirname(__file__), "..")
-        self.senpy = Senpy(plugin_folder=self.dir, base_plugins=False)
+        self.senpy = Senpy(plugin_folder=self.dir, default_plugins=False)
         self.senpy.init_app(self.app)
         self.senpy.activate_plugin("Dummy", sync=True)
         return self.app

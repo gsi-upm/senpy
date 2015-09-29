@@ -154,7 +154,7 @@ class Leaf(dict):
                          ' type="application/ld+json"' % url)
             }
             del js["@context"]
-        return FlaskResponse(json.dumps(js),
+        return FlaskResponse(json.dumps(js, indent=4),
                              status=self.get("status", 200),
                              headers=headers,
                              mimetype="application/json")
