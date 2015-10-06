@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 mypath = os.path.dirname(os.path.realpath(__file__))
-sp = Senpy(app, os.path.join(mypath, "plugins"))
+sp = Senpy(app, os.path.join(mypath, "plugins"), default_plugins=True)
 sp.activate_all()
 
 if __name__ == '__main__':
