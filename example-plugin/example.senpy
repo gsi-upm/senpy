@@ -5,11 +5,11 @@
     "author": "@balkian",
     "version": "0.1",
     "extra_params": {
-        "timeout": {
-            "@id": "timeout_sleep",
-            "aliases": ["timeout", "to"],
-            "required": false,
-            "default": 0
+        "parameter": {
+            "@id": "parameter",
+            "aliases": ["parameter", "param"],
+            "required": true,
+            "default": 42
         }
      },
     "custom_attribute": "42"
