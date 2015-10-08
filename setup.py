@@ -36,4 +36,9 @@ extendable, so new algorithms and sources can be used.
     tests_require=test_reqs,
     test_suite="nose.collector",
     include_package_data=True,
+    entry_points={
+        'console_scripts': [
+            'senpy = senpy.__main__:main'
+            ]
+        }
 )
