@@ -17,6 +17,7 @@ import inspect
 import sys
 import imp
 import logging
+import traceback
 import gevent
 import json
 
@@ -190,7 +191,8 @@ class Senpy(object):
             except InvalidGitRepositoryError:
                 module._repo = None
         except Exception as ex:
-            logger.debug("Exception importing {}: {}".format(filename, ex))
+            logger.error("Exception importing {}: {}".format(filename, ex))
+            logger.error("Trace: {}".format(traceback.format_exc()))
             return None, None
         return name, module
 
