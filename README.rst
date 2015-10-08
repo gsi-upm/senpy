@@ -36,7 +36,20 @@ To install it system-wide, use setuptools:
 .. code:: bash
 
    python setup.py install
+
+
+If you are using docker, build the image or use the pre-built one:
+
+.. code:: bash
+
+    docker run -ti -p 5000:5000 balkian/senpy --host 0.0.0.0 --default-plugins
+
+To add custom plugins, add a volume and tell senpy where to find the plugins:
    
+.. code:: bash
+
+    docker run -ti -p 5000:5000 -v <PATH OF PLUGINS:/plugins balkian/senpy --host 0.0.0.0 --default-plugins -f /plugins
+
 Using
 -----
 
@@ -56,6 +69,7 @@ or, alternatively:
 
 This will create a server with any modules found in the current path.
 For more options, see the `--help` page.
+
 
 TO-DO
 -----
