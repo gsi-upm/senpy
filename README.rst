@@ -45,7 +45,14 @@ However, the easiest and recommended way is to just use the command-line tool to
 
 .. code:: bash
 
-   python -m senpy
+   senpy
+
+or, alternatively:
+
+.. code:: bash
+
+    python -m senpy
+
 
 This will create a server with any modules found in the current path.
 For more options, see the `--help` page.
@@ -53,7 +60,6 @@ For more options, see the `--help` page.
 TO-DO
 -----
 
-* Installation instructions
 * Improve documentation and generate it with Sphinx
 * ReadTheDocs
 * Improve README
