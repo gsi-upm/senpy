@@ -34,6 +34,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
+    'sphinxcontrib.httpdomain',
     'sphinx.ext.coverage',
 ]
 
