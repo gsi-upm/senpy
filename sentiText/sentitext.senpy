@@ -1,0 +1,18 @@
+{
+    "name": "SentiText",
+    "module": "sentitext",
+    "description": "Sentiment classifier using rule-based classification for Spanish. Based on english to spanish translation and SentiWordNet sentiment knowledge.",
+    "author": "github.com/nachtkatze",
+    "version": "0.1",
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": true,
+            "options": ["es"],
+            "default": "es"
+        }
+    },
+    "requirements": {},
+    "sentiword_path": "SentiWordNet_3.0.txt",
+    "pos_path": "unigram_spanish.pickle"
+}
