@@ -1,5 +1,7 @@
 """
 """
+from future import standard_library
+standard_library.install_aliases()
 import gevent
 from gevent import monkey
 monkey.patch_all()
@@ -102,7 +104,7 @@ class Senpy(object):
     def default_plugin(self):
         candidates = self.filter_plugins(is_activated=True)
         if len(candidates) > 0:
-            candidate = candidates.values()[0]
+            candidate = list(candidates.values())[0]
             logger.debug("Default: {}".format(candidate))
             return candidate
         else:

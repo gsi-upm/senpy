@@ -1,9 +1,10 @@
+from future import standard_library
+standard_library.install_aliases()
 
 import inspect
 import os.path
 import shelve
 import logging
-import ConfigParser
 from .models import Response, Leaf
 
 logger = logging.getLogger(__name__)

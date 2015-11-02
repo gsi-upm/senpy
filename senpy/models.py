@@ -1,8 +1,10 @@
 import json
 import os
+import logging
+
+from builtins import str
 from collections import defaultdict
 from pyld import jsonld
-import logging
 from flask import Response as FlaskResponse
 
 
@@ -93,7 +95,7 @@ class Leaf(dict):
             return contexts
         elif isinstance(context, dict):
             return context
-        elif isinstance(context, basestring):
+        elif isinstance(context, str):
             try:
                 with open(context) as f:
                     return json.loads(f.read())

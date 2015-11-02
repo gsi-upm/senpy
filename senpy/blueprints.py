@@ -19,6 +19,7 @@ Blueprints for Senpy
 """
 from flask import Blueprint, request, current_app, Flask, redirect, url_for, render_template
 from .models import Error, Response, Leaf
+from future.utils import iteritems
 
 import json
 import logging
@@ -58,7 +59,7 @@ def get_params(req, params=BASIC_PARAMS):
 
     outdict = {}
     wrong_params = {}
-    for param, options in params.iteritems():
+    for param, options in iteritems(params):
         if param[0] != "@":  # Exclude json-ld properties
             logger.debug("Param: %s - Options: %s", param, options)
             for alias in options["aliases"]:
@@ -79,7 +80,7 @@ def get_params(req, params=BASIC_PARAMS):
                          "message": "Missing or invalid parameters",
                          "parameters": outdict,
                          "errors": {param: error for param, error in
-                                    wrong_params.iteritems()}
+                                    iteritems(wrong_params)}
                          })
         raise ValueError(message)
     return outdict
