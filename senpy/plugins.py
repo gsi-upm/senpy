@@ -1,4 +1,7 @@
 
+import inspect
+import os.path
+import shelve
 import logging
 import ConfigParser
 from .models import Response, Leaf
@@ -85,6 +88,9 @@ class SenpyPlugin(Leaf):
         self.is_activated = False
         self._info = info
 
+    def get_folder(self):
+        return os.path.dirname(inspect.getfile(self.__class__))
+
     def analyse(self, *args, **kwargs):
         logger.debug("Analysing with: {} {}".format(self.name, self.version))
         pass
@@ -121,3 +127,29 @@ class EmotionPlugin(SenpyPlugin):
         resp = super(EmotionPlugin, self).__init__(info, *args, **kwargs)
         self.minEmotionValue = float(info.get("minEmotionValue", 0))
         self.maxEmotionValue = float(info.get("maxEmotionValue", 0))
+
+
+class ShelfMixin(object):
+
+    @property
+    def sh(self):
+        if not hasattr(self, '_sh') or not self._sh:
+            self._sh = shelve.open(self.shelf_file, writeback=True)
+        return self._sh
+
+    @sh.deleter
+    def sh(self):
+        if hasattr(self, '_sh'):
+            del(self._sh)
+
+    @property
+    def shelf_file(self):
+        if not hasattr(self, '_shelf_file') or not self._shelf_file:
+            if hasattr(self, '_info') and 'shelf_file' in self._info:
+                self._shelf_file = self._info['shelf_file']
+            else:
+                self._shelf_file = os.path.join(self.get_folder(), self.name + '.db')
+        return self._shelf_file 
+
+    def close(self):
+        del(self._sh)

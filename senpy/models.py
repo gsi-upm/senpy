@@ -71,7 +71,10 @@ class Leaf(dict):
             return id
 
     def __delattr__(self, key):
-        return super(Leaf, self).__delitem__(self._get_key(key))
+        if key in self.__dict__:
+            del self.__dict__[key]
+        else:
+            super(Leaf, self).__delitem__(self._get_key(key))
 
     def _get_key(self, key):
         if key[0] == "_":
