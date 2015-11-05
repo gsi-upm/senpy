@@ -136,6 +136,7 @@ class Senpy(object):
             except Exception as ex:
                 logger.error("Error activating plugin {}: {}".format(plugin.name,
                                                                      ex))
+                logger.error("Trace: {}".format(traceback.format_exc()))
         th = gevent.spawn(act)
         th.link_value(partial(self._set_active_plugin, plugin_name, True))
         if sync:
