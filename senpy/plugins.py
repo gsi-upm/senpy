@@ -152,4 +152,5 @@ class ShelfMixin(object):
         return self._shelf_file 
 
     def close(self):
+        self.sh.close()
         del(self._sh)
