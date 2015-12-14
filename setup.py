@@ -15,7 +15,7 @@ except AttributeError:
 install_reqs = [str(ir.req) for ir in install_reqs]
 test_reqs = [str(ir.req) for ir in test_reqs]
 
-VERSION = "0.4.11rc"
+VERSION = "0.4.11"
 
 setup(
     name='senpy',

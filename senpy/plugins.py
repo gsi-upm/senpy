@@ -112,6 +112,9 @@ class SenpyPlugin(Leaf):
     def id(self):
         return "{}_{}".format(self.name, self.version)
 
+    def __del__(self):
+        ''' Destructor, to make sure all the resources are freed '''
+        self.deactivate()
 
 class SentimentPlugin(SenpyPlugin):
 
@@ -139,8 +142,8 @@ class ShelfMixin(object):
 
     @sh.deleter
     def sh(self):
-        if hasattr(self, '_sh'):
-            del(self._sh)
+        if os.path.isfile(self.shelf_file):
+            os.remove(self.shelf_file)
 
     @property
     def shelf_file(self):
