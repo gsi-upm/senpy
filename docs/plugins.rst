@@ -9,6 +9,7 @@ The basic methods in a plugin are:
 * __init__
 * activate: used to load memory-hungry resources
 * deactivate: used to free up resources
+* analyse: called in every user requests. It takes in the parameters supplied by a user and should return a senpy Response.
 
 Plugins are loaded asynchronously, so don't worry if the activate method takes too long. The plugin will be marked as activated once it is finished executing the method.
 
