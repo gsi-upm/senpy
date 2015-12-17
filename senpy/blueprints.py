@@ -55,7 +55,7 @@ def get_params(req, params=BASIC_PARAMS):
     elif req.method == 'GET':
         indict = req.args
     else:
-        raise ValueError("Invalid data")
+        raise Error(message="Invalid data")
 
     outdict = {}
     wrong_params = {}
@@ -82,7 +82,7 @@ def get_params(req, params=BASIC_PARAMS):
                          "errors": {param: error for param, error in
                                     iteritems(wrong_params)}
                          })
-        raise ValueError(message)
+        raise Error(message=message)
     return outdict
 
 
@@ -124,7 +124,7 @@ def api():
         response = current_app.senpy.analyse(**params)
         in_headers = params["inHeaders"] != "0"
         return response.flask(in_headers=in_headers)
-    except ValueError as ex:
+    except Error as ex:
         return ex.message.flask()
 
 

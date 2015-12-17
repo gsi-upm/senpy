@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import logging
 
@@ -31,7 +32,7 @@ class ExtensionsTest(TestCase):
         """ Discovery of plugins in given folders.  """
         # noinspection PyProtectedMember
         assert self.dir in self.senpy._search_folders
-        print self.senpy.plugins
+        print(self.senpy.plugins)
         assert "Dummy" in self.senpy.plugins
 
     def test_enabling(self):

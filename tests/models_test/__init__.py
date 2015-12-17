@@ -59,7 +59,7 @@ class ModelsTest(TestCase):
         assert("entries" in js)
         assert("analysis" in js)
         resp = r6.flask()
-        received = json.loads(resp.data)
+        received = json.loads(resp.data.decode())
         logging.debug("Response: %s", js)
         assert(received["entries"])
         assert(received["entries"][0]["text"] == "Just testing")

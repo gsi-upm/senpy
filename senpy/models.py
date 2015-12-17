@@ -1,90 +1,22 @@
+from __future__ import print_function
+from six import string_types
+
 import json
 import os
 import logging
 
-from builtins import str
 from collections import defaultdict
 from pyld import jsonld
 from flask import Response as FlaskResponse
 
 
-class Leaf(dict):
-    _prefix = None
-    _frame = {}
-    _context = {}
+class Response(object):
 
-    def __init__(self,
-                 *args,
-                 **kwargs):
-
-        id = kwargs.pop("id", None)
-        context = kwargs.pop("context", self._context)
-        vocab = kwargs.pop("vocab", None)
-        prefix = kwargs.pop("prefix", None)
-        frame = kwargs.pop("frame", None)
-        super(Leaf, self).__init__(*args, **kwargs)
-        if context is not None:
-            self.context = context
-        if frame is not None:
-            self._frame = frame
-        self._prefix = prefix
-        self.id = id
-
-    def __getattr__(self, key):
-        try:
-            return object.__getattr__(self, key)
-        except AttributeError:
-            try:
-                return super(Leaf, self).__getitem__(self._get_key(key))
-            except KeyError:
-                raise AttributeError()
-
-    def __setattr__(self, key, value):
-        try:
-            object.__getattr__(self, key)
-            object.__setattr__(self, key, value)
-        except AttributeError:
-            key = self._get_key(key)
-            if key == "@context":
-                value = self.get_context(value)
-            elif key == "@id":
-                value = self.get_id(value)
-            if key[0] == "_":
-                object.__setattr__(self, key, value)
-            else:
-                if value is None:
-                    try:
-                        super(Leaf, self).__delitem__(key)
-                    except KeyError:
-                        pass
-                else:
-                    super(Leaf, self).__setitem__(key, value)
-
-    def get_id(self, id):
-        """
-        Get id, dealing with prefixes
-        """
-        # This is not the most elegant solution to change the @id attribute,
-        # but it is the quickest way to have it included in the dictionary
-        # without extra boilerplate.
-        if id and self._prefix and ":" not in id:
-            return "{}{}".format(self._prefix, id)
-        else:
-            return id
-
-    def __delattr__(self, key):
-        if key in self.__dict__:
-            del self.__dict__[key]
-        else:
-            super(Leaf, self).__delitem__(self._get_key(key))
-
-    def _get_key(self, key):
-        if key[0] == "_":
-            return key
-        elif key in ["context", "id"]:
-            return "@{}".format(key)
-        else:
-            return key
+    @property
+    def context(self):
+        if not hasattr(self, '_context'):
+            self._context = None
+        return self._context
 
     @staticmethod
     def get_context(context):
@@ -95,22 +27,14 @@ class Leaf(dict):
             return contexts
         elif isinstance(context, dict):
             return context
-        elif isinstance(context, str):
+        elif isinstance(context, string_types):
             try:
                 with open(context) as f:
                     return json.loads(f.read())
             except IOError:
                 return context
-
-    def compact(self):
-        return jsonld.compact(self, self.get_context(self.context))
-
-    def frame(self, frame=None, options=None):
-        if frame is None:
-            frame = self._frame
-        if options is None:
-            options = {}
-        return jsonld.frame(self, frame, options)
+        else:
+            raise AttributeError('Please, provide a valid context')                
 
     def jsonld(self, frame=None, options=None,
                context=None, removeContext=None):
@@ -163,92 +87,32 @@ class Leaf(dict):
                              status=self.get("status", 200),
                              headers=headers,
                              mimetype="application/json")
+    
+class Entry(JSONLD):
+    pass
 
 
-class Response(Leaf):
-    _context = Leaf.get_context("{}/context.jsonld".format(
-        os.path.dirname(os.path.realpath(__file__))))
-    _frame = {
-        "@context": _context,
-        "analysis": {
-            "@explicit": True,
-            "maxPolarityValue": {},
-            "minPolarityValue": {},
-            "name": {},
-            "version": {},
-        },
-        "entries": {}
-    }
-
-    def __init__(self, *args, **kwargs):
-        context = kwargs.pop("context", None)
-        frame = kwargs.pop("frame", None)
-        if context is None:
-            context = self._context
-        self.context = context
-        super(Response, self).__init__(
-            *args, context=context, frame=frame, **kwargs)
-        if self._frame is not None and "entries" in self._frame:
-            self.analysis = []
-            self.entries = []
-
-    def jsonld(self, frame=None, options=None, context=None, removeContext={}):
-        return super(Response, self).jsonld(frame,
-                                            options,
-                                            context,
-                                            removeContext)
+class Sentiment(JSONLD):
+    pass
 
 
-class Entry(Leaf):
-    _context = {
-        "@vocab": ("http://persistence.uni-leipzig.org/"
-                   "nlp2rdf/ontologies/nif-core#")
-
-    }
-
-    def __init__(self, text=None, emotion_sets=None, opinions=None, **kwargs):
-        super(Entry, self).__init__(**kwargs)
-        if text:
-            self.text = text
-        self.emotionSets = emotion_sets if emotion_sets else []
-        self.opinions = opinions if opinions else []
+class EmotionSet(JSONLD):
+    pass
 
 
-class Opinion(Leaf):
-    _context = {
-        "@vocab": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"
-    }
-
-    def __init__(self, polarityValue=None, hasPolarity=None, *args, **kwargs):
-        super(Opinion, self).__init__(*args,
-                                      **kwargs)
-        if polarityValue is not None:
-            self.hasPolarityValue = polarityValue
-        if hasPolarity is not None:
-            self.hasPolarity = hasPolarity
+class Emotion(JSONLD):
+    pass
 
 
-class EmotionSet(Leaf):
-    _context = {}
+class Suggestion(JSONLD):
+    pass
 
-    def __init__(self, emotions=None, *args, **kwargs):
-        if not emotions:
-            emotions = []
-        super(EmotionSet, self).__init__(context=EmotionSet._context,
-                                         *args,
-                                         **kwargs)
-        self.emotions = emotions or []
-
-
-class Emotion(Leaf):
-    _context = {}
-
-
-class Error(Leaf):
+class Error(BaseException, JSONLD):
     # A better pattern would be this:
-    # http://flask.pocoo.org/docs/0.10/patterns/apierrors/
+    # htp://flask.pocoo.org/docs/0.10/patterns/apierrors/
     _frame = {}
     _context = {}
 
     def __init__(self, *args, **kwargs):
-        super(Error, self).__init__(*args, **kwargs)
+        self.message = kwargs.get('message', None)
+        super(Error, self).__init__(*args)

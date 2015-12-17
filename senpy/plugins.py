@@ -72,8 +72,8 @@ class SenpyPlugin(Leaf):
 
     def __init__(self, info=None):
         if not info:
-            raise ValueError(("You need to provide configuration"
-                              "information for the plugin."))
+            raise Error(message=("You need to provide configuration"
+                                 "information for the plugin."))
         logger.debug("Initialising {}".format(info))
         super(SenpyPlugin, self).__init__()
         self.name = info["name"]
@@ -137,7 +137,7 @@ class ShelfMixin(object):
 
     @property
     def sh(self):
-        if not hasattr(self, '_sh') or not self._sh:
+        if not hasattr(self, '_sh') or self._sh is None:
             self._sh = shelve.open(self.shelf_file, writeback=True)
         return self._sh
 
