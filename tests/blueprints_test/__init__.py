@@ -46,7 +46,7 @@ class BlueprintsTest(TestCase):
         The dummy plugin returns an empty response,\
         it should contain the context
         """
-        resp = self.client.get("/api/?i=My aloha mohame")
+        resp = self.client.get("/api?i=My aloha mohame")
         self.assert200(resp)
         logging.debug("Got response: %s", resp.json)
         assert "@context" in resp.json
