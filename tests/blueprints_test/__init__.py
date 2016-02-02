@@ -57,7 +57,7 @@ class BlueprintsTest(TestCase):
 
     def test_list(self):
         """ List the plugins """
-        resp = self.client.get("/plugins/")
+        resp = self.client.get("/api/plugins/")
         self.assert200(resp)
         logging.debug(resp.json)
         assert "Dummy" in resp.json
