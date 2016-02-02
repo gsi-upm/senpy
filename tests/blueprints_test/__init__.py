@@ -64,16 +64,16 @@ class BlueprintsTest(TestCase):
         assert "@context" in resp.json
 
     def test_headers(self):
-        i = ["/api/plugins/?nothing="]
-        j = ["/api/?i=test&"]
-        resp = self.client.get("%s" % (i))
-        assert "@context" in resp.json
-        resp = self.client.get("%s&%s=0" % (i, j))
-        assert "@context" in resp.json
-        resp = self.client.get("%s&%s=1" % (i, j))
-        assert "@context" not in resp.json
-        resp = self.client.get("%s&%s=true" % (i, j))
-        assert "@context" not in resp.json
+        for i, j in product(["/api/plugins/?nothing=", "/api?i=test&"],
+                            ["headers", "inHeaders"]):
+            resp = self.client.get("%s" % (i))
+            assert "@context" in resp.json
+            resp = self.client.get("%s&%s=0" % (i, j))
+            assert "@context" in resp.json
+            resp = self.client.get("%s&%s=1" % (i, j))
+            assert "@context" not in resp.json
+            resp = self.client.get("%s&%s=true" % (i, j))
+            assert "@context" not in resp.json
 
     def test_detail(self):
         """ Show only one plugin"""
