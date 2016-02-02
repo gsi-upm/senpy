@@ -64,8 +64,7 @@ class BlueprintsTest(TestCase):
         assert "@context" in resp.json
 
     def test_headers(self):
-        for i, j in product(["/api/plugins/?nothing=", "/api/?i=test&"],
-                            ["headers", "inHeaders"]):
+        for i, j in product(["/api/plugins/?nothing=", "/api/?i=test&"]):
             resp = self.client.get("%s" % (i))
             assert "@context" in resp.json
             resp = self.client.get("%s&%s=0" % (i, j))
