@@ -3,8 +3,13 @@ from python:2.7
 RUN apt-get update
 RUN apt-get -y install git
 RUN mkdir -p /senpy-plugins
+
 RUN apt-get -y install python-numpy
-RUN apt-get -y install build-dep python-scipy
+RUN apt-get -y install python-scipy
+RUN apt-get -y install python-sklearn
+RUN apt-get -y install python-gevent
+RUN apt-get -y install libopenblas-dev
+RUN apt-get -y install gfortran
 RUN pip install --upgrade pip
 
 ADD id_rsa /root/.ssh/id_rsa
@@ -16,7 +21,7 @@ RUN git clone git@github.com:gsi-upm/senpy-plugins-enterprise /senpy-plugins/ent
 RUN git clone https://github.com/gsi-upm/senpy-plugins-community /senpy-plugins/community
 
 RUN pip install /usr/src/app
-RUN pip install -r /senpy-plugins/enterprise/requirements.txt
+RUN pip install --no-use-wheel -r /senpy-plugins/enterprise/requirements.txt
 
 
 WORKDIR /senpy-plugins
