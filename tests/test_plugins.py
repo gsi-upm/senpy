@@ -1,17 +1,15 @@
-#!/bin/env python2
-# -*- py-which-shell: "python2"; -*-
+#!/bin/env python
+
 import os
 import logging
 import shelve
+import shutil
+import tempfile
 
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 import json
 import os
 from unittest import TestCase
-from senpy.models import Response, Entry
+from senpy.models import Results, Entry
 from senpy.plugins import SenpyPlugin, ShelfMixin
 
 
@@ -27,14 +25,18 @@ class ShelfTest(ShelfMixin, SenpyPlugin):
 
 
 class ModelsTest(TestCase):
-    shelf_file = 'shelf_test.db'
 
 
     def tearDown(self):
+        if os.path.exists(self.shelf_dir):
+            shutil.rmtree(self.shelf_dir)
+
         if os.path.isfile(self.shelf_file):
             os.remove(self.shelf_file)
 
-    setUp = tearDown
+    def setUp(self):
+        self.shelf_dir = tempfile.mkdtemp()
+        self.shelf_file = os.path.join(self.shelf_dir, "shelf")
         
     def test_shelf(self):
         ''' A shelf is created and the value is stored '''
@@ -45,11 +47,10 @@ class ModelsTest(TestCase):
         assert a.shelf_file == self.shelf_file
 
         a.sh['a'] = 'fromA'
-
         a.test(key='a', value='fromA')
-        del(a)
-        assert os.path.isfile(self.shelf_file)
+
         sh = shelve.open(self.shelf_file)
+
         assert sh['a'] == 'fromA'
 
 

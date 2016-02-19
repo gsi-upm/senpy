@@ -1,10 +1,6 @@
 import os
 import logging
 
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 from senpy.extensions import Senpy
 from flask import Flask
 from flask.ext.testing import TestCase
@@ -31,7 +27,7 @@ class BlueprintsTest(TestCase):
         """
         Calling with no arguments should ask the user for more arguments
         """
-        resp = self.client.get("/api")
+        resp = self.client.get("/api/")
         self.assert404(resp)
         logging.debug(resp.json)
         assert resp.json["status"] == 404
@@ -46,7 +42,7 @@ class BlueprintsTest(TestCase):
         The dummy plugin returns an empty response,\
         it should contain the context
         """
-        resp = self.client.get("/api?i=My aloha mohame")
+        resp = self.client.get("/api/?i=My aloha mohame")
         self.assert200(resp)
         logging.debug("Got response: %s", resp.json)
         assert "@context" in resp.json
@@ -64,7 +60,7 @@ class BlueprintsTest(TestCase):
         assert "@context" in resp.json
 
     def test_headers(self):
-        for i, j in product(["/api/plugins/?nothing=", "/api?i=test&"],
+        for i, j in product(["/api/plugins/?nothing=", "/api/?i=test&"],
                             ["headers", "inHeaders"]):
             resp = self.client.get("%s" % (i))
             assert "@context" in resp.json
@@ -77,7 +73,7 @@ class BlueprintsTest(TestCase):
 
     def test_detail(self):
         """ Show only one plugin"""
-        resp = self.client.get("/api/plugins/Dummy")
+        resp = self.client.get("/api/plugins/Dummy/")
         self.assert200(resp)
         logging.debug(resp.json)
         assert "@id" in resp.json
@@ -88,14 +84,14 @@ class BlueprintsTest(TestCase):
         resp = self.client.get("/api/plugins/Dummy/deactivate")
         self.assert200(resp)
         sleep(0.5)
-        resp = self.client.get("/api/plugins/Dummy")
+        resp = self.client.get("/api/plugins/Dummy/")
         self.assert200(resp)
         assert "is_activated" in resp.json
         assert resp.json["is_activated"] == False
         resp = self.client.get("/api/plugins/Dummy/activate")
         self.assert200(resp)
         sleep(0.5)
-        resp = self.client.get("/api/plugins/Dummy")
+        resp = self.client.get("/api/plugins/Dummy/")
         self.assert200(resp)
         assert "is_activated" in resp.json
         assert resp.json["is_activated"] == True

@@ -2,7 +2,7 @@ import requests
 import json
 
 from senpy.plugins import SentimentPlugin
-from senpy.models import Response, Opinion, Entry
+from senpy.models import Results, Sentiment, Entry
 
 
 class Sentiment140Plugin(SentimentPlugin):
@@ -16,7 +16,7 @@ class Sentiment140Plugin(SentimentPlugin):
                             )
 
         p = params.get("prefix", None)
-        response = Response(prefix=p)
+        response = Results(prefix=p)
         polarity_value = self.maxPolarityValue*int(res.json()["data"][0]
                                                    ["polarity"]) * 0.25
         polarity = "marl:Neutral"
@@ -25,15 +25,16 @@ class Sentiment140Plugin(SentimentPlugin):
             polarity = "marl:Positive"
         elif polarity_value < neutral_value:
             polarity = "marl:Negative"
+
         entry = Entry(id="Entry0",
-                      text=params["input"],
-                      prefix=p)
-        opinion = Opinion(id="Opinion0",
-                          prefix=p,
-                          hasPolarity=polarity,
-                          polarityValue=polarity_value)
-        opinion["prov:wasGeneratedBy"] = self.id
-        entry.opinions.append(opinion)
+                      nif__isString=params["input"])
+        sentiment = Sentiment(id="Sentiment0",
+                            prefix=p,
+                            marl__hasPolarity=polarity,
+                            marl__polarityValue=polarity_value)
+        sentiment.prov__wasGeneratedBy = self.id
+        entry.sentiments = []
+        entry.sentiments.append(sentiment)
         entry.language = lang
         response.entries.append(entry)
         return response

@@ -1,0 +1,33 @@
+{
+  "@vocab": "http://www.gsi.dit.upm.es/ontologies/senpy#",
+  "dc": "http://dublincore.org/2012/06/14/dcelements#",
+  "me": "http://www.mixedemotions-project.eu/ns/model#",
+  "prov": "http://www.w3.org/ns/prov#",
+  "nif": "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#",
+  "marl": "http://www.gsi.dit.upm.es/ontologies/marl/ns#",
+  "onyx": "http://www.gsi.dit.upm.es/ontologies/onyx#",
+  "wnaffect": "http://www.gsi.dit.upm.es/ontologies/wnaffect#",
+  "xsd": "http://www.w3.org/2001/XMLSchema#",
+  "topics": {
+    "@id": "dc:subject"
+  },
+  "entities": {
+  "@id": "me:hasEntities"
+  },
+  "suggestions": {
+    "@id": "me:hasSuggestions"
+  },
+  "emotions": {
+    "@id": "onyx:hasEmotionSet"
+  },
+  "sentiments": {
+    "@id": "marl:hasOpinion"
+  },
+  "entries": {
+    "@id": "prov:used"
+  },
+  "analysis": {
+    "@id": "prov:wasGeneratedBy"
+
+}
+}

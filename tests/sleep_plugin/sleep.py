@@ -1,5 +1,5 @@
 from senpy.plugins import SenpyPlugin
-from senpy.models import Response
+from senpy.models import Results
 from time import sleep
 
 
@@ -14,4 +14,4 @@ class SleepPlugin(SenpyPlugin):
 
     def analyse(self, *args, **kwargs):
         sleep(float(kwargs.get("timeout", self.timeout)))
-        return Response()
+        return Results()

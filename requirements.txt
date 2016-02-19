@@ -2,6 +2,10 @@ Flask>=0.10.1
 gunicorn>=19.0.0
 requests>=2.4.1
 GitPython>=0.3.2.RC1
-gevent>=1.0.1
+gevent>=1.1rc4
 PyLD>=0.6.5
 Flask-Testing>=0.4.2
+six
+future
+jsonschema
+jsonref

@@ -17,8 +17,8 @@
 """
 Blueprints for Senpy
 """
-from flask import Blueprint, request, current_app, Flask, redirect, url_for, render_template
-from .models import Error, Response, Leaf
+from flask import Blueprint, request, current_app, render_template
+from .models import Error, Response
 from future.utils import iteritems
 
 import json
@@ -27,6 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
+demo_blueprint = Blueprint("Demo of the service. It includes an HTML+Javascript playground to test senpy", __name__)
 
 BASIC_PARAMS = {
     "algorithm": {
@@ -39,15 +40,6 @@ BASIC_PARAMS = {
         "default": "0"
     }
 }
-
-LIST_PARAMS = {
-    "params": {
-        "aliases": ["params", "with_params"],
-        "required": False,
-        "default": "0"
-    },
-}
-
 
 def get_params(req, params=BASIC_PARAMS):
     if req.method == 'POST':
@@ -76,12 +68,11 @@ def get_params(req, params=BASIC_PARAMS):
                    outdict[param] not in params[param]["options"]:
                     wrong_params[param] = params[param]
     if wrong_params:
-        message = Error({"status": 404,
-                         "message": "Missing or invalid parameters",
-                         "parameters": outdict,
-                         "errors": {param: error for param, error in
-                                    iteritems(wrong_params)}
-                         })
+        message = Error(status=404,
+                        message="Missing or invalid parameters",
+                        parameters=outdict,
+                        errors={param: error for param, error in
+                                iteritems(wrong_params)})
         raise Error(message=message)
     return outdict
 
@@ -107,12 +98,12 @@ def basic_analysis(params):
     return response
 
 
-@nif_blueprint.route('/')
+@demo_blueprint.route('/')
 def index():
     return render_template("index.html")
 
 
-@nif_blueprint.route('/api', methods=['POST', 'GET'])
+@nif_blueprint.route('/', methods=['POST', 'GET'])
 def api():
     try:
         params = get_params(request)
@@ -128,7 +119,7 @@ def api():
         return ex.message.flask()
 
 
-@nif_blueprint.route("/api/default")
+@nif_blueprint.route("/default")
 def default():
     # return current_app.senpy.default_plugin
     plug = current_app.senpy.default_plugin
@@ -139,9 +130,9 @@ def default():
         return error.flask()
 
 
-@nif_blueprint.route('/api/plugins/', methods=['POST', 'GET'])
-@nif_blueprint.route('/api/plugins/<plugin>', methods=['POST', 'GET'])
-@nif_blueprint.route('/api/plugins/<plugin>/<action>', methods=['POST', 'GET'])
+@nif_blueprint.route('/plugins/', methods=['POST', 'GET'])
+@nif_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
+@nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 def plugins(plugin=None, action="list"):
     filt = {}
     sp = current_app.senpy
@@ -151,21 +142,19 @@ def plugins(plugin=None, action="list"):
     if plugin and not plugs:
         return "Plugin not found", 400
     if action == "list":
-        with_params = get_params(request, LIST_PARAMS)["params"] == "1"
         in_headers = get_params(request, BASIC_PARAMS)["inHeaders"] != "0"
         if plugin:
             dic = plugs[plugin]
         else:
             dic = Response(
-                    {plug: plugs[plug].jsonld(with_params) for plug in plugs},
-                    frame={})
+                    {plug: plugs[plug].serializable() for plug in plugs})
         return dic.flask(in_headers=in_headers)
     method = "{}_plugin".format(action)
     if(hasattr(sp, method)):
         getattr(sp, method)(plugin)
-        return Leaf(message="Ok").flask()
+        return Response(message="Ok").flask()
     else:
-        return Error("action '{}' not allowed".format(action)).flask()
+        return Error(message="action '{}' not allowed".format(action)).flask()
 
 
 if __name__ == '__main__':

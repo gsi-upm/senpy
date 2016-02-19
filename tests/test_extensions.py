@@ -2,10 +2,6 @@ from __future__ import print_function
 import os
 import logging
 
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock
 from senpy.extensions import Senpy
 from flask import Flask
 from flask.ext.testing import TestCase
@@ -15,7 +11,7 @@ class ExtensionsTest(TestCase):
 
     def create_app(self):
         self.app = Flask("test_extensions")
-        self.dir = os.path.join(os.path.dirname(__file__), "..")
+        self.dir = os.path.join(os.path.dirname(__file__))
         self.senpy = Senpy(plugin_folder=self.dir, default_plugins=False)
         self.senpy.init_app(self.app)
         self.senpy.activate_plugin("Dummy", sync=True)
@@ -60,7 +56,7 @@ class ExtensionsTest(TestCase):
         self.senpy.deactivate_all(sync=True)
         resp = self.senpy.analyse(input="tupni")
         logging.debug("Response: {}".format(resp))
-        assert resp["status"] == 404
+        assert resp.status == 404
 
     def test_analyse(self):
         """ Using a plugin """
@@ -75,7 +71,7 @@ class ExtensionsTest(TestCase):
             self.senpy.deactivate_plugin(plug, sync=True)
         resp = self.senpy.analyse(input="tupni")
         logging.debug("Response: {}".format(resp))
-        assert resp["status"] == 404
+        assert resp.status == 404
 
 
     def test_filtering(self):

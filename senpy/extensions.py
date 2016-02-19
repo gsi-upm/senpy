@@ -8,7 +8,7 @@ monkey.patch_all()
 
 from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
 from .models import Error
-from .blueprints import nif_blueprint
+from .blueprints import nif_blueprint, demo_blueprint
 
 from git import Repo, InvalidGitRepositoryError
 from functools import partial
@@ -57,7 +57,8 @@ class Senpy(object):
             app.teardown_appcontext(self.teardown)
         else:
             app.teardown_request(self.teardown)
-        app.register_blueprint(nif_blueprint)
+        app.register_blueprint(nif_blueprint, url_prefix="/api")
+        app.register_blueprint(demo_blueprint, url_prefix="/")
 
     def add_folder(self, folder):
         logger.debug("Adding folder: %s", folder)
