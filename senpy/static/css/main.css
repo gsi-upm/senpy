@@ -1,0 +1,141 @@
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 220px;
+}
+#inputswrapper {
+    min-height:100%;
+    background: white;
+    position:relative;
+    min-width: 800px;
+    height: 100%;
+    margin: 0 auto;
+}
+#site-logos {
+  margin-top: 1em;
+  float: right;
+  width: 200px;
+}
+#site-info {
+  float: left;
+  margin: 2em auto;
+  width: 70%;
+}
+#info {
+  display: inline;
+}
+#footer {
+  position:absolute;
+  bottom: 0;
+  background:#1F94D3;
+  color: white;
+  width:100%;
+  height:200px;
+}
+#footer > .container {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+#footer a{
+  font-weight: bold;
+  color: white;
+}
+#footer :visited{
+  font-weight: bold;
+  color: black;
+}
+#form {
+  width: 100%;
+}
+#results {
+    overflow: auto;
+    padding: 20px;
+    background: lightgray;
+     -moz-border-radius: 20px;
+     -webkit-border-radius: 20px;
+     -khtml-border-radius: 20px;
+     border-radius: 20px;
+
+}
+#input_request { 
+    display:block;
+    width:150px;
+    word-wrap:break-word;
+}
+textarea
+{
+    border:1px solid #999999;
+    width:100%;
+    margin:5px 0;
+    padding:3px;
+}
+.boxsizingBorder {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.valuerow {
+  position: relative;
+}
+.only > .removeclass {
+  visibility: hidden;      
+}
+.key {
+  margin: 0.5em !important;
+}
+.valuerow * {
+  vertical-align: middle;
+  margin: 0.5em;
+  width: 30%;
+  padding: 0.5em 1em;
+}
+.value  {
+  margin: 0.5em;
+  width: 60%;
+  padding: 0.5em 1em;
+}
+.valuerow input {
+  text-align: top;
+}
+.removeclass {
+  padding: 0.5em;
+  text-decoration: none;
+  color: red;
+}
+.query
+{
+  border:1px solid #999999;
+  width:100%;
+  margin:5px 0;
+  padding:3px;
+}
+#mixedemotions-logo{
+  float: right;
+  height: 100px;
+}
+#header-logo{
+  height: 50px;
+}
+
+.tab-content {
+  padding: 1em;
+  border: 1px solid #ddd;
+  border-top: none;
+}
+#content-services, #content-resources {
+  display: none;
+}
+
+#endpoint{
+    min-width: 80%;
+}
+
+.center-block {
+    float:none;
+}
+#header {
+  font-family: 'Architects Daughter', cursive;
+}

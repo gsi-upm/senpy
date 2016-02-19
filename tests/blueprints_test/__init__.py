@@ -31,7 +31,7 @@ class BlueprintsTest(TestCase):
         """
         Calling with no arguments should ask the user for more arguments
         """
-        resp = self.client.get("/")
+        resp = self.client.get("/api")
         self.assert404(resp)
         logging.debug(resp.json)
         assert resp.json["status"] == 404
@@ -46,7 +46,7 @@ class BlueprintsTest(TestCase):
         The dummy plugin returns an empty response,\
         it should contain the context
         """
-        resp = self.client.get("/?i=My aloha mohame")
+        resp = self.client.get("/api?i=My aloha mohame")
         self.assert200(resp)
         logging.debug("Got response: %s", resp.json)
         assert "@context" in resp.json
@@ -57,14 +57,14 @@ class BlueprintsTest(TestCase):
 
     def test_list(self):
         """ List the plugins """
-        resp = self.client.get("/plugins/")
+        resp = self.client.get("/api/plugins/")
         self.assert200(resp)
         logging.debug(resp.json)
         assert "Dummy" in resp.json
         assert "@context" in resp.json
 
     def test_headers(self):
-        for i, j in product(["/plugins/?nothing=", "/?i=test&"],
+        for i, j in product(["/api/plugins/?nothing=", "/api?i=test&"],
                             ["headers", "inHeaders"]):
             resp = self.client.get("%s" % (i))
             assert "@context" in resp.json
@@ -77,7 +77,7 @@ class BlueprintsTest(TestCase):
 
     def test_detail(self):
         """ Show only one plugin"""
-        resp = self.client.get("/plugins/Dummy")
+        resp = self.client.get("/api/plugins/Dummy")
         self.assert200(resp)
         logging.debug(resp.json)
         assert "@id" in resp.json
@@ -85,30 +85,30 @@ class BlueprintsTest(TestCase):
 
     def test_activate(self):
         """ Activate and deactivate one plugin """
-        resp = self.client.get("/plugins/Dummy/deactivate")
+        resp = self.client.get("/api/plugins/Dummy/deactivate")
         self.assert200(resp)
         sleep(0.5)
-        resp = self.client.get("/plugins/Dummy")
+        resp = self.client.get("/api/plugins/Dummy")
         self.assert200(resp)
         assert "is_activated" in resp.json
         assert resp.json["is_activated"] == False
-        resp = self.client.get("/plugins/Dummy/activate")
+        resp = self.client.get("/api/plugins/Dummy/activate")
         self.assert200(resp)
         sleep(0.5)
-        resp = self.client.get("/plugins/Dummy")
+        resp = self.client.get("/api/plugins/Dummy")
         self.assert200(resp)
         assert "is_activated" in resp.json
         assert resp.json["is_activated"] == True
 
     def test_default(self):
         """ Show only one plugin"""
-        resp = self.client.get("/default")
+        resp = self.client.get("/api/default")
         self.assert200(resp)
         logging.debug(resp.json)
         assert "@id" in resp.json
         assert resp.json["@id"] == "Dummy_0.1"
-        resp = self.client.get("/plugins/Dummy/deactivate")
+        resp = self.client.get("/api/plugins/Dummy/deactivate")
         self.assert200(resp)
         sleep(0.5)
-        resp = self.client.get("/default")
+        resp = self.client.get("/api/default")
         self.assert404(resp)

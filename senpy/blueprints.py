@@ -17,14 +17,13 @@
 """
 Blueprints for Senpy
 """
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request, current_app, Flask, redirect, url_for, render_template
 from .models import Error, Response, Leaf
 
 import json
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
 
@@ -107,8 +106,13 @@ def basic_analysis(params):
     return response
 
 
-@nif_blueprint.route('/', methods=['POST', 'GET'])
-def home():
+@nif_blueprint.route('/')
+def index():
+    return render_template("index.html")
+
+
+@nif_blueprint.route('/api', methods=['POST', 'GET'])
+def api():
     try:
         params = get_params(request)
         algo = params.get("algorithm", None)
@@ -123,7 +127,7 @@ def home():
         return ex.message.flask()
 
 
-@nif_blueprint.route("/default")
+@nif_blueprint.route("/api/default")
 def default():
     # return current_app.senpy.default_plugin
     plug = current_app.senpy.default_plugin
@@ -134,9 +138,9 @@ def default():
         return error.flask()
 
 
-@nif_blueprint.route('/plugins/', methods=['POST', 'GET'])
-@nif_blueprint.route('/plugins/<plugin>', methods=['POST', 'GET'])
-@nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
+@nif_blueprint.route('/api/plugins/', methods=['POST', 'GET'])
+@nif_blueprint.route('/api/plugins/<plugin>', methods=['POST', 'GET'])
+@nif_blueprint.route('/api/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 def plugins(plugin=None, action="list"):
     filt = {}
     sp = current_app.senpy
@@ -165,9 +169,7 @@ def plugins(plugin=None, action="list"):
 
 if __name__ == '__main__':
     import config
-    from flask import Flask
 
-    app = Flask(__name__)
     app.register_blueprint(nif_blueprint)
     app.debug = config.DEBUG
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
