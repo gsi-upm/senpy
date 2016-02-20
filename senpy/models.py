@@ -117,11 +117,16 @@ class SenpyMixin(object):
                         sort_keys=True)
         return js
 
+    def validate(self, obj=None):
+        if not obj:
+            obj = self
+        if hasattr(obj, "jsonld"):
+            obj = obj.jsonld()
+        jsonschema.validate(obj, self.schema)
     
 class SenpyModel(SenpyMixin, dict):
 
     schema = base_schema
-    prefix = None
 
     def __init__(self, *args, **kwargs):
         temp = dict(*args, **kwargs)
@@ -161,14 +166,6 @@ class SenpyModel(SenpyMixin, dict):
 
     def __delattr__(self, key):
         self.__delitem__(self._get_key(key))
-
-
-    def validate(self, obj=None):
-        if not obj:
-            obj = self
-        if hasattr(obj, "jsonld"):
-            obj = obj.jsonld()
-        jsonschema.validate(obj, self.schema)
         
     
     @classmethod

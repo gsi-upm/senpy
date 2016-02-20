@@ -56,7 +56,10 @@ class BlueprintsTest(TestCase):
         resp = self.client.get("/api/plugins/")
         self.assert200(resp)
         logging.debug(resp.json)
-        assert "Dummy" in resp.json
+        assert 'plugins' in resp.json
+        plugins = resp.json['plugins']
+        assert len(plugins) > 1
+        assert list(p for p in plugins if p['name'] == "Dummy")
         assert "@context" in resp.json
 
     def test_headers(self):
@@ -98,7 +101,7 @@ class BlueprintsTest(TestCase):
 
     def test_default(self):
         """ Show only one plugin"""
-        resp = self.client.get("/api/default")
+        resp = self.client.get("/api/plugins/default/")
         self.assert200(resp)
         logging.debug(resp.json)
         assert "@id" in resp.json
@@ -106,5 +109,5 @@ class BlueprintsTest(TestCase):
         resp = self.client.get("/api/plugins/Dummy/deactivate")
         self.assert200(resp)
         sleep(0.5)
-        resp = self.client.get("/api/default")
+        resp = self.client.get("/api/plugins/default/")
         self.assert404(resp)

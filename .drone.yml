@@ -1,0 +1,9 @@
+build:
+  image: python:$$PYTHON_VERSION
+  commands:
+    - python setup.py test
+
+matrix:
+  PYTHON_VERSION:
+    - 2.7
+    - 3.4

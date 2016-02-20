@@ -34,6 +34,7 @@ class Senpy(object):
         self.app = app
 
         self._search_folders = set()
+        self._plugin_list = []
         self._outdated = True
 
         self.add_folder(plugin_folder)
@@ -65,10 +66,8 @@ class Senpy(object):
         if os.path.isdir(folder):
             self._search_folders.add(folder)
             self._outdated = True
-            return True
         else:
             logger.debug("Not a folder: %s", folder)
-            return False
 
     def analyse(self, **params):
         algo = None
@@ -113,7 +112,7 @@ class Senpy(object):
 
     def parameters(self, algo):
         return getattr(self.plugins.get(algo) or self.default_plugin,
-                       "params",
+                       "extra_params",
                        {})
 
     def activate_all(self, sync=False):
@@ -129,13 +128,18 @@ class Senpy(object):
         return ps
 
     def _set_active_plugin(self, plugin_name, active=True, *args, **kwargs):
+        ''' We're using a variable in the plugin itself to activate/deactive plugins.\
+        Note that plugins may activate themselves by setting this variable.
+        '''
         self.plugins[plugin_name].is_activated = active
 
     def activate_plugin(self, plugin_name, sync=False):
         plugin = self.plugins[plugin_name]
+        logger.info("Activating plugin: {}".format(plugin.name))
         def act():
             try:
                 plugin.activate()
+                logger.info("Plugin activated: {}".format(plugin.name))
             except Exception as ex:
                 logger.error("Error activating plugin {}: {}".format(plugin.name,
                                                                      ex))
@@ -149,19 +153,33 @@ class Senpy(object):
 
     def deactivate_plugin(self, plugin_name, sync=False):
         plugin = self.plugins[plugin_name]
-        th = gevent.spawn(plugin.deactivate)
+
+        def deact():
+            try:
+                plugin.deactivate()
+                logger.info("Plugin deactivated: {}".format(plugin.name))
+            except Exception as ex:
+                logger.error("Error deactivating plugin {}: {}".format(plugin.name,
+                                                                       ex))
+                logger.error("Trace: {}".format(traceback.format_exc()))
+
+        th = gevent.spawn(deact)
         th.link_value(partial(self._set_active_plugin, plugin_name, False))
         if sync:
             th.join()
         else:
             return th
 
-    def reload_plugin(self, plugin):
-        logger.debug("Reloading {}".format(plugin))
-        plug = self.plugins[plugin]
-        nplug = self._load_plugin(plug.module, plug.path)
-        del self.plugins[plugin]
-        self.plugins[nplug.name] = nplug
+    def reload_plugin(self, name):
+        logger.debug("Reloading {}".format(name))
+        plugin = self.plugins[name]
+        try:
+            del self.plugins[name]
+            nplug = self._load_plugin(plugin.module, plugin.path)
+            self.plugins[nplug.name] = nplug
+        except Exception as ex:
+            logger.error('Error reloading {}: {}'.format(name, ex))
+            self.plugins[name] = plugin
 
     @staticmethod
     def _load_plugin(root, filename):
@@ -206,7 +224,7 @@ class Senpy(object):
             for root, dirnames, filenames in os.walk(search_folder):
                 for filename in fnmatch.filter(filenames, '*.senpy'):
                     name, plugin = self._load_plugin(root, filename)
-                    if plugin:
+                    if plugin and name not in self._plugin_list:
                         plugins[name] = plugin
 
         self._outdated = False
@@ -218,9 +236,9 @@ class Senpy(object):
     @property
     def plugins(self):
         """ Return the plugins registered for a given application.  """
-        if not hasattr(self, 'senpy_plugins') or self._outdated:
-            self.senpy_plugins = self._load_plugins()
-        return self.senpy_plugins
+        if self._outdated:
+            self._plugin_list = self._load_plugins()
+        return self._plugin_list
 
     def filter_plugins(self, **kwargs):
         """ Filter plugins by different criteria """

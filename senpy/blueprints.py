@@ -18,7 +18,7 @@
 Blueprints for Senpy
 """
 from flask import Blueprint, request, current_app, render_template
-from .models import Error, Response
+from .models import Error, Response, Plugins
 from future.utils import iteritems
 
 import json
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
 demo_blueprint = Blueprint("Demo of the service. It includes an HTML+Javascript playground to test senpy", __name__)
 
-BASIC_PARAMS = {
+API_PARAMS = {
     "algorithm": {
         "aliases": ["algorithm", "a", "algo"],
         "required": False,
@@ -39,6 +39,63 @@ BASIC_PARAMS = {
         "required": True,
         "default": "0"
     }
+}
+
+BASIC_PARAMS = {
+    "algorithm": {
+        "aliases": ["algorithm", "a", "algo"],
+        "required": False,
+    },
+    "inHeaders": {
+        "aliases": ["inHeaders", "headers"],
+        "required": True,
+        "default": "0"
+    },
+    "input": {
+        "@id": "input",
+        "aliases": ["i", "input"],
+        "required": True,
+        "help": "Input text"
+    },
+    "informat": {
+        "@id": "informat",
+        "aliases": ["f", "informat"],
+        "required": False,
+        "default": "text",
+        "options": ["turtle", "text"],
+    },
+    "intype": {
+        "@id": "intype",
+        "aliases": ["intype", "t"],
+        "required": False,
+        "default": "direct",
+        "options": ["direct", "url", "file"],
+    },
+    "outformat": {
+        "@id": "outformat",
+        "aliases": ["outformat", "o"],
+        "default": "json-ld",
+        "required": False,
+        "options": ["json-ld"],
+    },
+    "language": {
+        "@id": "language",
+        "aliases": ["language", "l"],
+        "required": False,
+    },
+    "prefix": {
+        "@id": "prefix",
+        "aliases": ["prefix", "p"],
+        "required": True,
+        "default": "",
+    },
+    "urischeme": {
+        "@id": "urischeme",
+        "aliases": ["urischeme", "u"],
+        "required": False,
+        "default": "RFC5147String",
+        "options": "RFC5147String"
+    },
 }
 
 def get_params(req, params=BASIC_PARAMS):
@@ -119,43 +176,35 @@ def api():
         return ex.message.flask()
 
 
-@nif_blueprint.route("/default")
-def default():
-    # return current_app.senpy.default_plugin
-    plug = current_app.senpy.default_plugin
-    if plug:
-        return plugins(action="list", plugin=plug.name)
-    else:
-        error = Error(status=404, message="No plugins found")
-        return error.flask()
-
-
 @nif_blueprint.route('/plugins/', methods=['POST', 'GET'])
+def plugins():
+    in_headers = get_params(request, API_PARAMS)["inHeaders"] != "0"
+    sp = current_app.senpy
+    dic = Plugins(plugins=list(sp.plugins.values()))
+    return dic.flask(in_headers=in_headers)
+    
 @nif_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
 @nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
-def plugins(plugin=None, action="list"):
+def plugin(plugin=None, action="list"):
     filt = {}
     sp = current_app.senpy
-    if plugin:
-        filt["name"] = plugin
-    plugs = sp.filter_plugins(**filt)
-    if plugin and not plugs:
-        return "Plugin not found", 400
+    plugs = sp.filter_plugins(name=plugin)
+    if plugin == 'default' and sp.default_plugin:
+        response = sp.default_plugin
+        plugin = response.name
+    elif plugin in sp.plugins:
+        response = sp.plugins[plugin]
+    else:
+        return Error(message="Plugin not found", status=404).flask()
     if action == "list":
-        in_headers = get_params(request, BASIC_PARAMS)["inHeaders"] != "0"
-        if plugin:
-            dic = plugs[plugin]
-        else:
-            dic = Response(
-                    {plug: plugs[plug].serializable() for plug in plugs})
-        return dic.flask(in_headers=in_headers)
+        in_headers = get_params(request, API_PARAMS)["inHeaders"] != "0"
+        return response.flask(in_headers=in_headers)
     method = "{}_plugin".format(action)
     if(hasattr(sp, method)):
         getattr(sp, method)(plugin)
         return Response(message="Ok").flask()
     else:
         return Error(message="action '{}' not allowed".format(action)).flask()
-
 
 if __name__ == '__main__':
     import config

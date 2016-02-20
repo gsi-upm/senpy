@@ -9,55 +9,6 @@ from .models import Response, PluginModel, Error
 
 logger = logging.getLogger(__name__)
 
-PARAMS = {
-    "input": {
-        "@id": "input",
-        "aliases": ["i", "input"],
-        "required": True,
-        "help": "Input text"
-    },
-    "informat": {
-        "@id": "informat",
-        "aliases": ["f", "informat"],
-        "required": False,
-        "default": "text",
-        "options": ["turtle", "text"],
-    },
-    "intype": {
-        "@id": "intype",
-        "aliases": ["intype", "t"],
-        "required": False,
-        "default": "direct",
-        "options": ["direct", "url", "file"],
-    },
-    "outformat": {
-        "@id": "outformat",
-        "aliases": ["outformat", "o"],
-        "default": "json-ld",
-        "required": False,
-        "options": ["json-ld"],
-    },
-    "language": {
-        "@id": "language",
-        "aliases": ["language", "l"],
-        "required": False,
-    },
-    "prefix": {
-        "@id": "prefix",
-        "aliases": ["prefix", "p"],
-        "required": True,
-        "default": "",
-    },
-    "urischeme": {
-        "@id": "urischeme",
-        "aliases": ["urischeme", "u"],
-        "required": False,
-        "default": "RFC5147String",
-        "options": "RFC5147String"
-    },
-}
-
-
 class SenpyPlugin(PluginModel):
 
     def __init__(self, info=None):
@@ -65,14 +16,12 @@ class SenpyPlugin(PluginModel):
             raise Error(message=("You need to provide configuration"
                                  "information for the plugin."))
         logger.debug("Initialising {}".format(info))
-        self.name = info["name"]
-        self.version = info["version"]
-        self.params = info.get("params", PARAMS.copy())
+        super(SenpyPlugin, self).__init__(info)
+        self.params = info.get("extra_params", {})
+        self._info = info
         if "@id" not in self.params:
             self.params["@id"] = "params_%s" % self.id
         self.is_activated = False
-        self._info = info
-        super(SenpyPlugin, self).__init__()
 
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))

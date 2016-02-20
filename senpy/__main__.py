@@ -63,7 +63,9 @@ def main():
                         default="plugins",
                         help='Where to look for plugins.')
     args = parser.parse_args()
-    logging.basicConfig(level=getattr(logging, args.level))
+    logging.basicConfig()
+    rl = logging.getLogger()
+    rl.setLevel(getattr(logging, args.level))
     app = Flask(__name__)
     app.debug = args.debug
     sp = Senpy(app, args.plugins_folder, default_plugins=args.default_plugins)
