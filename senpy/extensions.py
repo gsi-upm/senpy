@@ -134,7 +134,12 @@ class Senpy(object):
         self.plugins[plugin_name].is_activated = active
 
     def activate_plugin(self, plugin_name, sync=False):
-        plugin = self.plugins[plugin_name]
+        try:
+            plugin = self.plugins[plugin_name]
+        except KeyError:
+            raise Error(message="Plugin not found: {}".format(plugin_name),
+                        status=404)
+            
         logger.info("Activating plugin: {}".format(plugin.name))
         def act():
             try:
@@ -152,7 +157,11 @@ class Senpy(object):
             return th
 
     def deactivate_plugin(self, plugin_name, sync=False):
-        plugin = self.plugins[plugin_name]
+        try:
+            plugin = self.plugins[plugin_name]
+        except KeyError:
+            raise Error(message="Plugin not found: {}".format(plugin_name),
+                        status=404)
 
         def deact():
             try:
