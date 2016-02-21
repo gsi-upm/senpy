@@ -115,7 +115,11 @@
         "type": "string"
       },
       "onyx:hasEmotion": {
-        "$ref": "#/Emotion"
+        "type": "array",
+        "items": {
+          "$ref": "#/Emotion"
+        },
+        "default": []
       },
       "prov:wasGeneratedBy": {
         "type": "string",

@@ -38,7 +38,13 @@ API_PARAMS = {
         "aliases": ["inHeaders", "headers"],
         "required": True,
         "default": "0"
-    }
+    },
+    "prefix": {
+        "@id": "prefix",
+        "aliases": ["prefix", "p"],
+        "required": True,
+        "default": "",
+    },
 }
 
 BASIC_PARAMS = {
@@ -171,7 +177,8 @@ def api():
         params.update(get_params(request, specific_params))
         response = current_app.senpy.analyse(**params)
         in_headers = params["inHeaders"] != "0"
-        return response.flask(in_headers=in_headers)
+        prefix = params["prefix"]
+        return response.flask(in_headers=in_headers, prefix=prefix)
     except Error as ex:
         return ex.message.flask()
 
@@ -186,6 +193,7 @@ def plugins():
 @nif_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
 @nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 def plugin(plugin=None, action="list"):
+    params = get_params(request, API_PARAMS)
     filt = {}
     sp = current_app.senpy
     plugs = sp.filter_plugins(name=plugin)
@@ -197,8 +205,9 @@ def plugin(plugin=None, action="list"):
     else:
         return Error(message="Plugin not found", status=404).flask()
     if action == "list":
-        in_headers = get_params(request, API_PARAMS)["inHeaders"] != "0"
-        return response.flask(in_headers=in_headers)
+        in_headers = params["inHeaders"] != "0"
+        prefix = params['prefix']
+        return response.flask(in_headers=in_headers, prefix=prefix)
     method = "{}_plugin".format(action)
     if(hasattr(sp, method)):
         getattr(sp, method)(plugin)

@@ -6,7 +6,7 @@ import jsonschema
 import json
 import os
 from unittest import TestCase
-from senpy.models import Response, Entry, Results, Sentiment, EmotionSet, Error
+from senpy.models import Response, Entry, Results, Sentiment, EmotionSet, Emotion, Error
 from senpy.plugins import SenpyPlugin
 from pprint import pprint
 
@@ -15,13 +15,14 @@ class ModelsTest(TestCase):
 
     def test_jsonld(self):
         ctx = os.path.normpath(os.path.join(__file__, "..", "..", "..", "senpy", "schemas", "context.jsonld"))
-        prueba = {"@id": "test",
+        prueba = {"id": "test",
                   "analysis": [],
                   "entries": []}
         r = Results(**prueba)
-
         print("Response's context: ")
         pprint(r.context)
+
+        assert r.id == "test"
 
         j = r.jsonld(with_context=True)
         print("As JSON:")
@@ -29,6 +30,8 @@ class ModelsTest(TestCase):
         assert("@context" in j)
         assert("marl" in j["@context"])
         assert("entries" in j["@context"])
+        assert(j["@id"] == "test")
+        assert "id" not in j
 
         r6 = Results(**prueba)
         r6.entries.append(Entry({"@id":"ohno", "nif:isString":"Just testing"}))
@@ -46,6 +49,18 @@ class ModelsTest(TestCase):
         assert(received["entries"])
         assert(received["entries"][0]["nif:isString"] == "Just testing")
         assert(received["entries"][0]["nif:isString"] != "Not testing")
+
+    def test_id(self):
+        ''' Adding the id after creation should overwrite the automatic ID
+        '''
+        r = Entry()
+        j = r.jsonld()
+        assert '@id' in j
+        r.id = "test"
+        j2 = r.jsonld()
+        assert j2['@id'] == 'test'
+        assert 'id' not in j2
+
 
     def test_entries(self):
         e = Entry()
@@ -67,8 +82,6 @@ class ModelsTest(TestCase):
         self.assertRaises(jsonschema.ValidationError, e.validate)
         e.nif__anchorOf = "so much testing"
         e.prov__wasGeneratedBy = ""
-        self.assertRaises(jsonschema.ValidationError, e.validate)
-        e.onyx__hasEmotion = {}
         e.validate()
 
     def test_results(self):
@@ -78,9 +91,6 @@ class ModelsTest(TestCase):
         r.entries.append(e)
         r.id = ":test_results"
         r.validate()
-
-    def test_sentiments(self):
-        pass
 
     def test_plugins(self):
         self.assertRaises(Error, SenpyPlugin)

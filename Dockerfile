@@ -12,7 +12,7 @@ RUN apt-get -y install libopenblas-dev
 RUN apt-get -y install gfortran
 RUN apt-get -y install libxml2-dev libxslt1-dev python-dev
 
-RUN pip install --upgrade pip
+#RUN pip install --upgrade pip
 
 ADD id_rsa /root/.ssh/id_rsa
 RUN chmod 700 /root/.ssh/id_rsa

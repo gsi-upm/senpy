@@ -69,9 +69,12 @@ class SenpyMixin(object):
 
     def flask(self,
               in_headers=False,
-              url="http://demos.gsi.dit.upm.es/senpy/senpy.jsonld"):
+              url="http://demos.gsi.dit.upm.es/senpy/senpy.jsonld",
+              prefix=None):
         """
-        Return the values and error to be used in flask
+        Return the values and error to be used in flask.
+        So far, it returns a fixed context. We should store/generate different
+        contexts if the plugin adds more aliases.
         """
         headers = None
         if in_headers:
@@ -80,7 +83,8 @@ class SenpyMixin(object):
                          'rel="http://www.w3.org/ns/json-ld#context";'
                          ' type="application/ld+json"' % url)
             }
-        return FlaskResponse(self.to_JSON(with_context=not in_headers),
+        return FlaskResponse(self.to_JSON(with_context=not in_headers,
+                                          prefix=prefix),
                              status=getattr(self, "status", 200),
                              headers=headers,
                              mimetype="application/json")
@@ -103,11 +107,14 @@ class SenpyMixin(object):
         return ser_or_down(self._plain_dict())
 
 
-    def jsonld(self, context=None, with_context=False):
+    def jsonld(self, context=None, prefix=None, with_context=False):
         ser = self.serializable()
 
         if  with_context:
-            ser["@context"] = self.context
+            ser["@context"] = self.context.copy()
+
+            if prefix:
+                ser["@context"]["@base"] = prefix
 
         return ser
 
@@ -129,7 +136,16 @@ class SenpyModel(SenpyMixin, dict):
     schema = base_schema
 
     def __init__(self, *args, **kwargs):
+        self.id = kwargs.pop('id', '{}_{}'.format(type(self).__name__,
+                                                    time.time()))
+
         temp = dict(*args, **kwargs)
+
+        for i in temp:
+            nk = self._get_key(i)
+            if nk != i:
+                temp[nk] = temp[i]
+                del temp[i]
 
         reqs = self.schema.get('required', [])
         for i in reqs:
@@ -175,29 +191,14 @@ class SenpyModel(SenpyMixin, dict):
 
     def _plain_dict(self):
         d =  { k: v for (k,v) in self.items() if k[0] != "_"}
-        if hasattr(self, "id"):
-            d["@id"] = self.id
+        d["@id"] = d.pop('id')
         return d
-
-    @property
-    def id(self):
-        if not hasattr(self, '_id'):
-            self.__dict__["_id"] = '_:{}_{}'.format(type(self).__name__, time.time())
-        return self._id
-
-    @id.setter
-    def id(self, value):
-        self._id = value
-    
 
 class Response(SenpyModel):
     schema = read_schema('response.json')
 
 class Results(SenpyModel):
     schema = read_schema('results.json')
-
-    def jsonld(self, context=None, with_context=True):
-        return super(Results, self).jsonld(context, with_context)
 
 class Entry(SenpyModel):
     schema = read_schema('entry.json')
@@ -210,6 +211,9 @@ class Analysis(SenpyModel):
 
 class EmotionSet(SenpyModel):
     schema = read_schema('emotionSet.json')
+
+class Emotion(SenpyModel):
+    schema = read_schema('emotion.json')
 
 class Suggestion(SenpyModel):
     schema = read_schema('suggestion.json')

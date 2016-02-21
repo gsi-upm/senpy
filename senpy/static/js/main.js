@@ -17,37 +17,38 @@ function encodeHTML(text) {
 
 $(document).ready(function() {
     var response = JSON.parse($.ajax({type: "GET", url: "/api/plugins/" , async: false}).responseText);
-    var defaultPlugin= JSON.parse($.ajax({type: "GET", url: "/api/default" , async: false}).responseText);
+    var defaultPlugin= JSON.parse($.ajax({type: "GET", url: "/api/plugins/default" , async: false}).responseText);
     html="";
-    for (r in response){
-      if (response[r]["name"]){
-        if (response[r]["name"] == defaultPlugin["name"]){
-          if (response[r]["is_activated"]){
-            html+= "<option value=\""+response[r]["name"]+"\" selected=\"selected\">"+response[r]["name"]+"</option>"
+    plugins = response.plugins;
+    for (r in plugins){
+      if (plugins[r]["name"]){
+        if (plugins[r]["name"] == defaultPlugin["name"]){
+          if (plugins[r]["is_activated"]){
+            html+= "<option value=\""+plugins[r]["name"]+"\" selected=\"selected\">"+plugins[r]["name"]+"</option>"
           }else{
-            html+= "<option value=\""+response[r]["name"]+"\" selected=\"selected\" disabled=\"disabled\">"+response[r]["name"]+"</option>"
+            html+= "<option value=\""+plugins[r]["name"]+"\" selected=\"selected\" disabled=\"disabled\">"+plugins[r]["name"]+"</option>"
           }
         }
         else{
-          if (response[r]["is_activated"]){
-            html+= "<option value=\""+response[r]["name"]+"\">"+response[r]["name"]+"</option>"
+          if (plugins[r]["is_activated"]){
+            html+= "<option value=\""+plugins[r]["name"]+"\">"+plugins[r]["name"]+"</option>"
           }
           else{
-            html+= "<option value=\""+response[r]["name"]+"\" disabled=\"disabled\">"+response[r]["name"]+"</option>"
+            html+= "<option value=\""+plugins[r]["name"]+"\" disabled=\"disabled\">"+plugins[r]["name"]+"</option>"
           }
         }
       }
-      if (response[r]["extra_params"]){
-        plugins_params[response[r]["name"]]={};
-        for (param in response[r]["extra_params"]){
-          if (typeof response[r]["extra_params"][param] !="string"){
+      if (plugins[r]["extra_params"]){
+        plugins_params[plugins[r]["name"]]={};
+        for (param in plugins[r]["extra_params"]){
+          if (typeof plugins[r]["extra_params"][param] !="string"){
             var params = new Array();
-            var alias = response[r]["extra_params"][param]["aliases"][0];
+            var alias = plugins[r]["extra_params"][param]["aliases"][0];
             params[alias]=new Array();
-            for (option in response[r]["extra_params"][param]["options"]){
-              params[alias].push(response[r]["extra_params"][param]["options"][option])
+            for (option in plugins[r]["extra_params"][param]["options"]){
+              params[alias].push(plugins[r]["extra_params"][param]["options"][option])
             }
-            plugins_params[response[r]["name"]][alias] = (params[alias])
+            plugins_params[plugins[r]["name"]][alias] = (params[alias])
           }
         }
       }

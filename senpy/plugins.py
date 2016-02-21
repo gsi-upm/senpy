@@ -17,6 +17,7 @@ class SenpyPlugin(PluginModel):
                                  "information for the plugin."))
         logger.debug("Initialising {}".format(info))
         super(SenpyPlugin, self).__init__(info)
+        self.id = '{}_{}'.format(self.name, self.version)
         self.params = info.get("extra_params", {})
         self._info = info
         if "@id" not in self.params:
@@ -35,10 +36,6 @@ class SenpyPlugin(PluginModel):
 
     def deactivate(self):
         pass
-
-    @property
-    def id(self):
-        return "{}_{}".format(self.name, self.version)
 
     def __del__(self):
         ''' Destructor, to make sure all the resources are freed '''
