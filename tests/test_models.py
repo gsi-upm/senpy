@@ -98,7 +98,7 @@ class ModelsTest(TestCase):
         c = p.jsonld()
         assert "info" not in c
         assert "repo" not in c
-        assert "params" in c
+        assert "extra_params" in c
         logging.debug("Framed:")
         logging.debug(c)
         p.validate()

@@ -2,7 +2,9 @@ from __future__ import print_function
 import os
 import logging
 
+from functools import partial 
 from senpy.extensions import Senpy
+from senpy.models import Error
 from flask import Flask
 from flask.ext.testing import TestCase
 
@@ -54,9 +56,7 @@ class ExtensionsTest(TestCase):
     def test_noplugin(self):
         """ Don't analyse if there isn't any plugin installed """
         self.senpy.deactivate_all(sync=True)
-        resp = self.senpy.analyse(input="tupni")
-        logging.debug("Response: {}".format(resp))
-        assert resp.status == 404
+        self.assertRaises(Error, partial(self.senpy.analyse, input="tupni"))
 
     def test_analyse(self):
         """ Using a plugin """
@@ -67,12 +67,6 @@ class ExtensionsTest(TestCase):
         r2 = self.senpy.analyse(input="tupni", output="tuptuo")
         assert r1.analysis[0].id[:5] == "Dummy"
         assert r2.analysis[0].id[:5] == "Dummy"
-        for plug in self.senpy.plugins:
-            self.senpy.deactivate_plugin(plug, sync=True)
-        resp = self.senpy.analyse(input="tupni")
-        logging.debug("Response: {}".format(resp))
-        assert resp.status == 404
-
 
     def test_filtering(self):
         """ Filtering plugins """

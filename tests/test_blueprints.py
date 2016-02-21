@@ -46,9 +46,6 @@ class BlueprintsTest(TestCase):
         self.assert200(resp)
         logging.debug("Got response: %s", resp.json)
         assert "@context" in resp.json
-        assert check_dict(
-            resp.json["@context"],
-            {"marl": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"})
         assert "entries" in resp.json
 
     def test_list(self):
@@ -111,3 +108,16 @@ class BlueprintsTest(TestCase):
         sleep(0.5)
         resp = self.client.get("/api/plugins/default/")
         self.assert404(resp)
+
+    def test_context(self):
+        resp = self.client.get("/api/contexts/context.jsonld")
+        self.assert200(resp)
+        assert "@context" in resp.json
+        assert check_dict(
+            resp.json["@context"],
+            {"marl": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"})
+
+    def test_schema(self):
+        resp = self.client.get("/api/schemas/definitions.json")
+        self.assert200(resp)
+        assert "$schema" in resp.json

@@ -63,28 +63,31 @@ class Context(dict):
 
 base_context = Context.load(CONTEXT_PATH)
 
-
 class SenpyMixin(object):
-    context = base_context
+    context = base_context["@context"]
 
     def flask(self,
               in_headers=False,
-              url="http://demos.gsi.dit.upm.es/senpy/senpy.jsonld",
-              prefix=None):
+              headers=None,
+              prefix=None,
+              **kwargs):
         """
         Return the values and error to be used in flask.
         So far, it returns a fixed context. We should store/generate different
         contexts if the plugin adds more aliases.
         """
-        headers = None
+        headers = headers or {}
+        kwargs["with_context"] = True
+        js = self.jsonld(**kwargs)
         if in_headers:
-            headers = {
+            url = js["@context"]
+            del js["@context"]
+            headers.update({
                 "Link": ('<%s>;'
                          'rel="http://www.w3.org/ns/json-ld#context";'
                          ' type="application/ld+json"' % url)
-            }
-        return FlaskResponse(self.to_JSON(with_context=not in_headers,
-                                          prefix=prefix),
+            })
+        return FlaskResponse(json.dumps(js, indent=2, sort_keys=True),
                              status=getattr(self, "status", 200),
                              headers=headers,
                              mimetype="application/json")
@@ -107,15 +110,27 @@ class SenpyMixin(object):
         return ser_or_down(self._plain_dict())
 
 
-    def jsonld(self, context=None, prefix=None, with_context=False):
+    def jsonld(self, prefix=None, with_context=True, context_uri=None):
         ser = self.serializable()
 
         if  with_context:
-            ser["@context"] = self.context.copy()
-
+            context = []
+            if context_uri:
+                context = context_uri
+            else:
+                context = self.context.copy()
             if prefix:
-                ser["@context"]["@base"] = prefix
+                # This sets @base for the document, which will be used in
+                # all relative URIs will. For example, if a uri is "Example" and
+                # prefix =s "http://example.com", the absolute URI after expanding
+                # with JSON-LD will be "http://example.com/Example"
 
+                prefix_context = {"@base": prefix}
+                if isinstance(context, list):
+                    context.append(prefix_context)
+                else:
+                    context = [context, prefix_context]
+            ser["@context"] = context
         return ser
 
 
@@ -184,11 +199,6 @@ class SenpyModel(SenpyMixin, dict):
         self.__delitem__(self._get_key(key))
         
     
-    @classmethod
-    def from_base(cls, name):
-        subschema = base_schema[name]
-        return warlock.model_factory(subschema, base_class=cls)
-
     def _plain_dict(self):
         d =  { k: v for (k,v) in self.items() if k[0] != "_"}
         d["@id"] = d.pop('id')

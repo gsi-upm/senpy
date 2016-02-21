@@ -17,17 +17,18 @@
 """
 Blueprints for Senpy
 """
-from flask import Blueprint, request, current_app, render_template
-from .models import Error, Response, Plugins
+from flask import Blueprint, request, current_app, render_template, url_for, jsonify
+from .models import Error, Response, Plugins, read_schema
 from future.utils import iteritems
+from functools import wraps
 
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
-nif_blueprint = Blueprint("NIF Sentiment Analysis Server", __name__)
-demo_blueprint = Blueprint("Demo of the service. It includes an HTML+Javascript playground to test senpy", __name__)
+api_blueprint = Blueprint("api", __name__)
+demo_blueprint = Blueprint("demo", __name__)
 
 API_PARAMS = {
     "algorithm": {
@@ -47,7 +48,7 @@ API_PARAMS = {
     },
 }
 
-BASIC_PARAMS = {
+NIF_PARAMS = {
     "algorithm": {
         "aliases": ["algorithm", "a", "algo"],
         "required": False,
@@ -104,7 +105,7 @@ BASIC_PARAMS = {
     },
 }
 
-def get_params(req, params=BASIC_PARAMS):
+def update_params(req, params=NIF_PARAMS):
     if req.method == 'POST':
         indict = req.form
     elif req.method == 'GET':
@@ -136,64 +137,73 @@ def get_params(req, params=BASIC_PARAMS):
                         parameters=outdict,
                         errors={param: error for param, error in
                                 iteritems(wrong_params)})
-        raise Error(message=message)
+        raise message
+    if hasattr(request, 'params'):
+        request.params.update(outdict)
+    else:
+        request.params = outdict
     return outdict
-
-
-def basic_analysis(params):
-    response = {"@context":
-                [("http://demos.gsi.dit.upm.es/"
-                  "eurosentiment/static/context.jsonld"),
-                 {
-                    "@base": "{}#".format(request.url.encode('utf-8'))
-                  }
-                 ],
-                "analysis": [{"@type": "marl:SentimentAnalysis"}],
-                "entries": []
-                }
-    if "language" in params:
-        response["language"] = params["language"]
-    for idx, sentence in enumerate(params["input"].split(".")):
-        response["entries"].append({
-            "@id": "Sentence{}".format(idx),
-            "nif:isString": sentence
-        })
-    return response
 
 
 @demo_blueprint.route('/')
 def index():
     return render_template("index.html")
 
+@api_blueprint.route('/contexts/<entity>.jsonld')
+def context(entity="context"):
+    return jsonify({"@context": Response.context})
 
-@nif_blueprint.route('/', methods=['POST', 'GET'])
-def api():
+@api_blueprint.route('/schemas/<schema>')
+def schema(schema="definitions"):
     try:
-        params = get_params(request)
-        algo = params.get("algorithm", None)
-        specific_params = current_app.senpy.parameters(algo)
-        logger.debug(
-            "Specific params: %s", json.dumps(specific_params, indent=4))
-        params.update(get_params(request, specific_params))
-        response = current_app.senpy.analyse(**params)
-        in_headers = params["inHeaders"] != "0"
-        prefix = params["prefix"]
-        return response.flask(in_headers=in_headers, prefix=prefix)
-    except Error as ex:
-        return ex.message.flask()
+        return jsonify(read_schema(schema))
+    except Exception: # Should be FileNotFoundError, but it's missing from py2
+        return Error(message="Schema not found", status=404).flask()
+
+def basic_api(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        print('Getting request:')
+        print(request)
+        update_params(request, params=API_PARAMS)
+        print('Params: %s' % request.params)
+        try:
+            response = f(*args, **kwargs)
+        except Error as ex:
+            response = ex
+        in_headers = request.params["inHeaders"] != "0"
+        prefix = request.params["prefix"]
+        headers = {'X-ORIGINAL-PARAMS': request.params}
+        return response.flask(in_headers=in_headers,
+                              prefix=prefix,
+                              headers=headers,
+                              context_uri=url_for('api.context', entity=type(response).__name__,
+                                                  _external=True))
+    return decorated_function
+    
+@api_blueprint.route('/', methods=['POST', 'GET'])
+@basic_api
+def api():
+    algo = request.params.get("algorithm", None)
+    specific_params = current_app.senpy.parameters(algo)
+    update_params(request, params=NIF_PARAMS)
+    logger.debug("Specific params: %s", json.dumps(specific_params, indent=4))
+    update_params(request, specific_params)
+    response = current_app.senpy.analyse(**request.params)
+    return response
 
 
-@nif_blueprint.route('/plugins/', methods=['POST', 'GET'])
+@api_blueprint.route('/plugins/', methods=['POST', 'GET'])
+@basic_api
 def plugins():
-    in_headers = get_params(request, API_PARAMS)["inHeaders"] != "0"
     sp = current_app.senpy
     dic = Plugins(plugins=list(sp.plugins.values()))
-    return dic.flask(in_headers=in_headers)
+    return dic
     
-@nif_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
-@nif_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
+@api_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
+@api_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
+@basic_api
 def plugin(plugin=None, action="list"):
-    params = get_params(request, API_PARAMS)
     filt = {}
     sp = current_app.senpy
     plugs = sp.filter_plugins(name=plugin)
@@ -203,21 +213,19 @@ def plugin(plugin=None, action="list"):
     elif plugin in sp.plugins:
         response = sp.plugins[plugin]
     else:
-        return Error(message="Plugin not found", status=404).flask()
+        return Error(message="Plugin not found", status=404)
     if action == "list":
-        in_headers = params["inHeaders"] != "0"
-        prefix = params['prefix']
-        return response.flask(in_headers=in_headers, prefix=prefix)
+        return response
     method = "{}_plugin".format(action)
     if(hasattr(sp, method)):
         getattr(sp, method)(plugin)
-        return Response(message="Ok").flask()
+        return Response(message="Ok")
     else:
-        return Error(message="action '{}' not allowed".format(action)).flask()
+        return Error(message="action '{}' not allowed".format(action))
 
 if __name__ == '__main__':
     import config
 
-    app.register_blueprint(nif_blueprint)
+    app.register_blueprint(api_blueprint)
     app.debug = config.DEBUG
     app.run(host='0.0.0.0', port=5000)

@@ -2,7 +2,7 @@
 
 import os
 import logging
-import shelve
+import pickle
 import shutil
 import tempfile
 
@@ -16,7 +16,6 @@ from senpy.plugins import SenpyPlugin, ShelfMixin
 class ShelfTest(ShelfMixin, SenpyPlugin):
 
     def test(self, key=None, value=None):
-        assert isinstance(self.sh, shelve.Shelf)
         assert key in self.sh
         print('Checking: sh[{}] == {}'.format(key, value))
         print('SH[{}]: {}'.format(key, self.sh[key]))
@@ -49,7 +48,9 @@ class ModelsTest(TestCase):
         a.sh['a'] = 'fromA'
         a.test(key='a', value='fromA')
 
-        sh = shelve.open(self.shelf_file)
+        a.save()
+
+        sh = pickle.load(open(self.shelf_file, 'rb'))
 
         assert sh['a'] == 'fromA'
 
@@ -61,7 +62,7 @@ class ModelsTest(TestCase):
                             'shelf_file': self.shelf_file})
         print('Shelf file: %s' % a.shelf_file)
         a.sh['a'] = 'fromA'
-        a.close()
+        a.save()
 
         b = ShelfTest(info={'name': 'shelve',
                             'version': 'test',

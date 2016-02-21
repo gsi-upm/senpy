@@ -9,8 +9,7 @@ class Sentiment140Plugin(SentimentPlugin):
     def analyse(self, **params):
         lang = params.get("language", "auto")
 
-        p = params.get("prefix", None)
-        response = Results(prefix=p)
+        response = Results()
         polarity_value = max(-1, min(1, random.gauss(0.2, 0.2)))
         polarity = "marl:Neutral"
         if polarity_value > 0:

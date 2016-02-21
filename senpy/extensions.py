@@ -8,7 +8,7 @@ monkey.patch_all()
 
 from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
 from .models import Error
-from .blueprints import nif_blueprint, demo_blueprint
+from .blueprints import api_blueprint, demo_blueprint
 
 from git import Repo, InvalidGitRepositoryError
 from functools import partial
@@ -58,7 +58,7 @@ class Senpy(object):
             app.teardown_appcontext(self.teardown)
         else:
             app.teardown_request(self.teardown)
-        app.register_blueprint(nif_blueprint, url_prefix="/api")
+        app.register_blueprint(api_blueprint, url_prefix="/api")
         app.register_blueprint(demo_blueprint, url_prefix="/")
 
     def add_folder(self, folder):
@@ -77,28 +77,30 @@ class Senpy(object):
         elif self.plugins:
             algo = self.default_plugin and self.default_plugin.name
         if not algo:
-            return Error(status=404,
-                         message=("No plugins found."
-                                  " Please install one.").format(algo))
-        if algo in self.plugins:
-            if self.plugins[algo].is_activated:
-                plug = self.plugins[algo]
-                resp = plug.analyse(**params)
-                resp.analysis.append(plug)
-                logger.debug("Returning analysis result: {}".format(resp))
-                return resp
-            else:
-                logger.debug("Plugin not activated: {}".format(algo))
-                return Error(status=400,
-                             message=("The algorithm '{}'"
-                                      " is not activated yet").format(algo))
-        else:
+            raise Error(status=404,
+                        message=("No plugins found."
+                                 " Please install one.").format(algo))
+        if algo not in self.plugins:
             logger.debug(("The algorithm '{}' is not valid\n"
                           "Valid algorithms: {}").format(algo,
                                                          self.plugins.keys()))
-            return Error(status=404,
-                         message="The algorithm '{}' is not valid"
-                                 .format(algo))
+            raise Error(status=404,
+                        message="The algorithm '{}' is not valid"
+                        .format(algo))
+
+        if not self.plugins[algo].is_activated:
+            logger.debug("Plugin not activated: {}".format(algo))
+            raise Error(status=400,
+                        message=("The algorithm '{}'"
+                                    " is not activated yet").format(algo))
+        plug = self.plugins[algo]
+        try:
+            resp = plug.analyse(**params)
+            resp.analysis.append(plug)
+            logger.debug("Returning analysis result: {}".format(resp))
+        except Exception as ex:
+            resp = Error(message=str(ex), status=500)
+        return resp
 
     @property
     def default_plugin(self):

@@ -152,10 +152,14 @@
   },
   "Plugin": {
     "type": "object",
-    "required": ["@id"],
+    "required": ["@id", "extra_params"],
     "properties": {
       "@id": {
         "type": "string"
+      },
+      "extra_params": {
+        "type": "object",
+        "default": {}
       }
     }
   },

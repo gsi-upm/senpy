@@ -2,5 +2,6 @@
 .*
 *egg-info
 dist
+build
 README.html
 __pycache__
