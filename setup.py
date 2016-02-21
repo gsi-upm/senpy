@@ -15,12 +15,12 @@ except AttributeError:
 install_reqs = [str(ir.req) for ir in install_reqs]
 test_reqs = [str(ir.req) for ir in test_reqs]
 
-VERSION = "0.5.4"
+exec(open('senpy/__init__.py').read())
 
 setup(
     name='senpy',
     packages=['senpy'],  # this must be the same as the name above
-    version=VERSION,
+    version=__version__,
     description='''
     A sentiment analysis server implementation. Designed to be \
 extendable, so new algorithms and sources can be used.
@@ -28,8 +28,7 @@ extendable, so new algorithms and sources can be used.
     author='J. Fernando Sanchez',
     author_email='balkian@gmail.com',
     url='https://github.com/gsi-upm/senpy',  # use the URL to the github repo
-    download_url='https://github.com/gsi-upm/senpy/archive/{}.tar.gz'
-    .format(VERSION),
+    download_url='https://github.com/gsi-upm/senpy/archive/{}.tar.gz' .format(__version__),
     keywords=['eurosentiment', 'sentiment', 'emotions', 'nif'],
     classifiers=[],
     install_requires=install_reqs,

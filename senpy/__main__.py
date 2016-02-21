@@ -28,19 +28,20 @@ import gevent
 import logging
 import os
 import argparse
+import senpy
 
 patch_all(thread=False)
 
 def main():
     parser = argparse.ArgumentParser(description='Run a Senpy server')
     parser.add_argument('--level',
-                        "-l",
-                        metavar="logging_level",
+                        '-l',
+                        metavar='logging_level',
                         type=str,
                         default="INFO",
                         help='Logging level')
     parser.add_argument('--debug',
-                        "-d",
+                        '-d',
                         action='store_true',
                         default=False,
                         help='Run the application in debug mode')
@@ -60,7 +61,7 @@ def main():
     parser.add_argument('--plugins-folder',
                         '-f',
                         type=str,
-                        default="plugins",
+                        default='plugins',
                         help='Where to look for plugins.')
     args = parser.parse_args()
     logging.basicConfig()
@@ -72,12 +73,13 @@ def main():
     sp.activate_all()
     http_server = WSGIServer((args.host, args.port), app)
     try:
-        print("Server running on port %s:%d. Ctrl+C to quit" % (args.host,
+        print('Senpy version {}'.format(senpy.__version__))
+        print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                                 args.port))
         http_server.serve_forever()
     except KeyboardInterrupt:
         http_server.stop()
-        print("Bye!")
+        print('Bye!')
 
 if __name__ == '__main__':
     main()
