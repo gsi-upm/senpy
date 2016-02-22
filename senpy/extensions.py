@@ -107,7 +107,7 @@ class Senpy(object):
         candidates = self.filter_plugins(is_activated=True)
         if len(candidates) > 0:
             candidate = list(candidates.values())[0]
-            logger.debug("Default: {}".format(candidate))
+            logger.debug("Default: {}".format(candidate.name))
             return candidate
         else:
             return None
