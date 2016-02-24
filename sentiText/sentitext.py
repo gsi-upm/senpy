@@ -11,8 +11,7 @@ from scipy.interpolate import interp1d
 from os import path
 
 from senpy.plugins import SentimentPlugin, SenpyPlugin
-from senpy.models import Response, Opinion, Entry
-
+from senpy.models import Results, Entry, Sentiment
 
 logger = logging.getLogger(__name__)
 
@@ -113,27 +112,28 @@ class SentiTextPlugin(SentimentPlugin):
         scores = {}
         for i in tokens:
             scores[i] = {}
-            for word in useful_synsets[i]:
-                if useful_synsets[i][word] is None:
-                    continue
-                temp_scores = self._swn.get_score(useful_synsets[i][word].name().split('.')[0].replace(' ',' '))
-                for score in temp_scores:
-                    if score['synset'] == useful_synsets[i][word]:
-                        t_score = score['pos'] - score['neg']
-                        f_score = 'neu'
-                        if t_score > 0:
-                            f_score = 'pos'
-                        elif t_score < 0:
-                            f_score = 'neg'
-                        score['score'] = f_score
-                        scores[i][word] = score
-                        break
+            if useful_synsets is None:   
+                for word in useful_synsets[i]:
+                    if useful_synsets[i][word] is None:
+                        continue
+                    temp_scores = self._swn.get_score(useful_synsets[i][word].name().split('.')[0].replace(' ',' '))
+                    for score in temp_scores:
+                        if score['synset'] == useful_synsets[i][word]:
+                            t_score = score['pos'] - score['neg']
+                            f_score = 'neu'
+                            if t_score > 0:
+                                f_score = 'pos'
+                            elif t_score < 0:
+                                f_score = 'neg'
+                            score['score'] = f_score
+                            scores[i][word] = score
+                            break
         logger.debug("All scores (some not used): {}".format(scores))
 
 
         lang = params.get("language", "auto")
         p = params.get("prefix", None)
-        response = Response(prefix=p)
+        response = Results()
 
         for i in scores:
             n_pos = 0.0
@@ -159,17 +159,16 @@ class SentiTextPlugin(SentimentPlugin):
                 polarity = 'marl:Negative'
 
             entry = Entry(id="Entry"+str(i),
-                      text=tokens[i]['sentence'],
-                      prefix=p)
-            polarity
-            opinion = Opinion(id="Opinion0"+'_'+str(i),
-                          prefix=p,
-                          hasPolarity=polarity,
-                          polarityValue=float("{0:.2f}".format(g_score)))
+                      nif_isString=tokens[i]['sentence'])
 
+            opinion = Sentiment(id="Opinion0"+'_'+str(i),
+                          marl__hasPolarity=polarity,
+                          marL__polarityValue=float("{0:.2f}".format(g_score)))
 
             opinion["prov:wasGeneratedBy"] = self.id
-            entry.opinions.append(opinion)
+
+            entry.sentiments = []
+            entry.sentiments.append(opinion)
             entry.language = lang
             response.entries.append(entry)
         return response
