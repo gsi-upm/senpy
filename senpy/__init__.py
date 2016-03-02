@@ -18,4 +18,4 @@
 Sentiment analysis server in Python
 """
 
-__version__  = "0.5.5rc1"
+__version__  = "0.5.5"
