@@ -32,6 +32,8 @@ import senpy
 
 patch_all(thread=False)
 
+SERVER_PORT = os.environ.get("PORT", 5000)
+
 def main():
     parser = argparse.ArgumentParser(description='Run a Senpy server')
     parser.add_argument('--level',
@@ -56,7 +58,7 @@ def main():
     parser.add_argument('--port',
                         '-p',
                         type=int,
-                        default=5000,
+                        default=SERVER_PORT,
                         help='Port to listen on.')
     parser.add_argument('--plugins-folder',
                         '-f',
