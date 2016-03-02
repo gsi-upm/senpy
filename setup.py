@@ -37,7 +37,8 @@ extendable, so new algorithms and sources can be used.
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'senpy = senpy.__main__:main'
+            'senpy = senpy.__main__:main',
+            'senpy-cli = senpy.cli:main'
             ]
         }
 )

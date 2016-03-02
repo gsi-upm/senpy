@@ -9,6 +9,7 @@ monkey.patch_all()
 from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
 from .models import Error
 from .blueprints import api_blueprint, demo_blueprint
+from .api import API_PARAMS, NIF_PARAMS, parse_params
 
 from git import Repo, InvalidGitRepositoryError
 from functools import partial
@@ -72,8 +73,9 @@ class Senpy(object):
     def analyse(self, **params):
         algo = None
         logger.debug("analysing with params: {}".format(params))
-        if "algorithm" in params:
-            algo = params["algorithm"]
+        api_params = parse_params(params, spec=API_PARAMS)
+        if "algorithm" in api_params and api_params["algorithm"]:
+            algo = api_params["algorithm"]
         elif self.plugins:
             algo = self.default_plugin and self.default_plugin.name
         if not algo:
@@ -94,8 +96,12 @@ class Senpy(object):
                         message=("The algorithm '{}'"
                                     " is not activated yet").format(algo))
         plug = self.plugins[algo]
+        nif_params = parse_params(params, spec=NIF_PARAMS)
+        extra_params = plug.get('extra_params', {})
+        specific_params = parse_params(params, spec=extra_params)
+        nif_params.update(specific_params)
         try:
-            resp = plug.analyse(**params)
+            resp = plug.analyse(**nif_params)
             resp.analysis.append(plug)
             logger.debug("Returning analysis result: {}".format(resp))
         except Exception as ex:

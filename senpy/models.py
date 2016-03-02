@@ -69,7 +69,6 @@ class SenpyMixin(object):
     def flask(self,
               in_headers=False,
               headers=None,
-              prefix=None,
               **kwargs):
         """
         Return the values and error to be used in flask.
@@ -110,7 +109,7 @@ class SenpyMixin(object):
         return ser_or_down(self._plain_dict())
 
 
-    def jsonld(self, prefix=None, with_context=True, context_uri=None):
+    def jsonld(self, with_context=True, context_uri=None):
         ser = self.serializable()
 
         if  with_context:
@@ -119,13 +118,13 @@ class SenpyMixin(object):
                 context = context_uri
             else:
                 context = self.context.copy()
-            if prefix:
+            if hasattr(self, 'prefix'):
                 # This sets @base for the document, which will be used in
                 # all relative URIs will. For example, if a uri is "Example" and
                 # prefix =s "http://example.com", the absolute URI after expanding
                 # with JSON-LD will be "http://example.com/Example"
 
-                prefix_context = {"@base": prefix}
+                prefix_context = {"@base": self.prefix}
                 if isinstance(context, list):
                     context.append(prefix_context)
                 else:

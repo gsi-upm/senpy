@@ -19,7 +19,7 @@ Blueprints for Senpy
 """
 from flask import Blueprint, request, current_app, render_template, url_for, jsonify
 from .models import Error, Response, Plugins, read_schema
-from future.utils import iteritems
+from .api import NIF_PARAMS, WEB_PARAMS, parse_params
 from functools import wraps
 
 import json
@@ -30,119 +30,14 @@ logger = logging.getLogger(__name__)
 api_blueprint = Blueprint("api", __name__)
 demo_blueprint = Blueprint("demo", __name__)
 
-API_PARAMS = {
-    "algorithm": {
-        "aliases": ["algorithm", "a", "algo"],
-        "required": False,
-    },
-    "inHeaders": {
-        "aliases": ["inHeaders", "headers"],
-        "required": True,
-        "default": "0"
-    },
-    "prefix": {
-        "@id": "prefix",
-        "aliases": ["prefix", "p"],
-        "required": True,
-        "default": "",
-    },
-}
-
-NIF_PARAMS = {
-    "algorithm": {
-        "aliases": ["algorithm", "a", "algo"],
-        "required": False,
-    },
-    "inHeaders": {
-        "aliases": ["inHeaders", "headers"],
-        "required": True,
-        "default": "0"
-    },
-    "input": {
-        "@id": "input",
-        "aliases": ["i", "input"],
-        "required": True,
-        "help": "Input text"
-    },
-    "informat": {
-        "@id": "informat",
-        "aliases": ["f", "informat"],
-        "required": False,
-        "default": "text",
-        "options": ["turtle", "text"],
-    },
-    "intype": {
-        "@id": "intype",
-        "aliases": ["intype", "t"],
-        "required": False,
-        "default": "direct",
-        "options": ["direct", "url", "file"],
-    },
-    "outformat": {
-        "@id": "outformat",
-        "aliases": ["outformat", "o"],
-        "default": "json-ld",
-        "required": False,
-        "options": ["json-ld"],
-    },
-    "language": {
-        "@id": "language",
-        "aliases": ["language", "l"],
-        "required": False,
-    },
-    "prefix": {
-        "@id": "prefix",
-        "aliases": ["prefix", "p"],
-        "required": True,
-        "default": "",
-    },
-    "urischeme": {
-        "@id": "urischeme",
-        "aliases": ["urischeme", "u"],
-        "required": False,
-        "default": "RFC5147String",
-        "options": "RFC5147String"
-    },
-}
-
-def update_params(req, params=NIF_PARAMS):
+def get_params(req):
     if req.method == 'POST':
-        indict = req.form
+        indict = req.form.to_dict(flat=True)
     elif req.method == 'GET':
-        indict = req.args
+        indict = req.args.to_dict(flat=True)
     else:
         raise Error(message="Invalid data")
-
-    outdict = {}
-    wrong_params = {}
-    for param, options in iteritems(params):
-        if param[0] != "@":  # Exclude json-ld properties
-            logger.debug("Param: %s - Options: %s", param, options)
-            for alias in options["aliases"]:
-                if alias in indict:
-                    outdict[param] = indict[alias]
-            if param not in outdict:
-                if options.get("required", False) and "default" not in options:
-                    wrong_params[param] = params[param]
-                else:
-                    if "default" in options:
-                        outdict[param] = options["default"]
-            else:
-                if "options" in params[param] and \
-                   outdict[param] not in params[param]["options"]:
-                    wrong_params[param] = params[param]
-    if wrong_params:
-        message = Error(status=404,
-                        message="Missing or invalid parameters",
-                        parameters=outdict,
-                        errors={param: error for param, error in
-                                iteritems(wrong_params)})
-        raise message
-    if hasattr(request, 'params'):
-        request.params.update(outdict)
-    else:
-        request.params = outdict
-    return outdict
+    return indict
 
 
 @demo_blueprint.route('/')
@@ -165,17 +60,20 @@ def basic_api(f):
     def decorated_function(*args, **kwargs):
         print('Getting request:')
         print(request)
-        update_params(request, params=API_PARAMS)
-        print('Params: %s' % request.params)
+        raw_params = get_params(request)
+        web_params = parse_params(raw_params, spec=WEB_PARAMS)
+
+        if hasattr(request, 'params'):
+            request.params.update(raw_params)
+        else:
+            request.params = raw_params
         try:
             response = f(*args, **kwargs)
         except Error as ex:
             response = ex
-        in_headers = request.params["inHeaders"] != "0"
-        prefix = request.params["prefix"]
-        headers = {'X-ORIGINAL-PARAMS': request.params}
+        in_headers = web_params["inHeaders"] != "0"
+        headers = {'X-ORIGINAL-PARAMS': raw_params}
         return response.flask(in_headers=in_headers,
-                              prefix=prefix,
                               headers=headers,
                               context_uri=url_for('api.context', entity=type(response).__name__,
                                                   _external=True))
@@ -184,11 +82,6 @@ def basic_api(f):
 @api_blueprint.route('/', methods=['POST', 'GET'])
 @basic_api
 def api():
-    algo = request.params.get("algorithm", None)
-    specific_params = current_app.senpy.parameters(algo)
-    update_params(request, params=NIF_PARAMS)
-    logger.debug("Specific params: %s", json.dumps(specific_params, indent=4))
-    update_params(request, specific_params)
     response = current_app.senpy.analyse(**request.params)
     return response
 
