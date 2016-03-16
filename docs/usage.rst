@@ -14,7 +14,7 @@ Or, alternatively:
     python -m senpy
 
 
-This will create a server with any modules found in the current path. In case you want to load modules that are in a different folders under the same path, use the option `-f .`.
+This will create a server with any modules found in the current path. In case you want to load modules that are in a different folders under the same path, use the next option.
 
 .. code:: bash
 
