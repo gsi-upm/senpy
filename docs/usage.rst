@@ -17,7 +17,7 @@ Or, alternatively:
 This will create a server with any modules found in the current path.
 
 Useful command-line options
-=================
+===========================
 
 In case you want to load modules that are in different folders under the same path, use the next option.
 
@@ -40,3 +40,10 @@ Also, the host can be changed where senpy is deployed. The default value is `127
 For more options, see the `--help` page.
 
 Alternatively, you can use the modules included in senpy to build your own application.
+
+Senpy server
+============
+
+Once the server is launched, there is a basic endpoint in the server, which provides a playground to use the plugins that have been loaded.
+
+In case you want to know the different endpoints of the server, there is more information available in the **NIF API setion**.
