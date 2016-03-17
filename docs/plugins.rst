@@ -102,10 +102,10 @@ You can add these variables in the *.senpy with:  {variable_name} : {variable_va
 
 Once you have added your variables, the next step is to extract them in the plugin. The plugin's __init__ method has a parameter called `info` where you can extract the values of the variables. This info parameter has the structure of a python dictionary.
 
-Can I activate a DEBUGG mode for my plugin?
+Can I activate a DEBUG mode for my plugin?
 ???????????????????????????????????????????
 
-You can activate the DEBUGG mode by the command-line tool using the option -d.
+You can activate the DEBUG mode by the command-line tool using the option -d.
 
 .. code:: bash
 
