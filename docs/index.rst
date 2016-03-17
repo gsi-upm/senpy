@@ -13,4 +13,5 @@ Contents:
    usage
    api
    plugins
+   demo
    :maxdepth: 2
