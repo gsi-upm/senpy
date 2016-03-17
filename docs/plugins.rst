@@ -100,7 +100,7 @@ Where can I set up variables for using them in my plugin?
 
 You can add these variables in the *.senpy with:  {variable_name} : {variable_value}.
 
-Once you have added your variables, the next step is to extract them in the plugin. The plugin's __init__ method has a parameter called `info` where you can extract the values of the variables. This info parameter has the structure of a python dictionary.
+Once you have added your variables, the next step is to extract them into the plugin. The plugin's __init__ method has a parameter called `info` where you can extract the values of the variables. This info parameter has the structure of a python dictionary.
 
 Can I activate a DEBUG mode for my plugin?
 ???????????????????????????????????????????
