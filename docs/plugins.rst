@@ -1,31 +1,32 @@
 Developing new plugins
 ----------------------
+Each plugin represents a different analysis process.There are two types of files that are needed by senpy for loading a plugin:
 
-There are two types of files that were needed by senpy for loading a plugin:
+- Definition file, has the ".senpy" extension.
+- Code file, is a python file.
 
-- *.senpy: this file is the builder of the plugin.
-- *.py: this file is the interface of the plugin.
+Plugins Definitions
+===================
 
-Plugins Builder
-================
-
-The structure of this files is similar to a python dictionary, where the data representation consists on attribute-value pairs.
+The definition file can be written in JSON or YAML, where the data representation consists on attribute-value pairs.
 The principal attributes are:
 
 * name: plugin name used in senpy to call the plugin.
-* module: name of the file where the interface is written (*.py)
+* module: indicates the module that will be loaded
 
 .. code:: python
 
           {
             "name" : "senpyPlugin",
-            "module" : "{python file}"
+            "module" : "{python code file}"
           }
 
-You can use another attributes such as `description`, `author`, `version`, etc.
+.. code:: python
+          
+          name: senpyPlugin
+          module: {python code file}
 
-
-Plugins Interface
+Plugins Code
 =================
 
 The basic methods in a plugin are:
@@ -67,15 +68,57 @@ Training a classifier can be time time consuming. To avoid running the training 
 
 You can speficy a 'shelf_file' in your .senpy file. By default the ShelfMixin creates a file based on the plugin name and stores it in that plugin's folder.
 
+I want to implement my service as a plugin, How i can do it?
+????????????????????????????????????????????????????????????
+
+This example ilustrate how to implement the Sentiment140 service as a plugin in senpy
+
+.. code:: python
+
+          class Sentiment140Plugin(SentimentPlugin):
+              def analyse(self, **params):
+                  lang = params.get("language", "auto")
+                  res = requests.post("http://www.sentiment140.com/api/bulkClassifyJson",
+                                      json.dumps({"language": lang,
+                                                  "data": [{"text": params["input"]}]
+                                                  }
+                                                 )
+                                      )
+
+                  p = params.get("prefix", None)
+                  response = Results(prefix=p)
+                  polarity_value = self.maxPolarityValue*int(res.json()["data"][0]
+                                                             ["polarity"]) * 0.25
+                  polarity = "marl:Neutral"
+                  neutral_value = self.maxPolarityValue / 2.0
+                  if polarity_value > neutral_value:
+                      polarity = "marl:Positive"
+                  elif polarity_value < neutral_value:
+                      polarity = "marl:Negative"
+
+                  entry = Entry(id="Entry0",
+                                nif__isString=params["input"])
+                  sentiment = Sentiment(id="Sentiment0",
+                                      prefix=p,
+                                      marl__hasPolarity=polarity,
+                                      marl__polarityValue=polarity_value)
+                  sentiment.prov__wasGeneratedBy = self.id
+                  entry.sentiments = []
+                  entry.sentiments.append(sentiment)
+                  entry.language = lang
+                  response.entries.append(entry)
+                  return response
+
+
 Where can I define extra parameters to be introduced in the request to my plugin?
 ?????????????????????????????????????????????????????????????????????????????????
 
-You can add these parameters in the *.senpy file under the attribute "extra_params" : "{param_name}". The name of the parameter is going to act as another python dictionary with the next attributes:
+You can add these parameters in the definition file under the attribute "extra_params" : "{param_name}". The name of the parameter has new attributes-value pairs. The basic attributes are:
 
 * aliases: the different names which can be used in the request to use the parameter.
 * required: this option is a boolean and indicates if the parameters is binding in operation plugin.
 * options: the different values of the paremeter.
-* default: the default value which can have the parameter, this is useful in case the paremeter is required and you want to have a default value.
+* default: the default value of the parameter, this is useful in case the paremeter is required and you want to have a default value.
 
 .. code:: python
 
@@ -83,12 +126,12 @@ You can add these parameters in the *.senpy file under the attribute "extra_para
              "language": {
                 "aliases": ["language", "l"],
                 "required": true,
-                "options": ["es"],
+                "options": ["es","en"],
                 "default": "es"
              }
           }
 
-This example shows how to introduce a parameter associated language.
+This example shows how to introduce a parameter associated with language.
 The extraction of this paremeter is used in the analyse method of the Plugin interface.
 
 .. code:: python
@@ -98,7 +141,7 @@ The extraction of this paremeter is used in the analyse method of the Plugin int
 Where can I set up variables for using them in my plugin?
 ?????????????????????????????????????????????????????????
 
-You can add these variables in the *.senpy with:  {variable_name} : {variable_value}.
+You can add these variables in the definition file with the extracture of attribute-value pair.
 
 Once you have added your variables, the next step is to extract them into the plugin. The plugin's __init__ method has a parameter called `info` where you can extract the values of the variables. This info parameter has the structure of a python dictionary.
 
