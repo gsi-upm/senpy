@@ -1,0 +1,18 @@
+{
+  "@context": "http://mixedemotions-project.eu/ns/context.jsonld",
+  "@id": "http://example.com#NIFExample",
+  "analysis": [
+  ],
+  "entries": [
+    {
+      "@id": "http://example.org#char=0,40",
+      "@type": [
+        "nif:RFC5147String",
+        "nif:Context"
+      ],
+      "nif:beginIndex": 0,
+      "nif:endIndex": 40,
+      "nif:isString": "My favourite actress is Natalie Portman"
+    }
+  ]
+}

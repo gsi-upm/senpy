@@ -9,8 +9,11 @@ Welcome to Senpy's documentation!
 Contents:
 
 .. toctree::
+   senpy
    installation
    usage
    api
+   schema
    plugins
+   demo
    :maxdepth: 2
