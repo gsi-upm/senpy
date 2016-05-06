@@ -22,7 +22,7 @@ import imp
 import logging
 import traceback
 import gevent
-import json
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ class Senpy(object):
         logger.debug("Loading plugin: {}".format(filename))
         fpath = os.path.join(root, filename)
         with open(fpath, 'r') as f:
-            info = json.load(f)
+            info = yaml.load(f)
         logger.debug("Info: {}".format(info))
         sys.path.append(root)
         module = info["module"]
