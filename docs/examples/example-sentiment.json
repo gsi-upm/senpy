@@ -1,0 +1,39 @@
+{
+  "@context": "http://mixedemotions-project.eu/ns/context.jsonld",
+  "@id": "me:Result1",
+  "analysis": [
+    {
+      "@id": "me:SAnalysis1",
+      "@type": "marl:SentimentAnalysis",
+      "marl:maxPolarityValue": 1,
+      "marl:minPolarityValue": 0
+    }
+  ],
+  "entries": [
+    {
+      "@id": "http://micro.blog/status1",
+      "@type": [
+        "nif:RFC5147String",
+        "nif:Context"
+      ],
+      "nif:isString": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
+      "entities": [
+      ],
+      "suggestions": [
+      ],
+      "sentiments": [
+        {
+          "@id": "http://micro.blog/status1#char=80,97",
+          "nif:beginIndex": 80,
+          "nif:endIndex": 97,
+          "nif:anchorOf": "You'll be awesome.",
+          "marl:hasPolarity": "marl:Positive",
+          "marl:polarityValue": 0.9,
+          "prov:wasGeneratedBy": "me:SAnalysis1"
+        }
+      ],
+      "emotionSets": [
+      ]
+    }
+  ]
+}
