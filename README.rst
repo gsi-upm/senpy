@@ -30,7 +30,7 @@ Alternatively, you can use the development version:
  
 .. code:: bash
 
-   git clone git@github.com:gsi-upm/senpy
+   git clone http://github.com/gsi-upm/senpy
    cd senpy
    pip install --user .
 
