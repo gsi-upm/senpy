@@ -2,6 +2,7 @@ include requirements.txt
 include test-requirements.txt
 include README.md
 include senpy/context.jsonld
+include senpy/VERSION
 graft senpy/plugins
 graft senpy/schemas
 graft senpy/templates

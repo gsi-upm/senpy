@@ -5,3 +5,4 @@ dist
 build
 README.html
 __pycache__
+Dockerfile-*

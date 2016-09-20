@@ -1,0 +1,3 @@
+from python:{{PYVERSION}}-onbuild
+
+ENTRYPOINT ["python", "-m", "senpy", "-f", ".", "--host", "0.0.0.0"]

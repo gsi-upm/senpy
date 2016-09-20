@@ -18,4 +18,8 @@
 Sentiment analysis server in Python
 """
 
-__version__  = "0.5.6"
+import os
+VFILE = os.path.join(os.path.dirname(__file__), "VERSION")
+
+with open(VFILE, 'r') as f:
+    __version__  = f.read().strip()
