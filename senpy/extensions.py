@@ -23,6 +23,7 @@ import logging
 import traceback
 import gevent
 import yaml
+import pip
 
 logger = logging.getLogger(__name__)
 
@@ -198,18 +199,29 @@ class Senpy(object):
             logger.error('Error reloading {}: {}'.format(name, ex))
             self.plugins[name] = plugin
 
-    @staticmethod
-    def _load_plugin(root, filename):
-        logger.debug("Loading plugin: {}".format(filename))
-        fpath = os.path.join(root, filename)
-        with open(fpath, 'r') as f:
-            info = yaml.load(f)
-        logger.debug("Info: {}".format(info))
-        sys.path.append(root)
+
+    @classmethod
+    def validate_info(cls, info):
+        return all(x in info for x in ('name', 'module', 'version'))
+
+    @classmethod
+    def _load_plugin_from_info(cls, info, root):
+        if not cls.validate_info(info):
+            logger.warn('The module info is not valid.\n\t{}'.format(info))
+            return None, None 
         module = info["module"]
         name = info["name"]
+        requirements = info.get("requirements", [])
+        sys.path.append(root)
         (fp, pathname, desc) = imp.find_module(module, [root, ])
         try:
+            if requirements:
+                pip_args = []
+                pip_args.append('install')
+                for req in requirements:
+                    pip_args.append( req )
+                logger.info('Installing requirements: ' + str(requirements))
+                pip.main(pip_args) 
             tmp = imp.load_module(module, fp, pathname, desc)
             sys.path.remove(root)
             candidate = None
@@ -221,19 +233,29 @@ class Senpy(object):
                     candidate = obj
                     break
             if not candidate:
-                logger.debug("No valid plugin for: {}".format(filename))
+                logger.debug("No valid plugin for: {}".format(module))
                 return
             module = candidate(info=info)
-            try:
-                repo_path = root
-                module._repo = Repo(repo_path)
-            except InvalidGitRepositoryError:
-                module._repo = None
+            repo_path = root
+            module._repo = Repo(repo_path)
+        except InvalidGitRepositoryError:
+            logger.debug("The plugin {} is not in a Git repository".format(module))
+            module._repo = None
         except Exception as ex:
-            logger.error("Exception importing {}: {}".format(filename, ex))
+            logger.error("Exception importing {}: {}".format(module, ex))
             logger.error("Trace: {}".format(traceback.format_exc()))
             return None, None
         return name, module
+
+    @classmethod
+    def _load_plugin(cls, root, filename):
+        fpath = os.path.join(root, filename)
+        logger.debug("Loading plugin: {}".format(fpath))
+        with open(fpath, 'r') as f:
+            info = yaml.load(f)
+        logger.debug("Info: {}".format(info))
+        return cls._load_plugin_from_info(info, root)
+
 
     def _load_plugins(self):
         plugins = {}

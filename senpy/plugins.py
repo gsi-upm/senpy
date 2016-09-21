@@ -91,4 +91,4 @@ class ShelfMixin(object):
         if hasattr(self, '_sh') and self._sh is not None:
             with open(self.shelf_file, 'wb') as f:
                 pickle.dump(self._sh, f)
-        del(self.__dict__['_sh'])
+            del(self.__dict__['_sh'])

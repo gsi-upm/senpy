@@ -6,18 +6,17 @@ from functools import partial
 from senpy.extensions import Senpy
 from senpy.models import Error
 from flask import Flask
-from flask.ext.testing import TestCase
+from unittest import TestCase
 
 
 class ExtensionsTest(TestCase):
 
-    def create_app(self):
+    def setUp(self):
         self.app = Flask("test_extensions")
         self.dir = os.path.join(os.path.dirname(__file__))
         self.senpy = Senpy(plugin_folder=self.dir, default_plugins=False)
         self.senpy.init_app(self.app)
         self.senpy.activate_plugin("Dummy", sync=True)
-        return self.app
 
     def test_init(self):
         """ Initialising the app with the extension.  """
@@ -34,6 +33,20 @@ class ExtensionsTest(TestCase):
         assert "Dummy" in self.senpy.plugins
 
     def test_enabling(self):
+        """ Enabling a plugin """
+        info = {
+            'name': 'TestPip',
+            'module': 'dummy',
+            'requirements': ['noop'],
+            'version': 0
+            }
+        root = os.path.join(self.dir, 'dummy_plugin')
+        name, module = self.senpy._load_plugin_from_info(info, root=root)
+        assert name == 'TestPip'
+        assert module
+        import noop
+
+    def test_installing(self):
         """ Enabling a plugin """
         self.senpy.activate_all(sync=True)
         assert len(self.senpy.plugins) == 2
