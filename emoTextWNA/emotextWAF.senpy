@@ -1,0 +1,29 @@
+{
+    "name": "EmoTextWAF",
+    "module": "emotextWAF",
+    "description": "Emotion classifier using rule-based classification.",
+    "author": "@icorcuera @balkian",
+    "version": "0.2",
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": true,
+            "options": ["en"],
+            "default": "en"
+        }
+    },
+    "requirements": {},
+    "synsets_path": "/a-synsets.xml",
+    "hierarchy_path": "/a-hierarchy.xml",
+    "wn16_path": "/wordnet1.6/dict",
+    "requirements": [
+        "nltk>=3.0.5",
+        "numpy>=1.8.2",
+        "scipy>=0.14.0",
+        "scikit-learn>=0.14.1",
+        "lxml>=3.4.2",
+        "pandas",
+        "senpy",
+        "pattern"
+    ]
+}

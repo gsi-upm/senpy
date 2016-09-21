@@ -12,5 +12,6 @@
             "default": 42
         }
      },
+    "requirements": ["noop"],
     "custom_attribute": "42"
 }
