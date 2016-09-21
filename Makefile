@@ -1,4 +1,4 @@
-PYVERSIONS=2.7 3.4
+PYVERSIONS=3.4 2.7
 NAME=senpy
 REPO=gsiupm
 VERSION=$(shell cat $(NAME)/VERSION)
@@ -23,7 +23,16 @@ test-%: build-%
 
 test_pip-%:
 	docker run --rm -ti python:$* pip -q install senpy ;
-    
+
+upload-%:
+	docker push '$(REPO)/$(NAME):$(VERSION)-python$(firstword $(PYVERSIONS))'
+
+upload: test $(addprefix upload-,$(PYVERSIONS))
+	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(firstword $(PYVERSIONS))' '$(REPO)/$(NAME):$(VERSION)'
+	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(firstword $(PYVERSIONS))' '$(REPO)/$(NAME)'
+	docker push '$(REPO)/$(NAME):$(VERSION)'
+	docker push '$(REPO)/$(NAME)'
+
 test_pip: $(addprefix test_pip-,$(PYVERSIONS))
 
 .PHONY: test test-% build-% build test test_pip
