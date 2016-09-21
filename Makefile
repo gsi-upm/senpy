@@ -41,6 +41,10 @@ clean:
 	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1;}}' | xargs docker rm 2>/dev/null|| true
 	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
 
+upload_git:
+	git commit -a
+	git tag ${VERSION}
+	git push --tags origin master
 
 pip_upload:
 	python setup.py sdist upload ;
