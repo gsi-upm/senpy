@@ -34,9 +34,13 @@ upload-%: test-%
 
 upload: testall $(addprefix upload-,$(PYVERSIONS))
 	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)' '$(REPO)/$(NAME):$(VERSION)'
-	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(PYVERSIONS)' '$(REPO)/$(NAME)'
-	docker push '$(REPO)/$(NAME):$(VERSION)' docker push '$(REPO)/$(NAME)'
-	python setup.py sdist upload
+	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)' '$(REPO)/$(NAME)'
+	docker push '$(REPO)/$(NAME):$(VERSION)'
+
+clean:
+	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1;}}' | xargs docker rm 2>/dev/null|| true
+	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
+
 
 pip_upload:
 	python setup.py sdist upload ;

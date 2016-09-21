@@ -65,6 +65,11 @@ def main():
                         type=str,
                         default='plugins',
                         help='Where to look for plugins.')
+    parser.add_argument('--only-install',
+                        '-i',
+                        action='store_true',
+                        default=False,
+                        help='Do not run a server, only install the dependencies of the plugins.')
     args = parser.parse_args()
     logging.basicConfig()
     rl = logging.getLogger()
@@ -72,6 +77,9 @@ def main():
     app = Flask(__name__)
     app.debug = args.debug
     sp = Senpy(app, args.plugins_folder, default_plugins=args.default_plugins)
+    if args.only_install:
+        sp.install_deps()
+        return
     sp.activate_all()
     http_server = WSGIServer((args.host, args.port), app)
     try:

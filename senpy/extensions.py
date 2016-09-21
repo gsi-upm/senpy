@@ -204,6 +204,21 @@ class Senpy(object):
     def validate_info(cls, info):
         return all(x in info for x in ('name', 'module', 'version'))
 
+    def install_deps(self):
+        for i in self.plugins.values():
+            self._install_deps(i._info)
+
+    @classmethod
+    def _install_deps(cls, info=None):
+        requirements = info.get('requirements', [])
+        if requirements:
+            pip_args = []
+            pip_args.append('install')
+            for req in requirements:
+                pip_args.append( req )
+            logger.info('Installing requirements: ' + str(requirements))
+            pip.main(pip_args) 
+
     @classmethod
     def _load_plugin_from_info(cls, info, root):
         if not cls.validate_info(info):
@@ -215,13 +230,7 @@ class Senpy(object):
         sys.path.append(root)
         (fp, pathname, desc) = imp.find_module(module, [root, ])
         try:
-            if requirements:
-                pip_args = []
-                pip_args.append('install')
-                for req in requirements:
-                    pip_args.append( req )
-                logger.info('Installing requirements: ' + str(requirements))
-                pip.main(pip_args) 
+            cls._install_deps(info)
             tmp = imp.load_module(module, fp, pathname, desc)
             sys.path.remove(root)
             candidate = None
