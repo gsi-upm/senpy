@@ -1,0 +1,5 @@
+from python:3.4-onbuild
+
+RUN pip install .
+
+ENTRYPOINT ["python", "-m", "senpy", "-f", ".", "--host", "0.0.0.0"]

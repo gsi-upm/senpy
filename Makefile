@@ -8,6 +8,7 @@ VERSION=$(shell cat $(NAME)/VERSION)
 all: build run
 
 dockerfiles: $(addprefix Dockerfile-,$(PYVERSIONS))
+	ln -s Dockerfile-{PYMAIN} Dockerfile
 
 Dockerfile-%: Dockerfile.template
 	sed "s/{{PYVERSION}}/$*/" Dockerfile.template > Dockerfile-$*
