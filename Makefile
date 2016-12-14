@@ -26,8 +26,15 @@ testall: $(addprefix test-,$(PYVERSIONS))
 test-%: build-%
 	docker run --rm -w /usr/src/app/ --entrypoint=/usr/local/bin/python -ti '$(REPO)/$(NAME):$(VERSION)-python$*' setup.py test --addopts "-vvv -s --pdb" ;
 
-pip_test-%:
-	docker run --rm -ti python:$* pip install senpy ;
+dist/$(NAME)-$(VERSION).tar.gz:
+	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) python setup.py sdist;
+
+sdist: dist/$(NAME)-$(VERSION).tar.gz
+
+pip_test-%: sdist
+	docker run --rm -v $$PWD/dist:/dist/ -ti python:$* pip install /dist/$(NAME)-$(VERSION).tar.gz ;
+
+pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
 upload-%: test-%
 	docker push '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)'

@@ -32,7 +32,9 @@ def get_schema_path(schema_file, absolute=False):
 def read_schema(schema_file, absolute=False):
     schema_path = get_schema_path(schema_file, absolute)
     schema_uri = 'file://{}'.format(schema_path)
-    return jsonref.load(open(schema_path), base_uri=schema_uri)
+    with open(schema_path) as f:
+        return jsonref.load(f, base_uri=schema_uri)
+    
         
 
 base_schema = read_schema(DEFINITIONS_FILE)
