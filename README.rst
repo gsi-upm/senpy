@@ -12,7 +12,7 @@ Have you ever wanted to turn your sentiment analysis algorithms into a service?
 With senpy, now you can.
 It provides all the tools so you just have to worry about improving your algorithms:
 
-`See it in action. <http://demos.gsi.dit.upm.es/senpy>`_
+`See it in action. <http://senpy.cluster.gsi.dit.upm.es/>`_
 
 Installation
 ------------
