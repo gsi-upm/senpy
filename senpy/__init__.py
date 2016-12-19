@@ -19,7 +19,8 @@ Sentiment analysis server in Python
 """
 
 import os
-VFILE = os.path.join(os.path.dirname(__file__), "VERSION")
 
-with open(VFILE, 'r') as f:
-    __version__  = f.read().strip()
+from .version import __version__
+
+
+__all__ = ['api', 'blueprints', 'cli', 'extensions', 'models', 'plugins']

@@ -5,6 +5,7 @@ import inspect
 import os.path
 import pickle
 import logging
+import tempfile
 from .models import Response, PluginModel, Error
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ class ShelfMixin(object):
             if hasattr(self, '_info') and 'shelf_file' in self._info:
                 self.__dict__['_shelf_file'] = self._info['shelf_file']
             else:
-                self._shelf_file = os.path.join(self.get_folder(), self.name + '.p')
+                self._shelf_file = os.path.join(tempfile.gettempdir(), self.name + '.p')
         return self._shelf_file 
 
     def save(self):

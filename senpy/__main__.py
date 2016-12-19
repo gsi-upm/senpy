@@ -88,8 +88,9 @@ def main():
                                                                 args.port))
         http_server.serve_forever()
     except KeyboardInterrupt:
-        http_server.stop()
         print('Bye!')
+    http_server.stop()
+    sp.deactivate_all()
 
 if __name__ == '__main__':
     main()

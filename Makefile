@@ -8,7 +8,7 @@ VERSION=$(shell cat $(NAME)/VERSION)
 all: build run
 
 dockerfiles: $(addprefix Dockerfile-,$(PYVERSIONS))
-	ln -s Dockerfile-{PYMAIN} Dockerfile
+	ln -s Dockerfile-$(PYMAIN) Dockerfile
 
 Dockerfile-%: Dockerfile.template
 	sed "s/{{PYVERSION}}/$*/" Dockerfile.template > Dockerfile-$*
@@ -24,8 +24,11 @@ test: $(addprefix test-,$(PYMAIN))
 
 testall: $(addprefix test-,$(PYVERSIONS))
 
+debug-%: build-%
+	docker run --rm -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti '$(REPO)/$(NAME):$(VERSION)-python$*' ;
+
 test-%: build-%
-	docker run --rm -w /usr/src/app/ --entrypoint=/usr/local/bin/python -ti '$(REPO)/$(NAME):$(VERSION)-python$*' setup.py test --addopts "-vvv -s --pdb" ;
+	docker run --rm -w /usr/src/app/ --entrypoint=/usr/local/bin/python -ti '$(REPO)/$(NAME):$(VERSION)-python$*' setup.py test --addopts "-vvv -s" ;
 
 dist/$(NAME)-$(VERSION).tar.gz:
 	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) python setup.py sdist;
@@ -38,7 +41,7 @@ pip_test-%: sdist
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
 upload-%: test-%
-	docker push '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)'
+	docker push '$(REPO)/$(NAME):$(VERSION)-python$*'
 
 upload: testall $(addprefix upload-,$(PYVERSIONS))
 	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)' '$(REPO)/$(NAME):$(VERSION)'
