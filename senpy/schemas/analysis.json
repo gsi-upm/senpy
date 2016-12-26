@@ -1,4 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "definitions.json#/Analysis"
+  "description": "Senpy analysis",
+  "type": "object",
+  "properties": {
+    "@id": {
+      "type": "string"
+    },
+    "@type": {
+      "type": "string",
+      "description": "Type of the analysis. e.g. marl:SentimentAnalysis"
+    }
+  },
+  "required": ["@id", "@type"]
 }

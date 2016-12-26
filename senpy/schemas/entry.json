@@ -1,4 +1,37 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "definitions.json#/Entry"
+  "name": "Entry",
+  "properties": {
+    "@id": {
+      "type": "string"
+    },
+    "@type": {
+      "enum": [["nif:RFC5147String", "nif:Context"]]
+    },
+    "nif:isString": {
+      "description": "String contained in this Context",
+      "type": "string"
+    },
+    "sentiments": {
+      "type": "array",
+      "items": {"$ref": "sentiment.json" }
+    },
+    "emotions": {
+      "type": "array",
+      "items": {"$ref": "emotionSet.json" }
+    },
+    "entities": {
+      "type": "array",
+      "items": {"$ref": "entity.json" }
+    },
+    "topics": {
+      "type": "array",
+      "items": {"$ref": "topic.json" }
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {"$ref": "suggestion.json" }
+    }
+  },
+  "required": ["@id", "nif:isString"]
 }

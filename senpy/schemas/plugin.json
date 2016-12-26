@@ -1,3 +1,14 @@
 {
-  "$ref": "definitions.json#/Plugin"
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "required": ["@id", "extra_params"],
+  "properties": {
+    "@id": {
+      "type": "string"
+    },
+    "extra_params": {
+      "type": "object",
+      "default": {}
+    }
+  }
 }

@@ -1,4 +1,31 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "definitions.json#/Results"
+  "title": "Results",
+  "description": "The results of an analysis",
+  "type": "object",
+  "properties": {
+    "@context": {
+      "$ref": "context.json"
+    },
+    "@id": {
+      "description": "ID of the analysis",
+      "type": "string"
+    },
+    "analysis": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "analysis.json"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "entry.json"
+      }
+    }
+    
+  },
+  "required": ["@id", "analysis", "entries"]
 }

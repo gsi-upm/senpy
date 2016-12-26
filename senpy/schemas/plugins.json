@@ -1,3 +1,11 @@
 {
-  "$ref": "definitions.json#/Plugins"
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "properties": {
+    "plugins": {
+      "type": "array",
+      "items": {
+        "$ref": "plugin.json"
+      }
+    }
+  }
 }
