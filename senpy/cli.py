@@ -3,6 +3,7 @@ from .models import Error
 from .api import parse_params, CLI_PARAMS
 from .extensions import Senpy
 
+
 def argv_to_dict(argv):
     '''Turns parameters in the form of '--key value' into a dict {'key': 'value'}
     '''
@@ -11,12 +12,13 @@ def argv_to_dict(argv):
     for i in range(len(argv)):
         if argv[i][0] == '-':
             key = argv[i].strip('-')
-            value = argv[i+1] if len(argv)>i+1 else None
+            value = argv[i + 1] if len(argv) > i + 1 else None
             if value and value[0] == '-':
                 cli_dict[key] = ""
             else:
                 cli_dict[key] = value
     return cli_dict
+
 
 def parse_cli(argv):
     cli_dict = argv_to_dict(argv)
@@ -34,6 +36,7 @@ def main_function(argv):
     res = sp.analyse(**cli_dict)
     return res
 
+
 def main():
     '''This method is the entrypoint for the CLI (as configured un setup.py)
     '''
@@ -43,7 +46,7 @@ def main():
     except Error as err:
         print(err.to_JSON())
         sys.exit(2)
-    
+
 
 if __name__ == '__main__':
     main()

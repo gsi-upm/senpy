@@ -4,7 +4,6 @@ from time import sleep
 
 
 class SleepPlugin(SenpyPlugin):
-
     def activate(self, *args, **kwargs):
         sleep(self.timeout)
 

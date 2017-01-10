@@ -14,8 +14,10 @@ schema_folder = path.join(root_path, 'senpy', 'schemas')
 examples_path = path.join(root_path, 'docs', 'examples')
 bad_examples_path = path.join(root_path, 'docs', 'bad-examples')
 
+
 class JSONSchemaTests(unittest.TestCase):
     pass
+
 
 def do_create_(jsfile, success):
     def do_expected(self):
@@ -24,7 +26,8 @@ def do_create_(jsfile, success):
         try:
             assert '@type' in js
             schema_name = js['@type']
-            with open(os.path.join(schema_folder, schema_name+".json")) as file_object:
+            with open(os.path.join(schema_folder, schema_name +
+                                   ".json")) as file_object:
                 schema = json.load(file_object)
             resolver = RefResolver('file://' + schema_folder + '/', schema)
             validator = Draft4Validator(schema, resolver=resolver)
@@ -32,7 +35,9 @@ def do_create_(jsfile, success):
         except (AssertionError, ValidationError, KeyError) as ex:
             if success:
                 raise
+
     return do_expected
+
 
 def add_examples(dirname, success):
     for dirpath, dirnames, filenames in os.walk(dirname):
@@ -40,10 +45,14 @@ def add_examples(dirname, success):
             if fnmatch(i, '*.json'):
                 filename = path.join(dirpath, i)
                 test_method = do_create_(filename, success)
-                test_method.__name__ = 'test_file_%s_success_%s' % (filename, success)
-                test_method.__doc__ = '%s should %svalidate' % (filename, '' if success else 'not' )
+                test_method.__name__ = 'test_file_%s_success_%s' % (filename,
+                                                                    success)
+                test_method.__doc__ = '%s should %svalidate' % (filename, ''
+                                                                if success else
+                                                                'not')
                 setattr(JSONSchemaTests, test_method.__name__, test_method)
                 del test_method
+
 
 add_examples(examples_path, True)
 add_examples(bad_examples_path, False)

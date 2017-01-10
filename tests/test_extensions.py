@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 import logging
 
-from functools import partial 
+from functools import partial
 from senpy.extensions import Senpy
 from senpy.models import Error
 from flask import Flask
@@ -10,7 +10,6 @@ from unittest import TestCase
 
 
 class ExtensionsTest(TestCase):
-
     def setUp(self):
         self.app = Flask("test_extensions")
         self.dir = os.path.join(os.path.dirname(__file__))
@@ -39,7 +38,7 @@ class ExtensionsTest(TestCase):
             'module': 'dummy',
             'requirements': ['noop'],
             'version': 0
-            }
+        }
         root = os.path.join(self.dir, 'dummy_plugin')
         name, module = self.senpy._load_plugin_from_info(info, root=root)
         assert name == 'TestPip'
@@ -88,4 +87,5 @@ class ExtensionsTest(TestCase):
         assert self.senpy.filter_plugins(name="Dummy", is_activated=True)
         self.senpy.deactivate_plugin("Dummy", sync=True)
         assert not len(
-            self.senpy.filter_plugins(name="Dummy", is_activated=True))
+            self.senpy.filter_plugins(
+                name="Dummy", is_activated=True))

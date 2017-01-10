@@ -29,10 +29,12 @@ logger = logging.getLogger(__name__)
 
 
 class Senpy(object):
-
     """ Default Senpy extension for Flask """
 
-    def __init__(self, app=None, plugin_folder="plugins", default_plugins=False):
+    def __init__(self,
+                 app=None,
+                 plugin_folder="plugins",
+                 default_plugins=False):
         self.app = app
 
         self._search_folders = set()
@@ -80,22 +82,24 @@ class Senpy(object):
         elif self.plugins:
             algo = self.default_plugin and self.default_plugin.name
         if not algo:
-            raise Error(status=404,
-                        message=("No plugins found."
-                                 " Please install one.").format(algo))
+            raise Error(
+                status=404,
+                message=("No plugins found."
+                         " Please install one.").format(algo))
         if algo not in self.plugins:
             logger.debug(("The algorithm '{}' is not valid\n"
                           "Valid algorithms: {}").format(algo,
                                                          self.plugins.keys()))
-            raise Error(status=404,
-                        message="The algorithm '{}' is not valid"
-                        .format(algo))
+            raise Error(
+                status=404,
+                message="The algorithm '{}' is not valid".format(algo))
 
         if not self.plugins[algo].is_activated:
             logger.debug("Plugin not activated: {}".format(algo))
-            raise Error(status=400,
-                        message=("The algorithm '{}'"
-                                    " is not activated yet").format(algo))
+            raise Error(
+                status=400,
+                message=("The algorithm '{}'"
+                         " is not activated yet").format(algo))
         plug = self.plugins[algo]
         nif_params = parse_params(params, spec=NIF_PARAMS)
         extra_params = plug.get('extra_params', {})
@@ -120,9 +124,8 @@ class Senpy(object):
             return None
 
     def parameters(self, algo):
-        return getattr(self.plugins.get(algo) or self.default_plugin,
-                       "extra_params",
-                       {})
+        return getattr(
+            self.plugins.get(algo) or self.default_plugin, "extra_params", {})
 
     def activate_all(self, sync=False):
         ps = []
@@ -146,18 +149,20 @@ class Senpy(object):
         try:
             plugin = self.plugins[plugin_name]
         except KeyError:
-            raise Error(message="Plugin not found: {}".format(plugin_name),
-                        status=404)
-            
+            raise Error(
+                message="Plugin not found: {}".format(plugin_name), status=404)
+
         logger.info("Activating plugin: {}".format(plugin.name))
+
         def act():
             try:
                 plugin.activate()
                 logger.info("Plugin activated: {}".format(plugin.name))
             except Exception as ex:
-                logger.error("Error activating plugin {}: {}".format(plugin.name,
-                                                                     ex))
+                logger.error("Error activating plugin {}: {}".format(
+                    plugin.name, ex))
                 logger.error("Trace: {}".format(traceback.format_exc()))
+
         th = gevent.spawn(act)
         th.link_value(partial(self._set_active_plugin, plugin_name, True))
         if sync:
@@ -169,16 +174,16 @@ class Senpy(object):
         try:
             plugin = self.plugins[plugin_name]
         except KeyError:
-            raise Error(message="Plugin not found: {}".format(plugin_name),
-                        status=404)
+            raise Error(
+                message="Plugin not found: {}".format(plugin_name), status=404)
 
         def deact():
             try:
                 plugin.deactivate()
                 logger.info("Plugin deactivated: {}".format(plugin.name))
             except Exception as ex:
-                logger.error("Error deactivating plugin {}: {}".format(plugin.name,
-                                                                       ex))
+                logger.error("Error deactivating plugin {}: {}".format(
+                    plugin.name, ex))
                 logger.error("Trace: {}".format(traceback.format_exc()))
 
         th = gevent.spawn(deact)
@@ -199,7 +204,6 @@ class Senpy(object):
             logger.error('Error reloading {}: {}'.format(name, ex))
             self.plugins[name] = plugin
 
-
     @classmethod
     def validate_info(cls, info):
         return all(x in info for x in ('name', 'module', 'version'))
@@ -215,15 +219,15 @@ class Senpy(object):
             pip_args = []
             pip_args.append('install')
             for req in requirements:
-                pip_args.append( req )
+                pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
-            pip.main(pip_args) 
+            pip.main(pip_args)
 
     @classmethod
     def _load_plugin_from_info(cls, info, root):
         if not cls.validate_info(info):
             logger.warn('The module info is not valid.\n\t{}'.format(info))
-            return None, None 
+            return None, None
         module = info["module"]
         name = info["name"]
         requirements = info.get("requirements", [])
@@ -237,8 +241,8 @@ class Senpy(object):
             for _, obj in inspect.getmembers(tmp):
                 if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
                     logger.debug(("Found plugin class:"
-                                  " {}@{}").format(obj, inspect.getmodule(obj))
-                                 )
+                                  " {}@{}").format(obj, inspect.getmodule(
+                                      obj)))
                     candidate = obj
                     break
             if not candidate:
@@ -248,7 +252,8 @@ class Senpy(object):
             repo_path = root
             module._repo = Repo(repo_path)
         except InvalidGitRepositoryError:
-            logger.debug("The plugin {} is not in a Git repository".format(module))
+            logger.debug("The plugin {} is not in a Git repository".format(
+                module))
             module._repo = None
         except Exception as ex:
             logger.error("Exception importing {}: {}".format(module, ex))
@@ -264,7 +269,6 @@ class Senpy(object):
             info = yaml.load(f)
         logger.debug("Info: {}".format(info))
         return cls._load_plugin_from_info(info, root)
-
 
     def _load_plugins(self):
         plugins = {}
@@ -293,8 +297,7 @@ class Senpy(object):
 
         def matches(plug):
             res = all(getattr(plug, k, None) == v for (k, v) in kwargs.items())
-            logger.debug("matching {} with {}: {}".format(plug.name,
-                                                          kwargs,
+            logger.debug("matching {} with {}: {}".format(plug.name, kwargs,
                                                           res))
             return res
 
@@ -305,5 +308,8 @@ class Senpy(object):
 
     def sentiment_plugins(self):
         """ Return only the sentiment plugins """
-        return {p: plugin for p, plugin in self.plugins.items() if
-                isinstance(plugin, SentimentPlugin)}
+        return {
+            p: plugin
+            for p, plugin in self.plugins.items()
+            if isinstance(plugin, SentimentPlugin)
+        }

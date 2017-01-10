@@ -13,8 +13,8 @@ from flask import Flask
 from senpy.models import Results, Entry
 from senpy.plugins import SentimentPlugin, ShelfMixin
 
-class ShelfDummyPlugin(SentimentPlugin, ShelfMixin):
 
+class ShelfDummyPlugin(SentimentPlugin, ShelfMixin):
     def activate(self, *args, **kwargs):
         if 'counter' not in self.sh:
             self.sh['counter'] = 0
@@ -24,15 +24,15 @@ class ShelfDummyPlugin(SentimentPlugin, ShelfMixin):
         self.save()
 
     def analyse(self, *args, **kwargs):
-        self.sh['counter'] = self.sh['counter']+1
+        self.sh['counter'] = self.sh['counter'] + 1
         e = Entry()
         e.nif__isString = self.sh['counter']
         r = Results()
         r.entries.append(e)
         return r
 
-class PluginsTest(TestCase):
 
+class PluginsTest(TestCase):
     def tearDown(self):
         if os.path.exists(self.shelf_dir):
             shutil.rmtree(self.shelf_dir)
@@ -43,10 +43,11 @@ class PluginsTest(TestCase):
     def setUp(self):
         self.shelf_dir = tempfile.mkdtemp()
         self.shelf_file = os.path.join(self.shelf_dir, "shelf")
-        
+
     def test_shelf_file(self):
-        a = ShelfDummyPlugin(info={'name': 'default_shelve_file',
-                                   'version': 'test'})
+        a = ShelfDummyPlugin(
+            info={'name': 'default_shelve_file',
+                  'version': 'test'})
         assert os.path.dirname(a.shelf_file) == tempfile.gettempdir()
         a.activate()
         assert os.path.isfile(a.shelf_file)
@@ -54,9 +55,11 @@ class PluginsTest(TestCase):
 
     def test_shelf(self):
         ''' A shelf is created and the value is stored '''
-        a = ShelfDummyPlugin(info={'name': 'shelve',
-                            'version': 'test',
-                            'shelf_file': self.shelf_file})
+        a = ShelfDummyPlugin(info={
+            'name': 'shelve',
+            'version': 'test',
+            'shelf_file': self.shelf_file
+        })
         assert a.sh == {}
         a.activate()
         assert a.sh == {'counter': 0}
@@ -72,9 +75,11 @@ class PluginsTest(TestCase):
         assert sh['a'] == 'fromA'
 
     def test_dummy_shelf(self):
-        a = ShelfDummyPlugin(info={'name': 'DummyShelf',
-                                   'shelf_file': self.shelf_file,
-                                   'version': 'test'})
+        a = ShelfDummyPlugin(info={
+            'name': 'DummyShelf',
+            'shelf_file': self.shelf_file,
+            'version': 'test'
+        })
         a.activate()
 
         res1 = a.analyse(input=1)
@@ -84,17 +89,21 @@ class PluginsTest(TestCase):
 
     def test_two(self):
         ''' Reusing the values of a previous shelf '''
-        a = ShelfDummyPlugin(info={'name': 'shelve',
-                            'version': 'test',
-                            'shelf_file': self.shelf_file})
+        a = ShelfDummyPlugin(info={
+            'name': 'shelve',
+            'version': 'test',
+            'shelf_file': self.shelf_file
+        })
         a.activate()
         print('Shelf file: %s' % a.shelf_file)
         a.sh['a'] = 'fromA'
         a.save()
 
-        b = ShelfDummyPlugin(info={'name': 'shelve',
-                            'version': 'test',
-                            'shelf_file': self.shelf_file})
+        b = ShelfDummyPlugin(info={
+            'name': 'shelve',
+            'version': 'test',
+            'shelf_file': self.shelf_file
+        })
         b.activate()
         assert b.sh['a'] == 'fromA'
         b.sh['a'] = 'fromB'

@@ -10,8 +10,8 @@ from .models import Response, PluginModel, Error
 
 logger = logging.getLogger(__name__)
 
-class SenpyPlugin(PluginModel):
 
+class SenpyPlugin(PluginModel):
     def __init__(self, info=None):
         if not info:
             raise Error(message=("You need to provide configuration"
@@ -39,8 +39,8 @@ class SenpyPlugin(PluginModel):
         ''' Destructor, to make sure all the resources are freed '''
         self.deactivate()
 
-class SentimentPlugin(SenpyPlugin):
 
+class SentimentPlugin(SenpyPlugin):
     def __init__(self, info, *args, **kwargs):
         super(SentimentPlugin, self).__init__(info, *args, **kwargs)
         self.minPolarityValue = float(info.get("minPolarityValue", 0))
@@ -49,7 +49,6 @@ class SentimentPlugin(SenpyPlugin):
 
 
 class EmotionPlugin(SenpyPlugin):
-
     def __init__(self, info, *args, **kwargs):
         resp = super(EmotionPlugin, self).__init__(info, *args, **kwargs)
         self.minEmotionValue = float(info.get("minEmotionValue", 0))
@@ -58,7 +57,6 @@ class EmotionPlugin(SenpyPlugin):
 
 
 class ShelfMixin(object):
-
     @property
     def sh(self):
         if not hasattr(self, '_sh') or self._sh is None:
@@ -75,7 +73,7 @@ class ShelfMixin(object):
         self.save()
 
     def __del__(self):
-        self.save()        
+        self.save()
         super(ShelfMixin, self).__del__()
 
     @property
@@ -84,12 +82,13 @@ class ShelfMixin(object):
             if hasattr(self, '_info') and 'shelf_file' in self._info:
                 self.__dict__['_shelf_file'] = self._info['shelf_file']
             else:
-                self._shelf_file = os.path.join(tempfile.gettempdir(), self.name + '.p')
-        return self._shelf_file 
+                self._shelf_file = os.path.join(tempfile.gettempdir(),
+                                                self.name + '.p')
+        return self._shelf_file
 
     def save(self):
         logger.debug('closing pickle')
         if hasattr(self, '_sh') and self._sh is not None:
             with open(self.shelf_file, 'wb') as f:
                 pickle.dump(self._sh, f)
-            del(self.__dict__['_sh'])
+            del (self.__dict__['_sh'])

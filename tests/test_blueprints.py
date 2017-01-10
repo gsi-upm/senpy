@@ -12,12 +12,12 @@ from itertools import product
 def check_dict(indic, template):
     return all(item in indic.items() for item in template.items())
 
+
 def parse_resp(resp):
     return json.loads(resp.data.decode('utf-8'))
 
 
 class BlueprintsTest(TestCase):
-
     def setUp(self):
         self.app = Flask("test_extensions")
         self.client = self.app.test_client()
@@ -29,7 +29,7 @@ class BlueprintsTest(TestCase):
 
     def assertCode(self, resp, code):
         self.assertEqual(resp.status_code, code)
-        
+
     def test_home(self):
         """
         Calling with no arguments should ask the user for more arguments
@@ -55,7 +55,7 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         logging.debug("Got response: %s", js)
         assert "@context" in js
-        assert "entries" in js 
+        assert "entries" in js
 
     def test_list(self):
         """ List the plugins """
@@ -77,13 +77,13 @@ class BlueprintsTest(TestCase):
             assert "@context" in js
             resp = self.client.get("%s&%s=0" % (i, j))
             js = parse_resp(resp)
-            assert "@context" in js 
+            assert "@context" in js
             resp = self.client.get("%s&%s=1" % (i, j))
             js = parse_resp(resp)
-            assert "@context" not in js 
+            assert "@context" not in js
             resp = self.client.get("%s&%s=true" % (i, j))
             js = parse_resp(resp)
-            assert "@context" not in js 
+            assert "@context" not in js
 
     def test_detail(self):
         """ Show only one plugin"""
@@ -110,7 +110,7 @@ class BlueprintsTest(TestCase):
         resp = self.client.get("/api/plugins/Dummy/")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert "is_activated" in js 
+        assert "is_activated" in js
         assert js["is_activated"] == True
 
     def test_default(self):
@@ -119,7 +119,7 @@ class BlueprintsTest(TestCase):
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         logging.debug(js)
-        assert "@id" in js 
+        assert "@id" in js
         assert js["@id"] == "Dummy_0.1"
         resp = self.client.get("/api/plugins/Dummy/deactivate")
         self.assertCode(resp, 200)
@@ -140,4 +140,4 @@ class BlueprintsTest(TestCase):
         resp = self.client.get("/api/schemas/definitions.json")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert "$schema" in js 
+        assert "$schema" in js

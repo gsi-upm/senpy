@@ -7,6 +7,10 @@ VERSION=$(shell cat $(NAME)/VERSION)
 
 all: build run
 
+yapf:
+	yapf -i -r senpy
+	yapf -i -r tests
+
 dockerfiles: $(addprefix Dockerfile-,$(PYVERSIONS))
 	ln -s Dockerfile-$(PYMAIN) Dockerfile
 
@@ -71,4 +75,4 @@ pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 run: build
 	docker run --rm -p 5000:5000 -ti '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)'
 
-.PHONY: test test-% build-% build test test_pip run
+.PHONY: test test-% build-% build test test_pip run yapf

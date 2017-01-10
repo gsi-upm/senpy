@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 api_blueprint = Blueprint("api", __name__)
 demo_blueprint = Blueprint("demo", __name__)
 
+
 def get_params(req):
     if req.method == 'POST':
         indict = req.form.to_dict(flat=True)
@@ -44,16 +45,19 @@ def get_params(req):
 def index():
     return render_template("index.html")
 
+
 @api_blueprint.route('/contexts/<entity>.jsonld')
 def context(entity="context"):
     return jsonify({"@context": Response.context})
+
 
 @api_blueprint.route('/schemas/<schema>')
 def schema(schema="definitions"):
     try:
         return jsonify(read_schema(schema))
-    except Exception: # Should be FileNotFoundError, but it's missing from py2
+    except Exception:  # Should be FileNotFoundError, but it's missing from py2
         return Error(message="Schema not found", status=404).flask()
+
 
 def basic_api(f):
     @wraps(f)
@@ -73,12 +77,15 @@ def basic_api(f):
             response = ex
         in_headers = web_params["inHeaders"] != "0"
         headers = {'X-ORIGINAL-PARAMS': raw_params}
-        return response.flask(in_headers=in_headers,
-                              headers=headers,
-                              context_uri=url_for('api.context', entity=type(response).__name__,
-                                                  _external=True))
+        return response.flask(
+            in_headers=in_headers,
+            headers=headers,
+            context_uri=url_for(
+                'api.context', entity=type(response).__name__, _external=True))
+
     return decorated_function
-    
+
+
 @api_blueprint.route('/', methods=['POST', 'GET'])
 @basic_api
 def api():
@@ -92,7 +99,8 @@ def plugins():
     sp = current_app.senpy
     dic = Plugins(plugins=list(sp.plugins.values()))
     return dic
-    
+
+
 @api_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
 @api_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 @basic_api
@@ -110,11 +118,12 @@ def plugin(plugin=None, action="list"):
     if action == "list":
         return response
     method = "{}_plugin".format(action)
-    if(hasattr(sp, method)):
+    if (hasattr(sp, method)):
         getattr(sp, method)(plugin)
         return Response(message="Ok")
     else:
         return Error(message="action '{}' not allowed".format(action))
+
 
 if __name__ == '__main__':
     import config

@@ -10,7 +10,6 @@ from senpy.models import Error
 
 
 class CLITest(TestCase):
-
     def test_basic(self):
         self.assertRaises(Error, partial(main_function, []))
         res = main_function(['--input', 'test'])

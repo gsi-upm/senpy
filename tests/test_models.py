@@ -12,12 +12,11 @@ from pprint import pprint
 
 
 class ModelsTest(TestCase):
-
     def test_jsonld(self):
-        ctx = os.path.normpath(os.path.join(__file__, "..", "..", "..", "senpy", "schemas", "context.jsonld"))
-        prueba = {"id": "test",
-                  "analysis": [],
-                  "entries": []}
+        ctx = os.path.normpath(
+            os.path.join(__file__, "..", "..", "..", "senpy", "schemas",
+                         "context.jsonld"))
+        prueba = {"id": "test", "analysis": [], "entries": []}
         r = Results(**prueba)
         print("Response's context: ")
         pprint(r.context)
@@ -27,28 +26,32 @@ class ModelsTest(TestCase):
         j = r.jsonld(with_context=True)
         print("As JSON:")
         pprint(j)
-        assert("@context" in j)
-        assert("marl" in j["@context"])
-        assert("entries" in j["@context"])
-        assert(j["@id"] == "test")
+        assert ("@context" in j)
+        assert ("marl" in j["@context"])
+        assert ("entries" in j["@context"])
+        assert (j["@id"] == "test")
         assert "id" not in j
 
         r6 = Results(**prueba)
-        r6.entries.append(Entry({"@id":"ohno", "nif:isString":"Just testing"}))
+        r6.entries.append(
+            Entry({
+                "@id": "ohno",
+                "nif:isString": "Just testing"
+            }))
         logging.debug("Reponse 6: %s", r6)
-        assert("marl" in r6.context)
-        assert("entries" in r6.context)
+        assert ("marl" in r6.context)
+        assert ("entries" in r6.context)
         j6 = r6.jsonld(with_context=True)
         logging.debug("jsonld: %s", j6)
-        assert("@context" in j6)
-        assert("entries" in j6)
-        assert("analysis" in j6)
+        assert ("@context" in j6)
+        assert ("entries" in j6)
+        assert ("analysis" in j6)
         resp = r6.flask()
         received = json.loads(resp.data.decode())
         logging.debug("Response: %s", j6)
-        assert(received["entries"])
-        assert(received["entries"][0]["nif:isString"] == "Just testing")
-        assert(received["entries"][0]["nif:isString"] != "Not testing")
+        assert (received["entries"])
+        assert (received["entries"][0]["nif:isString"] == "Just testing")
+        assert (received["entries"][0]["nif:isString"] != "Not testing")
 
     def test_id(self):
         ''' Adding the id after creation should overwrite the automatic ID
@@ -60,7 +63,6 @@ class ModelsTest(TestCase):
         j2 = r.jsonld()
         assert j2['@id'] == 'test'
         assert 'id' not in j2
-
 
     def test_entries(self):
         e = Entry()

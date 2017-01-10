@@ -25,7 +25,7 @@ CLI_PARAMS = {
         "required": True,
         "default": "."
     },
-    }
+}
 
 NIF_PARAMS = {
     "input": {
@@ -96,10 +96,11 @@ def parse_params(indict, spec=NIF_PARAMS):
                    outdict[param] not in spec[param]["options"]:
                     wrong_params[param] = spec[param]
     if wrong_params:
-        message = Error(status=404,
-                        message="Missing or invalid parameters",
-                        parameters=outdict,
-                        errors={param: error for param, error in
-                                iteritems(wrong_params)})
+        message = Error(
+            status=404,
+            message="Missing or invalid parameters",
+            parameters=outdict,
+            errors={param: error
+                    for param, error in iteritems(wrong_params)})
         raise message
     return outdict

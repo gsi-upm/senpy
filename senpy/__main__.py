@@ -34,42 +34,51 @@ patch_all(thread=False)
 
 SERVER_PORT = os.environ.get("PORT", 5000)
 
+
 def main():
     parser = argparse.ArgumentParser(description='Run a Senpy server')
-    parser.add_argument('--level',
-                        '-l',
-                        metavar='logging_level',
-                        type=str,
-                        default="INFO",
-                        help='Logging level')
-    parser.add_argument('--debug',
-                        '-d',
-                        action='store_true',
-                        default=False,
-                        help='Run the application in debug mode')
-    parser.add_argument('--default-plugins',
-                        action='store_true',
-                        default=False,
-                        help='Load the default plugins')
-    parser.add_argument('--host',
-                        type=str,
-                        default="127.0.0.1",
-                        help='Use 0.0.0.0 to accept requests from any host.')
-    parser.add_argument('--port',
-                        '-p',
-                        type=int,
-                        default=SERVER_PORT,
-                        help='Port to listen on.')
-    parser.add_argument('--plugins-folder',
-                        '-f',
-                        type=str,
-                        default='plugins',
-                        help='Where to look for plugins.')
-    parser.add_argument('--only-install',
-                        '-i',
-                        action='store_true',
-                        default=False,
-                        help='Do not run a server, only install the dependencies of the plugins.')
+    parser.add_argument(
+        '--level',
+        '-l',
+        metavar='logging_level',
+        type=str,
+        default="INFO",
+        help='Logging level')
+    parser.add_argument(
+        '--debug',
+        '-d',
+        action='store_true',
+        default=False,
+        help='Run the application in debug mode')
+    parser.add_argument(
+        '--default-plugins',
+        action='store_true',
+        default=False,
+        help='Load the default plugins')
+    parser.add_argument(
+        '--host',
+        type=str,
+        default="127.0.0.1",
+        help='Use 0.0.0.0 to accept requests from any host.')
+    parser.add_argument(
+        '--port',
+        '-p',
+        type=int,
+        default=SERVER_PORT,
+        help='Port to listen on.')
+    parser.add_argument(
+        '--plugins-folder',
+        '-f',
+        type=str,
+        default='plugins',
+        help='Where to look for plugins.')
+    parser.add_argument(
+        '--only-install',
+        '-i',
+        action='store_true',
+        default=False,
+        help='Do not run a server, only install the dependencies of the plugins.'
+    )
     args = parser.parse_args()
     logging.basicConfig()
     rl = logging.getLogger()
@@ -91,6 +100,7 @@ def main():
         print('Bye!')
     http_server.stop()
     sp.deactivate_all()
+
 
 if __name__ == '__main__':
     main()

@@ -22,5 +22,4 @@ import os
 
 from .version import __version__
 
-
 __all__ = ['api', 'blueprints', 'cli', 'extensions', 'models', 'plugins']
