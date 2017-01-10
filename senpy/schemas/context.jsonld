@@ -16,16 +16,20 @@
     "@id": "me:hasEntities"
     },
     "suggestions": {
-        "@id": "me:hasSuggestions"
+        "@id": "me:hasSuggestions",
+        "@container": "@set"
     },
     "emotions": {
-        "@id": "onyx:hasEmotionSet"
+        "@id": "onyx:hasEmotionSet",
+        "@container": "@set"
     },
     "sentiments": {
-        "@id": "marl:hasOpinion"
+        "@id": "marl:hasOpinion",
+        "@container": "@set"
     },
     "entries": {
-        "@id": "prov:used"
+        "@id": "prov:used",
+        "@container": "@set"
     },
     "analysis": {
         "@id": "prov:wasGeneratedBy"
