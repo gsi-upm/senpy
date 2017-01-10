@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Senpy Emotion analysis",
+  "type": "object",
+  "allOf": [
+    {"$ref": "analysis.json"},
+    {"properties":
+     {
+       "onyx:hasEmotionModel": {
+         "anyOf": [
+           {"type": "string"},
+           {"$ref": "emotionModel.json"}
+         ]
+       }
+     },
+     "required": ["onyx:hasEmotionModel"]
+    }]
+}

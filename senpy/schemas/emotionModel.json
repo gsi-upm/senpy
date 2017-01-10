@@ -8,17 +8,20 @@
       "description": "Piece of context that contains the Sentiment",
       "type": "string"
     },
-    "onyx:hasEmotion": {
+    "onyx:hasDimension": {
+      "type": "array",
+      "items": {
+        "$ref": "dimensions.json"
+      },
+      "uniqueItems": true
+    },
+    "onyx:hasEmotionCategory": {
       "type": "array",
       "items": {
         "$ref": "emotion.json"
       },
       "default": []
-    },
-    "prov:wasGeneratedBy": {
-      "type": "string",
-      "description": "The ID of the analysis that generated this Emotion. The full object should be included in the \"analysis\" property of the root object"
     }
   },
-  "required": ["@id", "prov:wasGeneratedBy", "onyx:hasEmotion"]
+  "required": ["@id", "onyx:hasEmotion"]
 }

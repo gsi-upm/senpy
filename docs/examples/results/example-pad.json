@@ -1,0 +1,46 @@
+{
+"@context": [
+             "http://mixedemotions-project.eu/ns/context.jsonld",
+             {
+               "emovoc": "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#"
+             }
+  ],
+  "@id": "me:Result1",
+  "@type": "results",
+  "analysis": [
+    {
+      "@id": "me:HesamsAnalysis",
+      "@type": "onyx:EmotionAnalysis",
+      "onyx:usesEmotionModel": "emovoc:pad-dimensions"
+    }
+  ],
+  "entries": [
+    {
+      "@id": "Entry1",
+      "@type": [
+        "nif:RFC5147String",
+        "nif:Context"
+      ],
+      "nif:isString": "This is a test string",
+      "entities": [
+      ],
+      "suggestions": [
+      ],
+      "sentiments": [
+      ],
+      "emotions": [
+        {
+          "@id": "Entry1#char=0,21",
+          "nif:anchorOf": "This is a test string",
+          "prov:wasGeneratedBy": "me:HesamAnalysis",
+          "onyx:hasEmotion": [
+            {
+                "emovoc:pleasure": 0.5,
+                "emovoc:arousal": 0.7
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

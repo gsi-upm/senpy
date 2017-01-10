@@ -1,0 +1,5 @@
+from python:3.4
+
+RUN pip install pytest
+ADD requirements.txt /usr/src/app/
+RUN pip install -r /usr/src/app/requirements.txt

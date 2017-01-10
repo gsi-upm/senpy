@@ -1,11 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "properties": {
-    "plugins": {
-      "type": "array",
-      "items": {
-        "$ref": "plugin.json"
+  "allOf": [
+    {"$ref": "response.json"},
+    {
+      "properties": {
+        "plugins": {
+          "type": "array",
+          "items": {
+            "$ref": "plugin.json"
+          }
+        },
+        "@type": {
+        }
       }
     }
-  }
+  ]
 }

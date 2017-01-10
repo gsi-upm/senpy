@@ -1,11 +1,11 @@
 {
   "@context": "http://mixedemotions-project.eu/ns/context.jsonld",
   "@id": "http://example.com#NIFExample",
+  "@type": "results",
   "analysis": [
   ],
   "entries": [
     {
-      "@id": "http://example.org#char=0,40",
       "@type": [
         "nif:RFC5147String",
         "nif:Context"

@@ -36,7 +36,6 @@ def read_schema(schema_file, absolute=False):
         return jsonref.load(f, base_uri=schema_uri)
     
         
-
 base_schema = read_schema(DEFINITIONS_FILE)
 logging.debug(base_schema)
 
@@ -157,18 +156,16 @@ class SenpyModel(SenpyMixin, dict):
 
         temp = dict(*args, **kwargs)
 
+        for obj in [self.schema,]+self.schema.get('allOf', []):
+            for k, v in obj.get('properties', {}).items():
+                if 'default' in v:
+                    temp[k] = copy.deepcopy(v['default'])
+
         for i in temp:
             nk = self._get_key(i)
             if nk != i:
                 temp[nk] = temp[i]
                 del temp[i]
-
-        reqs = self.schema.get('required', [])
-        for i in reqs:
-            if i not in temp:
-                prop = self.schema['properties'][i]
-                if 'default' in prop:
-                    temp[i] = copy.deepcopy(prop['default'])
         if 'context' in temp:
             context = temp['context']
             del temp['context']
@@ -226,10 +223,19 @@ class EmotionSet(SenpyModel):
 class Emotion(SenpyModel):
     schema = read_schema('emotion.json')
 
+class EmotionModel(SenpyModel):
+    schema = read_schema('emotionModel.json')
+
 class Suggestion(SenpyModel):
     schema = read_schema('suggestion.json')
 
 class PluginModel(SenpyModel):
+    schema = read_schema('plugin.json')
+
+class EmotionPluginModel(SenpyModel):
+    schema = read_schema('plugin.json')
+
+class SentimentPluginModel(SenpyModel):
     schema = read_schema('plugin.json')
 
 class Plugins(SenpyModel):
