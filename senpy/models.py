@@ -1,9 +1,9 @@
 '''
-Senpy Models. 
+Senpy Models.
 
 This implementation should mirror the JSON schema definition.
-For compatibility with Py3 and for easier debugging, this new version drops introspection
-and adds all arguments to the models.
+For compatibility with Py3 and for easier debugging, this new version drops
+introspection and adds all arguments to the models.
 '''
 from __future__ import print_function
 from six import string_types
@@ -124,9 +124,9 @@ class SenpyMixin(object):
                 context = self.context.copy()
             if hasattr(self, 'prefix'):
                 # This sets @base for the document, which will be used in
-                # all relative URIs will. For example, if a uri is "Example" and
-                # prefix =s "http://example.com", the absolute URI after expanding
-                # with JSON-LD will be "http://example.com/Example"
+                # all relative URIs. For example, if a uri is "Example" and
+                # prefix =s "http://example.com", the absolute URI after
+                # expanding with JSON-LD will be "http://example.com/Example"
 
                 prefix_context = {"@base": self.prefix}
                 if isinstance(context, list):

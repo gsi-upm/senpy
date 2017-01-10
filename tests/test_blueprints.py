@@ -103,7 +103,7 @@ class BlueprintsTest(TestCase):
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         assert "is_activated" in js
-        assert js["is_activated"] == False
+        assert not js["is_activated"]
         resp = self.client.get("/api/plugins/Dummy/activate")
         self.assertCode(resp, 200)
         sleep(0.5)
@@ -111,7 +111,7 @@ class BlueprintsTest(TestCase):
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         assert "is_activated" in js
-        assert js["is_activated"] == True
+        assert js["is_activated"]
 
     def test_default(self):
         """ Show only one plugin"""

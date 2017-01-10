@@ -1,8 +1,7 @@
 from future.utils import iteritems
+from .models import Error
 import logging
 logger = logging.getLogger(__name__)
-
-from .models import Error
 
 API_PARAMS = {
     "algorithm": {

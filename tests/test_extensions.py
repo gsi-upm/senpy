@@ -44,6 +44,7 @@ class ExtensionsTest(TestCase):
         assert name == 'TestPip'
         assert module
         import noop
+        dir(noop)
 
     def test_installing(self):
         """ Enabling a plugin """

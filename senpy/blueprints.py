@@ -17,12 +17,12 @@
 """
 Blueprints for Senpy
 """
-from flask import Blueprint, request, current_app, render_template, url_for, jsonify
+from flask import (Blueprint, request, current_app,
+                   render_template, url_for, jsonify)
 from .models import Error, Response, Plugins, read_schema
-from .api import NIF_PARAMS, WEB_PARAMS, parse_params
+from .api import WEB_PARAMS, parse_params
 from functools import wraps
 
-import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -105,9 +105,7 @@ def plugins():
 @api_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 @basic_api
 def plugin(plugin=None, action="list"):
-    filt = {}
     sp = current_app.senpy
-    plugs = sp.filter_plugins(name=plugin)
     if plugin == 'default' and sp.default_plugin:
         response = sp.default_plugin
         plugin = response.name
@@ -123,11 +121,3 @@ def plugin(plugin=None, action="list"):
         return Response(message="Ok")
     else:
         return Error(message="action '{}' not allowed".format(action))
-
-
-if __name__ == '__main__':
-    import config
-
-    app.register_blueprint(api_blueprint)
-    app.debug = config.DEBUG
-    app.run(host='0.0.0.0', port=5000)

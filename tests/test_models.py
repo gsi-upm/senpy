@@ -1,21 +1,16 @@
-import os
 import logging
 
 import jsonschema
 
 import json
-import os
 from unittest import TestCase
-from senpy.models import Response, Entry, Results, Sentiment, EmotionSet, Emotion, Error
+from senpy.models import Entry, Results, Sentiment, EmotionSet, Error
 from senpy.plugins import SenpyPlugin
 from pprint import pprint
 
 
 class ModelsTest(TestCase):
     def test_jsonld(self):
-        ctx = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "senpy", "schemas",
-                         "context.jsonld"))
         prueba = {"id": "test", "analysis": [], "entries": []}
         r = Results(**prueba)
         print("Response's context: ")

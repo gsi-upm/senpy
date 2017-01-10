@@ -9,3 +9,4 @@ future
 jsonschema
 jsonref
 PyYAML
+semver

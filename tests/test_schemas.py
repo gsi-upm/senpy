@@ -6,8 +6,7 @@ import os
 from os import path
 from fnmatch import fnmatch
 
-import pyld
-from jsonschema import validate, RefResolver, Draft4Validator, ValidationError
+from jsonschema import RefResolver, Draft4Validator, ValidationError
 
 root_path = path.join(path.dirname(path.realpath(__file__)), '..')
 schema_folder = path.join(root_path, 'senpy', 'schemas')

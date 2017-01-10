@@ -6,7 +6,7 @@ import os.path
 import pickle
 import logging
 import tempfile
-from .models import Response, PluginModel, Error
+from .models import PluginModel, Error
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,6 @@ class SentimentPlugin(SenpyPlugin):
 
 class EmotionPlugin(SenpyPlugin):
     def __init__(self, info, *args, **kwargs):
-        resp = super(EmotionPlugin, self).__init__(info, *args, **kwargs)
         self.minEmotionValue = float(info.get("minEmotionValue", 0))
         self.maxEmotionValue = float(info.get("maxEmotionValue", 0))
         self["@type"] = "onyx:EmotionAnalysis"

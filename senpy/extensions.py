@@ -6,7 +6,7 @@ import gevent
 from gevent import monkey
 monkey.patch_all()
 
-from .plugins import SenpyPlugin, SentimentPlugin, EmotionPlugin
+from .plugins import SentimentPlugin
 from .models import Error
 from .blueprints import api_blueprint, demo_blueprint
 from .api import API_PARAMS, NIF_PARAMS, parse_params
@@ -21,7 +21,6 @@ import sys
 import imp
 import logging
 import traceback
-import gevent
 import yaml
 import pip
 
@@ -230,7 +229,6 @@ class Senpy(object):
             return None, None
         module = info["module"]
         name = info["name"]
-        requirements = info.get("requirements", [])
         sys.path.append(root)
         (fp, pathname, desc) = imp.find_module(module, [root, ])
         try:

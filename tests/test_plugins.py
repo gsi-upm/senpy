@@ -1,15 +1,11 @@
 #!/bin/env python
 
 import os
-import logging
 import pickle
 import shutil
 import tempfile
 
-import json
-import os
 from unittest import TestCase
-from flask import Flask
 from senpy.models import Results, Entry
 from senpy.plugins import SentimentPlugin, ShelfMixin
 

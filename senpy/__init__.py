@@ -17,9 +17,24 @@
 """
 Sentiment analysis server in Python
 """
-
-import os
-
+from __future__ import print_function
 from .version import __version__
+
+try:
+    import semver
+    __version_info__ = semver.parse_version_info(__version__)
+
+    if __version_info__.prerelease:
+        import logging
+        logger = logging.getLogger(__name__)
+        msg = 'WARNING: You are using a pre-release version of {} ({})'.format(
+            __name__, __version__)
+        if len(logging.root.handlers) > 0:
+            logger.info(msg)
+        else:
+            import sys
+            print(msg, file=sys.stderr)
+except ImportError:
+    print('semver not installed. Not doing version checking')
 
 __all__ = ['api', 'blueprints', 'cli', 'extensions', 'models', 'plugins']

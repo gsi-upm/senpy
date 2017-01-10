@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 #
 # Senpy documentation build configuration file, created by
 # sphinx-quickstart on Tue Feb 24 08:57:32 2015.

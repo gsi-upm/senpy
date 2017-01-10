@@ -11,6 +11,10 @@ yapf:
 	yapf -i -r senpy
 	yapf -i -r tests
 
+dev:
+	pip install --user pre-commit
+	pre-commit install
+
 dockerfiles: $(addprefix Dockerfile-,$(PYVERSIONS))
 	ln -s Dockerfile-$(PYMAIN) Dockerfile
 
@@ -75,4 +79,4 @@ pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 run: build
 	docker run --rm -p 5000:5000 -ti '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)'
 
-.PHONY: test test-% build-% build test test_pip run yapf
+.PHONY: test test-% build-% build test test_pip run yapf dev

@@ -24,7 +24,6 @@ from flask import Flask
 from senpy.extensions import Senpy
 from gevent.wsgi import WSGIServer
 from gevent.monkey import patch_all
-import gevent
 import logging
 import os
 import argparse
@@ -77,7 +76,7 @@ def main():
         '-i',
         action='store_true',
         default=False,
-        help='Do not run a server, only install the dependencies of the plugins.'
+        help='Do not run a server, only install plugin dependencies'
     )
     args = parser.parse_args()
     logging.basicConfig()
