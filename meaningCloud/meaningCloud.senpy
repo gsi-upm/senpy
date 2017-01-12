@@ -1,0 +1,23 @@
+{
+    "name": "meaningCloud",
+    "module": "meaningCloud",
+    "description": "Sentiment analysis with meaningCloud service",
+    "author": "GSI UPM",
+    "version": "1.0",
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": true,
+            "options": ["en","es"],
+            "default": "en"
+        },
+        "model": {
+            "aliases": ["model"],
+            "required": true,
+            "options": ["general"],
+            "default": "general"
+        }
+
+    },
+    "requirements": {},
+}
