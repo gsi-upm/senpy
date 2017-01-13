@@ -1,0 +1,36 @@
+{
+    "name": "affect",
+    "module": "sentiEmotions",
+    "description": "Sentiment Analysis and Emotion Recognition",
+    "author": "GSI UPM",
+    "version": "0.1",
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": true,
+            "options": ["en","es"],
+            "default": "en"
+        },
+        "sentiments-plugin": {
+            "aliases": ["sentiplug"],
+            "required": true,
+            "options": ["meaningCloud","sentiText","vaderSentiment"],
+            "default": "sentiText"
+        },
+        "emotions-plugin": {
+            "aliases": ["emoplug"],
+            "required": true,
+            "options": ["EmoTextWAF","EmoTextANEW"],
+            "default": "EmoTextANEW"
+        },
+        "endpoint": {
+            "aliases": ["endpoint"],
+            "required": true,
+            "options": ["http://senpy.cluster.gsi.dit.upm.es/api/"],
+            "default": "http://senpy.cluster.gsi.dit.upm.es/api/"
+        }
+
+
+    },
+    "requirements": {},
+}
