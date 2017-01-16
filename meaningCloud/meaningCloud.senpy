@@ -18,7 +18,7 @@
             "default": "general"
         },
         "apiKey":{
-            "aliases":["meaningCloud-key"],
+            "aliases":["meaningCloud-key","apiKey"],
             "required":true
         }
 

@@ -30,7 +30,7 @@
             "default": "http://senpy.cluster.gsi.dit.upm.es/api/"
         },
         "apiKey": {
-            "aliases": ["apikey"],
+            "aliases": ["apiKey","meaningCloud-key"],
             "required": false
         }
 
