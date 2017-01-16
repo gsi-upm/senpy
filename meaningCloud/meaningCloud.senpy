@@ -17,6 +17,10 @@
             "options": ["general"],
             "default": "general"
         }
+        "apiKey":{
+            "aliases":["meaningCloud-key"],
+            "required":true
+        }
 
     },
     "requirements": {},

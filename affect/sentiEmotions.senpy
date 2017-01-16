@@ -28,6 +28,10 @@
             "required": true,
             "options": ["http://senpy.cluster.gsi.dit.upm.es/api/"],
             "default": "http://senpy.cluster.gsi.dit.upm.es/api/"
+        },
+        "apiKey": {
+            "aliases": ["apikey"],
+            "required": false
         }
 
 

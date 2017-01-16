@@ -24,7 +24,8 @@ class DaedalusPlugin(SentimentPlugin):
         model = params["model"] # general_es / general_es / general_fr
         api = 'http://api.meaningcloud.com/sentiment-2.1'
         lang = params.get("language")
-        key = os.environ.get('DAEDALUS_KEY')
+        #key = os.environ.get('DAEDALUS_KEY')
+        key = params["apiKey"]
         parameters = {'key': key,'model': model,'lang': lang,'of': 'json','txt': txt,'src': 'its-not-a-real-python-sdk'}
         r = requests.post(api, params=parameters)
         print(r.text)
