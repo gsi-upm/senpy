@@ -1,6 +1,6 @@
 {
     "name": "affect",
-    "module": "sentiEmotions",
+    "module": "affect",
     "description": "Sentiment Analysis and Emotion Recognition",
     "author": "GSI UPM",
     "version": "0.1",
