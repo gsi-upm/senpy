@@ -28,12 +28,13 @@ class unifiedPlugin(SentimentPlugin):
         logger.info('TXT:%s' % txt)
         endpoint = params["endpoint"]
         lang = params.get("language")
-        
+        key = params["apiKey"]
         sentiplug = params["sentiments-plugin"]
         s_params = params.copy()
-        s_params.update({'algo':sentiplug,'language':lang})
+        s_params.update({'algo':sentiplug,'language':lang, 'meaningCloud-key':key})
         senti_response = requests.get(endpoint, params=s_params).json()
         logger.info('SENTIPARAMS: %s' % s_params)
+        logger.info('SENTIRESPONSE: %s' % senti_response)
         if 'entries' not in senti_response:
             raise Error(senti_response)
         senti_response = Results(senti_response)

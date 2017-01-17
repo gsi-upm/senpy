@@ -6,7 +6,7 @@ import os
 from os import path
 import time
 from senpy.plugins import SentimentPlugin, SenpyPlugin
-from senpy.models import Results, Entry, Sentiment
+from senpy.models import Results, Entry, Sentiment,Error
 
 class DaedalusPlugin(SentimentPlugin):
 
@@ -24,13 +24,15 @@ class DaedalusPlugin(SentimentPlugin):
         model = params["model"] # general_es / general_es / general_fr
         api = 'http://api.meaningcloud.com/sentiment-2.1'
         lang = params.get("language")
-        #key = os.environ.get('DAEDALUS_KEY')
         key = params["apiKey"]
         parameters = {'key': key,'model': model,'lang': lang,'of': 'json','txt': txt,'src': 'its-not-a-real-python-sdk'}
         r = requests.post(api, params=parameters)
         print(r.text)
 
         value = r.json().get('score_tag', None)
+        if not value:
+            raise Error(r.json())
+
         #Senpy Response
         response = Results()
         
