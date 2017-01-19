@@ -35,14 +35,16 @@ class DaedalusPlugin(SentimentPlugin):
 
         #Senpy Response
         response = Results()
-        
+        polarityValue = 0
         polarity = 'marl:Neutral'
         if 'N' in value:
             polarity = 'marl:Negative'
+            polarityValue = -1
         elif 'P' in value:
             polarity = 'marl:Positive'
+            polarityValue = 1
         entry = Entry(id="Entry0",nif_isString=txt)
-        opinion = Sentiment(id="Opinion0",marl__hasPolarity=polarity)
+        opinion = Sentiment(id="Opinion0",marl__hasPolarity=polarity,marl__polarityValue = polarityValue)
         opinion["prov:wasGeneratedBy"] = self.id
         entry.sentiments = []
         entry.sentiments.append(opinion)
