@@ -18,7 +18,12 @@ Params:
 
 ## Example of Usage
 
-Example requests: 
+Example request: 
 ```
 https://senpy.gsi.dit.upm.es/api/?algo=meaningCloud&language=en&apiKey=<put here your API key>&input=I%20love%20Madrid
 ```
+
+![alt GSI Logo][logoGSI]
+
+[logoGSI]: http://www.gsi.dit.upm.es/images/stories/logos/gsi.png "GSI Logo"
+
