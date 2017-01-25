@@ -25,7 +25,7 @@ http://senpy.cluster.gsi.dit.upm.es/api/?algo=meaningCloud&language=en&apiKey=<p
 ```
 
 
-Example respond: This plugin follows the standard for the senpy plugin response. For more information, please visit [senpy documentation](senpy.readthedocs.io). Specifically, NIF API section. 
+Example respond: This plugin follows the standard for the senpy plugin response. For more information, please visit [senpy documentation](http://senpy.readthedocs.io). Specifically, NIF API section. 
 
 ![alt GSI Logo][logoGSI]
 

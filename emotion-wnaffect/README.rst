@@ -1,6 +1,6 @@
 This plugin uses WNAffect labels for emotion analysis.
 
-The emotextWAF.senpy file can be copied and modified to use different versions of wnaffect with the same python code.
+The emotion-wnaffect.senpy file can be copied and modified to use different versions of wnaffect with the same python code.
 
 
 Known issues

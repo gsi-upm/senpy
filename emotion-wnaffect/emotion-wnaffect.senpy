@@ -1,6 +1,6 @@
 {
-    "name": "EmoTextWAF",
-    "module": "emotextWAF",
+    "name": "emotion-wnaffect",
+    "module": "emotion-wnaffect",
     "description": "Emotion classifier using rule-based classification.",
     "author": "@icorcuera @balkian",
     "version": "0.2",

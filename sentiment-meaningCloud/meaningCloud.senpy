@@ -1,6 +1,6 @@
 {
     "name": "meaningCloud",
-    "module": "meaningCloud",
+    "module": "sentiment-meaningCloud",
     "description": "Sentiment analysis with meaningCloud service",
     "author": "GSI UPM",
     "version": "1.0",

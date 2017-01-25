@@ -1,6 +1,6 @@
 {
-    "name": "SentiText",
-    "module": "sentitext",
+    "name": "sentiment-basic",
+    "module": "sentiment-basic",
     "description": "Sentiment classifier using rule-based classification for Spanish. Based on english to spanish translation and SentiWordNet sentiment knowledge.",
     "author": "github.com/nachtkatze",
     "version": "0.1",
