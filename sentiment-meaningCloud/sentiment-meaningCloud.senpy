@@ -1,7 +1,7 @@
 {
-    "name": "meaningCloud",
+    "name": "sentiment-meaningCloud",
     "module": "sentiment-meaningCloud",
-    "description": "Sentiment analysis with meaningCloud service",
+    "description": "Sentiment analysis with meaningCloud service. To use this plugin, you need to obtain an API key from meaningCloud signing up here: https://www.meaningcloud.com/developer/login. When you had obtained the meaningCloud API Key, you have to provide it to the plugin, using param apiKey. Example request: http://senpy.cluster.gsi.dit.upm.es/api/?algo=meaningCloud&language=en&apiKey=<put here your API key>&input=I%20love%20Madrid.",
     "author": "GSI UPM",
     "version": "1.0",
     "extra_params": {
@@ -23,5 +23,6 @@
         }
 
     },
-    "requirements": {},
+    "requirements": {}
+
 }

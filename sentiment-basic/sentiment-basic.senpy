@@ -1,7 +1,7 @@
 {
     "name": "sentiment-basic",
     "module": "sentiment-basic",
-    "description": "Sentiment classifier using rule-based classification for Spanish. Based on english to spanish translation and SentiWordNet sentiment knowledge.",
+    "description": "Sentiment classifier using rule-based classification for Spanish. Based on english to spanish translation and SentiWordNet sentiment knowledge. This is a demo plugin that uses only some features from the TASS 2015 classifier. To use the entirely functional classifier you can use the service in: http://senpy.cluster.gsi.dit.upm.es.",
     "author": "github.com/nachtkatze",
     "version": "0.1",
     "extra_params": {

@@ -13,7 +13,6 @@ class DaedalusPlugin(SentimentPlugin):
     def activate(self, *args, **kwargs):
         pass
 
-
     def deactivate(self, *args, **kwargs):
         self.close()
      

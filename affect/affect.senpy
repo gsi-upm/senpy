@@ -14,14 +14,14 @@
         "sentiments-plugin": {
             "aliases": ["sentiplug"],
             "required": true,
-            "options": ["meaningCloud","sentiText","vaderSentiment"],
-            "default": "sentiText"
+            "options": ["sentiment-meaningCloud","sentiment-tass","sentiment-vader"],
+            "default": "sentiment-tass"
         },
         "emotions-plugin": {
             "aliases": ["emoplug"],
             "required": true,
-            "options": ["EmoTextWAF","EmoTextANEW"],
-            "default": "EmoTextANEW"
+            "options": ["emotion-wnaffect","emotion-anew"],
+            "default": "emotion-anew"
         },
         "endpoint": {
             "aliases": ["endpoint"],
@@ -36,5 +36,5 @@
 
 
     },
-    "requirements": {},
+    "requirements": {}
 }
