@@ -37,9 +37,9 @@ class EmotionTextPlugin(EmotionPlugin):
                                    'joy': 'joy',
                                    'sadness': 'sadness'}
 
-        self._load_emotions(local_path+self.info['hierarchy_path'])     
-        self._total_synsets = self._load_synsets(local_path+self.info['synsets_path'])
-        self._wn16_path = local_path+self.info['wn16_path']
+        self._load_emotions(self.info['hierarchy_path'])     
+        self._total_synsets = self._load_synsets(self.info['synsets_path'])
+        self._wn16_path = self.info['wn16_path']
         self._wn16= None
         self._wn16 = WordNetCorpusReader(os.path.abspath("{0}".format(self._wn16_path)), nltk.data.find(self._wn16_path))
         

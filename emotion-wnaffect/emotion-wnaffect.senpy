@@ -13,9 +13,9 @@
         }
     },
     "requirements": {},
-    "synsets_path": "/a-synsets.xml",
-    "hierarchy_path": "/a-hierarchy.xml",
-    "wn16_path": "/wordnet1.6/dict",
+    "synsets_path": "/senpy-plugins-data/emotion-wnaffect/a-synsets.xml",
+    "hierarchy_path": "/senpy-plugins-data/emotion-wnaffect/a-hierarchy.xml",
+    "wn16_path": "/senpy-plugins-data/emotion-wnaffect/wordnet1.6/dict",
     "requirements": [
         "nltk>=3.0.5",
         "numpy>=1.8.2",
