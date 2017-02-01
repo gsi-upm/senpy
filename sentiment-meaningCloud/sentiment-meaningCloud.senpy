@@ -23,6 +23,8 @@
         }
 
     },
-    "requirements": {}
+    "requirements": {},
+    "maxPolarityValue": "1",
+    "minPolarityValue": "-1"
 
 }
