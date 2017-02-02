@@ -23,10 +23,9 @@ setup(
     name='senpy',
     packages=['senpy'],  # this must be the same as the name above
     version=__version__,
-    description='''
-    A sentiment analysis server implementation. Designed to be \
-extendable, so new algorithms and sources can be used.
-    ''',
+    description=('A sentiment analysis server implementation. '
+                 'Designed to be extensible, so new algorithms '
+                 'and sources can be used.'),
     author='J. Fernando Sanchez',
     author_email='balkian@gmail.com',
     url='https://github.com/gsi-upm/senpy',  # use the URL to the github repo

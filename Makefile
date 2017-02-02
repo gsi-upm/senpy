@@ -1,4 +1,4 @@
-PYVERSIONS=3.4 2.7
+PYVERSIONS=3.5 3.4 2.7
 PYMAIN=$(firstword $(PYVERSIONS))
 NAME=senpy
 REPO=gsiupm
@@ -16,6 +16,7 @@ dev:
 	pre-commit install
 
 dockerfiles: $(addprefix Dockerfile-,$(PYVERSIONS))
+	@unlink Dockerfile >/dev/null
 	ln -s Dockerfile-$(PYMAIN) Dockerfile
 
 Dockerfile-%: Dockerfile.template
@@ -35,7 +36,7 @@ test: $(addprefix test-,$(PYMAIN))
 
 testall: $(addprefix test-,$(PYVERSIONS))
 
-debug-%: build-debug-%
+debug-%:
 	docker run --rm -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti $(NAME)-debug ;
 
 debug: debug-$(PYMAIN)

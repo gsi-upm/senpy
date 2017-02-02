@@ -2,9 +2,6 @@
 """
 from future import standard_library
 standard_library.install_aliases()
-import gevent
-from gevent import monkey
-monkey.patch_all()
 
 from .plugins import SentimentPlugin
 from .models import Error
@@ -12,7 +9,8 @@ from .blueprints import api_blueprint, demo_blueprint
 from .api import API_PARAMS, NIF_PARAMS, parse_params
 
 from git import Repo, InvalidGitRepositoryError
-from functools import partial
+
+from threading import Thread
 
 import os
 import fnmatch
@@ -154,20 +152,23 @@ class Senpy(object):
         logger.info("Activating plugin: {}".format(plugin.name))
 
         def act():
+            success = False
             try:
                 plugin.activate()
-                logger.info("Plugin activated: {}".format(plugin.name))
+                msg = "Plugin activated: {}".format(plugin.name)
+                logger.info(msg)
+                success = True
+                self._set_active_plugin(plugin_name, success)
             except Exception as ex:
-                logger.error("Error activating plugin {}: {}".format(
-                    plugin.name, ex))
-                logger.error("Trace: {}".format(traceback.format_exc()))
-
-        th = gevent.spawn(act)
-        th.link_value(partial(self._set_active_plugin, plugin_name, True))
+                msg = "Error activating plugin {} - {} : \n\t{}".format(
+                    plugin.name, ex, ex.format_exc())
+                logger.error(msg)
+                raise Error(msg)
         if sync:
-            th.join()
+            act()
         else:
-            return th
+            th = Thread(target=act)
+            th.start()
 
     def deactivate_plugin(self, plugin_name, sync=False):
         try:
@@ -175,6 +176,8 @@ class Senpy(object):
         except KeyError:
             raise Error(
                 message="Plugin not found: {}".format(plugin_name), status=404)
+
+        self._set_active_plugin(plugin_name, False)
 
         def deact():
             try:
@@ -185,12 +188,11 @@ class Senpy(object):
                     plugin.name, ex))
                 logger.error("Trace: {}".format(traceback.format_exc()))
 
-        th = gevent.spawn(deact)
-        th.link_value(partial(self._set_active_plugin, plugin_name, False))
         if sync:
-            th.join()
+            deact()
         else:
-            return th
+            th = Thread(target=deact)
+            th.start()
 
     def reload_plugin(self, name):
         logger.debug("Reloading {}".format(name))
