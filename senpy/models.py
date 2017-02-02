@@ -147,6 +147,9 @@ class SenpyMixin(object):
             obj = obj.jsonld()
         jsonschema.validate(obj, self.schema)
 
+    def __str__(self):
+        return str(self.to_JSON())
+
 
 class SenpyModel(SenpyMixin, dict):
 
@@ -198,7 +201,8 @@ class SenpyModel(SenpyMixin, dict):
 
     def _plain_dict(self):
         d = {k: v for (k, v) in self.items() if k[0] != "_"}
-        d["@id"] = d.pop('id')
+        if 'id' in d:
+            d["@id"] = d.pop('id')
         return d
 
 

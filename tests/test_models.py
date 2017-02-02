@@ -100,5 +100,16 @@ class ModelsTest(TestCase):
         logging.debug(c)
         p.validate()
 
+    def test_str(self):
+        """The string representation shouldn't include private variables"""
+        r = Results()
+        p = SenpyPlugin({"name": "STR test", "version": 0})
+        p._testing = 0
+        s = str(p)
+        assert "_testing" not in s
+        r.analysis.append(p)
+        s = str(r)
+        assert "_testing" not in s
+
     def test_frame_response(self):
         pass
