@@ -60,6 +60,15 @@ body {
      border-radius: 20px;
 
 }
+#jsonraw {
+    overflow: auto;
+    padding: 20px;
+    background: lightgray;
+     -moz-border-radius: 20px;
+     -webkit-border-radius: 20px;
+     -khtml-border-radius: 20px;
+     border-radius: 20px;
+}
 #input_request { 
     display:block;
     width:150px;

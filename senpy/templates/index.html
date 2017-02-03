@@ -77,10 +77,25 @@ I cannot believe it!</textarea></div>
                 <a id="preview" class="btn btn-lg btn-primary" href="#" onclick="load_JSON()">Analyse!</a>
                 <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
             </form>
-            <div id="content">
               <span id="input_request"></span>
-              <pre id="results"></pre>
-            </div>
+              <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a class="active" href="#viewer">Viewer</a></li>
+                <li role="presentation"><a class="active" href="#raw">Raw</a></li>
+              </ul>
+              <div class="tab-content">
+                
+                <div class="tab-pane active" id="viewer">
+                    <div id="content">
+                      <pre id="results"></pre>
+                    </div>
+                </div>
+                
+                <div class="tab-pane" id="raw">
+                    <div id="content">
+                       <pre id="jsonraw"></pre>
+                    </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

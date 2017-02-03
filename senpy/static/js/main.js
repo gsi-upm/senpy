@@ -102,22 +102,17 @@ function load_JSON(){
         }
       }
       var response = JSON.parse($.ajax({type: "GET", url: url , async: false}).responseText);
-
       var container = document.getElementById('results');
-      
       var options = {
         mode: 'view'
       };
-
       try { 
         container.removeChild(container.firstChild);
       }
-      
       catch(err) {
-
       }
       var editor = new JSONEditor(container, options, response);
-      //document.getElementById("results").innerHTML = replaceURLWithHTMLLinks(JSON.stringify(response, undefined, 2))
+      document.getElementById("jsonraw").innerHTML = replaceURLWithHTMLLinks(JSON.stringify(response, undefined, 2))
       document.getElementById("input_request").innerHTML = "<label>"+url+"</label>"
       
 
