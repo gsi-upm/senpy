@@ -1,7 +1,7 @@
 {
     "name": "affect",
     "module": "affect",
-    "description": "Sentiment Analysis and Emotion Recognition",
+    "description": "Sentiment Analysis and Emotion Recognition. This plugins uses emotion and sentiment plugins to return an unified response with the sentiment analysis and the emotion Recognition. You have to choose as parameters one sentiment plugin and one emotion plugin.",
     "author": "GSI UPM",
     "version": "0.1",
     "extra_params": {
