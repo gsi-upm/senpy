@@ -24,6 +24,7 @@
         "lxml>=3.4.2",
         "pandas",
         "senpy",
-        "pattern"
+        "pattern",
+        "textblob"
     ]
 }

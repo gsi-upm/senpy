@@ -12,38 +12,14 @@ from nltk.corpus import WordNetCorpusReader
 
 from emotion import Emotion as Emo
 from pattern.en import parse
-from senpy.plugins import EmotionPlugin, SenpyPlugin
+from senpy.plugins import EmotionPlugin, SenpyPlugin, ShelfMixin
 from senpy.models import Results, EmotionSet, Entry, Emotion
 
 logger = logging.getLogger(__name__)
 
-class EmotionTextPlugin(EmotionPlugin):
+class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
     
-    def __init__(self, info, *args, **kwargs):
-        super(EmotionTextPlugin, self).__init__(info, *args, **kwargs)
-        self.id = info['module']
-        self.info = info
-        self._stopwords = stopwords.words('english')
-        local_path=os.path.dirname(os.path.abspath(__file__))
-        self._categories = {'anger': ['general-dislike',],
-                            'fear': ['negative-fear',],
-                            'disgust': ['shame',],
-                            'joy': ['gratitude','affective','enthusiasm','love','joy','liking'],
-                            'sadness': ['ingrattitude','daze','humility','compassion','despair','anxiety','sadness']}
-
-        self._wnaffect_mappings = {'anger': 'anger',
-                                   'fear': 'negative-fear',
-                                   'disgust': 'disgust',
-                                   'joy': 'joy',
-                                   'sadness': 'sadness'}
-
-        self._load_emotions(self.info['hierarchy_path'])     
-        self._total_synsets = self._load_synsets(self.info['synsets_path'])
-        self._wn16_path = self.info['wn16_path']
-        self._wn16= None
-        self._wn16 = WordNetCorpusReader(os.path.abspath("{0}".format(self._wn16_path)), nltk.data.find(self._wn16_path))
-        
-
+  
     def _load_synsets(self, synsets_path):
         """Returns a dictionary POS tag -> synset offset -> emotion (str -> int -> str)."""
         tree = ET.parse(synsets_path)
@@ -76,10 +52,41 @@ class EmotionTextPlugin(EmotionPlugin):
                 Emo.emotions[name] = Emo(name, elem.get("isa"))
 
     def activate(self, *args, **kwargs):
+        self._stopwords = stopwords.words('english')
+        #local_path=os.path.dirname(os.path.abspath(__file__))
+        self._categories = {'anger': ['general-dislike',],
+                            'fear': ['negative-fear',],
+                            'disgust': ['shame',],
+                            'joy': ['gratitude','affective','enthusiasm','love','joy','liking'],
+                            'sadness': ['ingrattitude','daze','humility','compassion','despair','anxiety','sadness']}
+
+        self._wnaffect_mappings = {'anger': 'anger',
+                                   'fear': 'negative-fear',
+                                   'disgust': 'disgust',
+                                   'joy': 'joy',
+                                   'sadness': 'sadness'}
+
+
+        self._load_emotions(self._info['hierarchy_path'])
+                
+        if 'total_synsets' not in self.sh:
+            total_synsets = self._load_synsets(self._info['synsets_path'])
+            self.sh['total_synsets'] = total_synsets
+        
+        self._total_synsets = self.sh['total_synsets']
+        
+        if 'wn16' not in self.sh:
+            self._wn16_path = self._info['wn16_path']
+            wn16 = WordNetCorpusReader(os.path.abspath("{0}".format(self._wn16_path)), nltk.data.find(self._wn16_path))
+            self.sh['wn16'] = wn16
+        
+        self._wn16 = self.sh['wn16']
+
+
         logger.info("EmoText plugin is ready to go!")
 
     def deactivate(self, *args, **kwargs):
-
+        self.save()
         logger.info("EmoText plugin is being deactivated...")
 
     def _my_preprocessor(self, text):
