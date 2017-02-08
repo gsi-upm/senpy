@@ -44,7 +44,6 @@ class PluginsTest(TestCase):
         a = ShelfDummyPlugin(
             info={'name': 'default_shelve_file',
                   'version': 'test'})
-        assert os.path.dirname(a.shelf_file) == tempfile.gettempdir()
         a.activate()
         assert os.path.isfile(a.shelf_file)
         os.remove(a.shelf_file)

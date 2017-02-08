@@ -11,7 +11,9 @@ from pprint import pprint
 
 class ModelsTest(TestCase):
     def test_jsonld(self):
-        prueba = {"id": "test", "analysis": [], "entries": []}
+        prueba = {"id": "test",
+                  "analysis": [],
+                  "entries": []}
         r = Results(**prueba)
         print("Response's context: ")
         pprint(r.context)
@@ -28,11 +30,11 @@ class ModelsTest(TestCase):
         assert "id" not in j
 
         r6 = Results(**prueba)
-        r6.entries.append(
-            Entry({
-                "@id": "ohno",
-                "nif:isString": "Just testing"
-            }))
+        e = Entry({
+            "@id": "ohno",
+            "nif:isString": "Just testing"
+        })
+        r6.entries.append(e)
         logging.debug("Reponse 6: %s", r6)
         assert ("marl" in r6.context)
         assert ("entries" in r6.context)

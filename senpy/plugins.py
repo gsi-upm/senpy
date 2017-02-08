@@ -6,16 +6,16 @@ import os.path
 import pickle
 import logging
 import tempfile
-from .models import PluginModel, Error
+from . import models
 
 logger = logging.getLogger(__name__)
 
 
-class SenpyPlugin(PluginModel):
+class SenpyPlugin(models.Plugin):
     def __init__(self, info=None):
         if not info:
-            raise Error(message=("You need to provide configuration"
-                                 "information for the plugin."))
+            raise models.Error(message=("You need to provide configuration"
+                                        "information for the plugin."))
         logger.debug("Initialising {}".format(info))
         super(SenpyPlugin, self).__init__(info)
         self.id = '{}_{}'.format(self.name, self.version)
@@ -40,7 +40,7 @@ class SenpyPlugin(PluginModel):
         self.deactivate()
 
 
-class SentimentPlugin(SenpyPlugin):
+class SentimentPlugin(SenpyPlugin, models.SentimentPlugin):
     def __init__(self, info, *args, **kwargs):
         super(SentimentPlugin, self).__init__(info, *args, **kwargs)
         self.minPolarityValue = float(info.get("minPolarityValue", 0))
@@ -48,7 +48,7 @@ class SentimentPlugin(SenpyPlugin):
         self["@type"] = "marl:SentimentAnalysis"
 
 
-class EmotionPlugin(SenpyPlugin):
+class EmotionPlugin(SentimentPlugin, models.EmotionPlugin):
     def __init__(self, info, *args, **kwargs):
         self.minEmotionValue = float(info.get("minEmotionValue", 0))
         self.maxEmotionValue = float(info.get("maxEmotionValue", 0))
@@ -71,10 +71,6 @@ class ShelfMixin(object):
             del self.__dict__['_sh']
         self.save()
 
-    def __del__(self):
-        self.save()
-        super(ShelfMixin, self).__del__()
-
     @property
     def shelf_file(self):
         if not hasattr(self, '_shelf_file') or not self._shelf_file:
@@ -86,8 +82,7 @@ class ShelfMixin(object):
         return self._shelf_file
 
     def save(self):
-        logger.debug('closing pickle')
+        logger.debug('saving pickle')
         if hasattr(self, '_sh') and self._sh is not None:
             with open(self.shelf_file, 'wb') as f:
                 pickle.dump(self._sh, f)
-            del (self.__dict__['_sh'])

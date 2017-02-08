@@ -12,11 +12,14 @@ import time
 import copy
 import json
 import os
-import logging
 import jsonref
 import jsonschema
 
 from flask import Response as FlaskResponse
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 DEFINITIONS_FILE = 'definitions.json'
 CONTEXT_PATH = os.path.join(
@@ -40,7 +43,6 @@ def read_schema(schema_file, absolute=False):
 
 
 base_schema = read_schema(DEFINITIONS_FILE)
-logging.debug(base_schema)
 
 
 class Context(dict):
@@ -72,7 +74,7 @@ base_context = Context.load(CONTEXT_PATH)
 class SenpyMixin(object):
     context = base_context["@context"]
 
-    def flask(self, in_headers=False, headers=None, **kwargs):
+    def flask(self, in_headers=True, headers=None, **kwargs):
         """
         Return the values and error to be used in flask.
         So far, it returns a fixed context. We should store/generate different
@@ -151,14 +153,16 @@ class SenpyMixin(object):
         return str(self.to_JSON())
 
 
-class SenpyModel(SenpyMixin, dict):
+class BaseModel(SenpyMixin, dict):
 
     schema = base_schema
 
     def __init__(self, *args, **kwargs):
-        self.id = kwargs.pop('id', '{}_{}'.format(
-            type(self).__name__, time.time()))
-
+        if 'id' in kwargs:
+            self.id = kwargs.pop('id')
+        elif kwargs.pop('_auto_id', True):
+            self.id = '_:{}_{}'.format(
+                type(self).__name__, time.time())
         temp = dict(*args, **kwargs)
 
         for obj in [self.schema, ] + self.schema.get('allOf', []):
@@ -175,7 +179,11 @@ class SenpyModel(SenpyMixin, dict):
             context = temp['context']
             del temp['context']
             self.__dict__['context'] = Context.load(context)
-        super(SenpyModel, self).__init__(temp)
+        try:
+            temp['@type'] = getattr(self, '@type')
+        except AttributeError:
+            logger.warn('Creating an instance of an unknown model')
+        super(BaseModel, self).__init__(temp)
 
     def _get_key(self, key):
         key = key.replace("__", ":", 1)
@@ -206,73 +214,80 @@ class SenpyModel(SenpyMixin, dict):
         return d
 
 
-class Response(SenpyModel):
-    schema = read_schema('response.json')
+_subtypes = {}
 
 
-class Results(SenpyModel):
-    schema = read_schema('results.json')
+def register(rsubclass, rtype=None):
+    _subtypes[rtype or rsubclass.__name__] = rsubclass
 
 
-class Entry(SenpyModel):
-    schema = read_schema('entry.json')
+def from_dict(indict):
+    target = indict.get('@type', None)
+    if target and target in _subtypes:
+        cls = _subtypes[target]
+    else:
+        cls = BaseModel
+    return cls(**indict)
 
 
-class Sentiment(SenpyModel):
-    schema = read_schema('sentiment.json')
+def from_schema(name, schema_file=None, base_classes=None):
+    base_classes = base_classes or []
+    base_classes.append(BaseModel)
+    schema_file = schema_file or '{}.json'.format(name)
+    class_name = '{}{}'.format(i[0].upper(), i[1:])
+    newclass = type(class_name, tuple(base_classes), {})
+    setattr(newclass, '@type', name)
+    setattr(newclass, 'schema', read_schema(schema_file))
+    register(newclass, name)
+    return newclass
 
 
-class Analysis(SenpyModel):
-    schema = read_schema('analysis.json')
+def _add_from_schema(*args, **kwargs):
+    generatedClass = from_schema(*args, **kwargs)
+    globals()[generatedClass.__name__] = generatedClass
+    del generatedClass
 
 
-class EmotionSet(SenpyModel):
-    schema = read_schema('emotionSet.json')
+for i in ['response',
+          'results',
+          'entry',
+          'sentiment',
+          'analysis',
+          'emotionSet',
+          'emotion',
+          'emotionModel',
+          'suggestion',
+          'plugin',
+          'emotionPlugin',
+          'sentimentPlugin',
+          'plugins']:
+    _add_from_schema(i)
 
-
-class Emotion(SenpyModel):
-    schema = read_schema('emotion.json')
-
-
-class EmotionModel(SenpyModel):
-    schema = read_schema('emotionModel.json')
-
-
-class Suggestion(SenpyModel):
-    schema = read_schema('suggestion.json')
-
-
-class PluginModel(SenpyModel):
-    schema = read_schema('plugin.json')
-
-
-class EmotionPluginModel(SenpyModel):
-    schema = read_schema('plugin.json')
-
-
-class SentimentPluginModel(SenpyModel):
-    schema = read_schema('plugin.json')
-
-
-class Plugins(SenpyModel):
-    schema = read_schema('plugins.json')
+_ErrorModel = from_schema('error')
 
 
 class Error(SenpyMixin, BaseException):
     def __init__(self,
                  message,
-                 status=500,
-                 params=None,
-                 errors=None,
                  *args,
                  **kwargs):
+        super(Error, self).__init__(self, message, message)
+        self._error = _ErrorModel(message=message, *args, **kwargs)
         self.message = message
-        self.status = status
-        self.params = params or {}
-        self.errors = errors or ""
 
-    def _plain_dict(self):
-        return self.__dict__
+    def __getattr__(self, key):
+        if key != '_error' and hasattr(self._error, key):
+            return getattr(self._error, key)
+        raise AttributeError(key)
 
-    def __str__(self):
-        return str(self.jsonld())
+    def __setattr__(self, key, value):
+        if key != '_error':
+            return setattr(self._error, key, value)
+        else:
+            super(Error, self).__setattr__(key, value)
+
+    def __delattr__(self, key):
+        delattr(self._error, key)
+
+
+register(Error, 'error')

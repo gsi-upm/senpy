@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Base schema for all Senpy objects",
+  "type": "object",
+  "$allOf": [
+    {"$ref": "atom.json"},
+    {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "list",
+          "items": {"type": "object"}
+        },
+        "code": {
+          "type": "int"
+        },
+        "required": ["message"]
+      }
+    }
+  ]
+}

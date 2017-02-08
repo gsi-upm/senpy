@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Base schema for all Senpy objects",
+  "type": "object",
+  "properties": {
+    "@id": {
+      "type": "string"
+    },
+    "@type": {
+      "type": "string",
+      "description": "Type of the atom. e.g., 'onyx:EmotionAnalysis', 'nif:Entry'"
+    }
+  },
+  "required": ["@id", "@type"]
+}

@@ -1,4 +1,4 @@
-from python:{{PYVERSION}}-slim
+from python:{{PYVERSION}}
 
 WORKDIR /usr/src/app
 ADD requirements.txt /usr/src/app/

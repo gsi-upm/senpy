@@ -4,6 +4,7 @@ NAME=senpy
 REPO=gsiupm
 VERSION=$(shell cat $(NAME)/VERSION)
 TARNAME=$(NAME)-$(subst -,.,$(VERSION)).tar.gz 
+IMAGENAME=$(REPO)/$(NAME):$(VERSION)
 
 all: build run
 
@@ -22,27 +23,24 @@ dockerfiles: $(addprefix Dockerfile-,$(PYVERSIONS))
 Dockerfile-%: Dockerfile.template
 	sed "s/{{PYVERSION}}/$*/" Dockerfile.template > Dockerfile-$*
 
-build: $(addprefix build-, $(PYMAIN))
+quick_build: $(addprefix build-, $(PYMAIN))
 
-buildall: $(addprefix build-, $(PYVERSIONS))
+build: $(addprefix build-, $(PYVERSIONS))
 
 build-%: Dockerfile-%
-	docker build -t '$(REPO)/$(NAME):$(VERSION)-python$*' -f Dockerfile-$* .;
+	docker build -t '$(IMAGENAME)-python$*' -f Dockerfile-$* .;
 
-build-debug-%:
-	docker build -t '$(NAME)-debug' -f Dockerfile-debug-$* .;
+quick_test: $(addprefix test-,$(PYMAIN))
 
-test: $(addprefix test-,$(PYMAIN))
-
-testall: $(addprefix test-,$(PYVERSIONS))
+test: $(addprefix test-,$(PYVERSIONS))
 
 debug-%:
-	docker run --rm -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti $(NAME)-debug ;
+	(docker start $(NAME)-debug && docker attach $(NAME)-debug) || docker run -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti --name $(NAME)-debug '$(IMAGENAME)-python$*'
 
 debug: debug-$(PYMAIN)
 
 test-%: build-%
-	docker run --rm -w /usr/src/app/ --entrypoint=/usr/local/bin/python -ti '$(REPO)/$(NAME):$(VERSION)-python$*' setup.py test --addopts "-vvv -s" ;
+	docker run --rm -w /usr/src/app/ --entrypoint=/usr/local/bin/python -ti '$(IMAGENAME)-python$*' setup.py test --addopts "-vvv -s" ;
 
 dist/$(TARNAME):
 	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) python setup.py sdist;
@@ -55,12 +53,13 @@ pip_test-%: sdist
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
 upload-%: test-%
-	docker push '$(REPO)/$(NAME):$(VERSION)-python$*'
+	docker push '$(IMAGENAME)-python$*'
 
-upload: testall $(addprefix upload-,$(PYVERSIONS))
-	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)' '$(REPO)/$(NAME):$(VERSION)'
-	docker tag '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)' '$(REPO)/$(NAME)'
-	docker push '$(REPO)/$(NAME):$(VERSION)'
+upload: test $(addprefix upload-,$(PYVERSIONS))
+	docker tag '$(IMAGENAME)-python$(PYMAIN)' '$(IMAGENAME)'
+	docker tag '$(IMAGENAME)-python$(PYMAIN)' '$(REPO)/$(NAME)'
+	docker push '$(IMAGENAME)'
+	docker push '$(REPO)/$(NAME)'
 
 clean:
 	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1;}}' | xargs docker rm 2>/dev/null|| true
@@ -78,6 +77,6 @@ pip_upload:
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
 run: build
-	docker run --rm -p 5000:5000 -ti '$(REPO)/$(NAME):$(VERSION)-python$(PYMAIN)'
+	docker run --rm -p 5000:5000 -ti '$(IMAGENAME)-python$(PYMAIN)'
 
 .PHONY: test test-% build-% build test pip_test run yapf dev

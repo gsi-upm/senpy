@@ -5,9 +5,6 @@
     "@id": {
       "type": "string"
     },
-    "@type": {
-      "enum": [["nif:RFC5147String", "nif:Context"]]
-    },
     "nif:isString": {
       "description": "String contained in this Context",
       "type": "string"

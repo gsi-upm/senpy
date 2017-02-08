@@ -161,7 +161,7 @@ class Senpy(object):
                 self._set_active_plugin(plugin_name, success)
             except Exception as ex:
                 msg = "Error activating plugin {} - {} : \n\t{}".format(
-                    plugin.name, ex, ex.format_exc())
+                    plugin.name, ex, traceback.format_exc())
                 logger.error(msg)
                 raise Error(msg)
         if sync:

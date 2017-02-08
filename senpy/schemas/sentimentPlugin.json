@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "$allOf": [
+    {
+      "$ref": "plugin.json"
+    },
+    {
+      "properties": {
+        "marl:minPolarityValue": {
+          "type": "number"
+        },
+        "marl:maxPolarityValue": {
+          "type": "number"
+        }
+      }
+    }
+  ]
+}
