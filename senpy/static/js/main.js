@@ -29,6 +29,7 @@ $(document).ready(function() {
     var response = JSON.parse($.ajax({type: "GET", url: "/api/plugins/" , async: false}).responseText);
     var defaultPlugin= JSON.parse($.ajax({type: "GET", url: "/api/plugins/default" , async: false}).responseText);
     html="";
+    var availablePlugins = document.getElementById('availablePlugins');
     plugins = response.plugins;
     for (r in plugins){
       if (plugins[r]["name"]){
@@ -62,12 +63,17 @@ $(document).ready(function() {
           }
         }
       }
+      var pluginList = document.createElement('li');
+      pluginList.innerHTML = "<a href=https://github.com/gsi-upm/senpy-plugins-community>" + plugins[r]["name"] + "</a>" + ": " + plugins[r]["description"]
+      availablePlugins.appendChild(pluginList)
     }
     document.getElementById('plugins').innerHTML = html;
     change_params();
+  
   $(window).on('hashchange', hashchanged);
   hashchanged();
   $('.tooltip-form').tooltip();
+
 });
 
 
@@ -102,9 +108,20 @@ function load_JSON(){
         }
       }
       var response = JSON.parse($.ajax({type: "GET", url: url , async: false}).responseText);
-      document.getElementById("results").innerHTML = replaceURLWithHTMLLinks(JSON.stringify(response, undefined, 2))
-      document.getElementById("input_request").innerHTML = "<label>"+url+"</label>"
-  
+      var container = document.getElementById('results');
+      var options = {
+        mode: 'view'
+      };
+      try { 
+        container.removeChild(container.firstChild);
+      }
+      catch(err) {
+      }
+      var editor = new JSONEditor(container, options, response);
+      document.getElementById("jsonraw").innerHTML = replaceURLWithHTMLLinks(JSON.stringify(response, undefined, 2))
+      document.getElementById("input_request").innerHTML = "<a href='"+url+"'>"+url+"</a>"
+      
+
 }
 
 

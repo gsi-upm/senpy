@@ -60,13 +60,30 @@ body {
      border-radius: 20px;
 
 }
-#input_request { 
-    display:block;
-    width:150px;
-    word-wrap:break-word;
+#jsonraw {
+    overflow: auto;
+    padding: 20px;
+    background: lightgray;
+     -moz-border-radius: 20px;
+     -webkit-border-radius: 20px;
+     -khtml-border-radius: 20px;
+     border-radius: 20px;
 }
-textarea
-{
+#input_request { 
+    margin-top: 5px;
+    display:block;
+    word-wrap:break-word;
+    white-space:pre;
+    overflow: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+#input_request a{ 
+    width:100%;
+}
+
+
+textarea{
     border:1px solid #999999;
     width:100%;
     margin:5px 0;
