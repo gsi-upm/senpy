@@ -1,13 +1,12 @@
 image: docker:latest
 
 
-services:
-  - docker:dind
-  
 # When using dind, it's wise to use the overlayfs driver for
 # improved performance.
 variables:
   DOCKER_DRIVER: overlay
+  IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG
+  DOCKERFILE: Dockerfile
 
 stages:
   - test
@@ -43,9 +42,6 @@ test-2.7:
 
 .image: &image_definition
   stage: release
-  variables:
-    IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG
-    DOCKERFILE: Dockerfile
   before_script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
