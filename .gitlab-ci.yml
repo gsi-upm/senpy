@@ -5,13 +5,15 @@ image: docker:latest
 # improved performance.
 variables:
   DOCKER_DRIVER: overlay
-  IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_BUILD_TAG
   DOCKERFILE: Dockerfile
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
 
 stages:
   - test
+  - images
   - release
-  - deploy
 
 .test: &test_definition
   variables:
@@ -21,7 +23,7 @@ stages:
       - .venv/
       - pip-cache/
     key: "$CI_PROJECT_NAME"
-  stage: deploy
+  stage: test
   script:
     - pip install virtualenv
     - virtualenv -q .venv
@@ -40,30 +42,35 @@ test-2.7:
   <<: *test_definition
   image: "python:2.7"
 
-.image: &image_definition
-  stage: release
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-  script:
-    - docker build -f $DOCKERFILE . -t $IMAGE_NAME
-    - docker push $IMAGE_NAME
-  # only:
-  #   - tags
-  #   - triggers
 
-image-master:
-  <<: *image_definition
+.image: &image_definition
+  variables:
+    PYTHON_VERSION: "3.5"
+  script:
+    - docker build -f Dockerfile-3.5 . -t $CI_REGISTRY_IMAGE:$CI_BUILD_TAG-$PYTHON_VERSION
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_TAG-$PYTHON_VERSION
+  stage: images
   only:
-    - master
+    - tags
+    - triggers
 
 image-3.5:
   <<: *image_definition
   variables:
-    IMAGE_NAME: "$REGISTRY_IMAGE:$CI_BUILD_TAG-python3.5"
-    DOCKERFILE: Dockerfile-3.5
+    PYTHON_VERSION: "3.5"
 
 image-2.7:
   <<: *image_definition
   variables:
-    IMAGE_NAME: "$REGISTRY_IMAGE:$CI_BUILD_TAG-python2.7"
-    DOCKERFILE: Dockerfile-2.7
+    PYTHON_VERSION: "2.7"
+
+image-latest:
+  stage: release
+  script:
+    - docker build -f Dockerfile . -t $CI_REGISTRY_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
+    - docker push $IMAGE_NAME
+    - docker push $IMAGE_NAME:$CI_BUILD_REF_SLUG
+  only:
+    - master
+    - triggers
