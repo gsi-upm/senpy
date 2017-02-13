@@ -61,6 +61,8 @@ image-2.7:
 
 image-latest:
   stage: release
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
     - docker build -f Dockerfile . -t $CI_REGISTRY_IMAGE
     - docker tag $CI_REGISTRY_IMAGE $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
