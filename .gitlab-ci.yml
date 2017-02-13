@@ -30,15 +30,15 @@ stages:
   
 test-3.5:
   <<: *test_definition
-  image: python:3.5
+  image: "python:3.5"
 
 test-3.4:
   <<: *test_definition
-  image: python:3.4
+  image: "python:3.4"
 
 test-2.7:
   <<: *test_definition
-  image: python:2.7
+  image: "python:2.7"
 
 .image: &image_definition
   stage: release
@@ -56,7 +56,7 @@ test-2.7:
     - tags
     - triggers
 
-image:
+image-master:
   <<: *image_definition
   only:
     - master
@@ -64,11 +64,11 @@ image:
 image-3.5:
   <<: *image_definition
   variables:
-    IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG-python3.5
+    IMAGE_NAME: "$REGISTRY_IMAGE:$CI_BUILD_TAG-python3.5"
     DOCKERFILE: Dockerfile-3.5
 
 image-2.7:
   <<: *image_definition
   variables:
-    IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG-python2.7
+    IMAGE_NAME: "$REGISTRY_IMAGE:$CI_BUILD_TAG-python2.7"
     DOCKERFILE: Dockerfile-2.7
