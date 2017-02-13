@@ -2,7 +2,7 @@ image: docker:latest
 
 
 services:
-- docker:dind
+  - docker:dind
   
 # When using dind, it's wise to use the overlayfs driver for
 # improved performance.
@@ -22,7 +22,7 @@ stages:
       - .venv/
       - pip-cache/
     key: "$CI_PROJECT_NAME"
-  stage: test
+  stage: deploy
   script:
     - pip install virtualenv
     - virtualenv -q .venv
@@ -51,9 +51,9 @@ test-2.7:
   script:
     - docker build -f $DOCKERFILE . -t $IMAGE_NAME
     - docker push $IMAGE_NAME
-  only:
-    - tags
-    - triggers
+  # only:
+  #   - tags
+  #   - triggers
 
 image-master:
   <<: *image_definition
