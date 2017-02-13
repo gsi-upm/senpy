@@ -5,6 +5,7 @@ REPO=gsiupm
 VERSION=$(shell cat $(NAME)/VERSION)
 TARNAME=$(NAME)-$(subst -,.,$(VERSION)).tar.gz 
 IMAGENAME=$(REPO)/$(NAME):$(VERSION)
+TEST_COMMAND=gitlab-runner exec docker --cache-dir=/tmp/gitlabrunner --docker-volumes /tmp/gitlabrunner:/tmp/gitlabrunner --env CI_PROJECT_NAME=$(NAME)
 
 all: build run
 
@@ -39,8 +40,8 @@ debug-%:
 
 debug: debug-$(PYMAIN)
 
-test-%: build-%
-	docker run --rm -w /usr/src/app/ --entrypoint=/usr/local/bin/python -ti '$(IMAGENAME)-python$*' setup.py test --addopts "-vvv -s" ;
+test-%:
+	$(TEST_COMMAND) test-$*
 
 dist/$(TARNAME):
 	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) python setup.py sdist;

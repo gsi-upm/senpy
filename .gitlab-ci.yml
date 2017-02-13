@@ -1,0 +1,73 @@
+image: docker:latest
+
+
+# When using dind, it's wise to use the overlayfs driver for
+# improved performance.
+variables:
+  DOCKER_DRIVER: overlay
+  DOCKERFILE: Dockerfile
+
+stages:
+  - test
+  - images
+  - release
+
+.test: &test_definition
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.eggs"
+  cache:
+    paths:
+      - .eggs/
+    key: "$CI_PROJECT_NAME"
+  stage: test
+  script:
+    - python setup.py test
+  
+test-3.5:
+  <<: *test_definition
+  image: "python:3.5"
+
+test-3.4:
+  <<: *test_definition
+  image: "python:3.4"
+
+test-2.7:
+  <<: *test_definition
+  image: "python:2.7"
+
+
+.image: &image_definition
+  variables:
+    PYTHON_VERSION: "3.5"
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  script:
+    - docker build -f Dockerfile-3.5 . -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG-$PYTHON_VERSION
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG-$PYTHON_VERSION
+  stage: images
+  only:
+    - tags
+    - triggers
+
+image-3.5:
+  <<: *image_definition
+  variables:
+    PYTHON_VERSION: "3.5"
+
+image-2.7:
+  <<: *image_definition
+  variables:
+    PYTHON_VERSION: "2.7"
+
+image-latest:
+  stage: release
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  script:
+    - docker build -f Dockerfile . -t $CI_REGISTRY_IMAGE
+    - docker tag $CI_REGISTRY_IMAGE $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
+    - docker push $CI_REGISTRY_IMAGE
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
+  only:
+    - master
+    - triggers
