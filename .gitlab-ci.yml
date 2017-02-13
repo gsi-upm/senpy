@@ -64,8 +64,8 @@ image-latest:
   script:
     - docker build -f Dockerfile . -t $CI_REGISTRY_IMAGE
     - docker tag $CI_REGISTRY_IMAGE $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
-    - docker push $IMAGE_NAME
-    - docker push $IMAGE_NAME:$CI_BUILD_REF_SLUG
+    - docker push $CI_REGISTRY_IMAGE
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
   only:
     - master
     - triggers
