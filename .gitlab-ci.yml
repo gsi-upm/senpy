@@ -1,0 +1,74 @@
+image: docker:latest
+
+
+services:
+  
+# When using dind, it's wise to use the overlayfs driver for
+# improved performance.
+variables:
+  DOCKER_DRIVER: overlay
+
+stages:
+  - test
+  - release
+  - deploy
+
+.test: &test_definition
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/pip-cache"
+  cache:
+    paths:
+      - .venv/
+      - pip-cache/
+    key: "$CI_PROJECT_NAME"
+  stage: test
+  script:
+    - pip install virtualenv
+    - virtualenv -q .venv
+    - source .venv/bin/activate
+    - python setup.py test
+  
+test-3.5:
+  <<: *test_definition
+  image: python:3.5
+
+test-3.4:
+  <<: *test_definition
+  image: python:3.4
+
+test-2.7:
+  <<: *test_definition
+  image: python:2.7
+
+.image: &image_definition
+  stage: release
+  variables:
+    IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG
+    DOCKERFILE: Dockerfile
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  script:
+    - docker build -f $DOCKERFILE . -t $IMAGE_NAME
+    - docker push $IMAGE_NAME
+  only:
+    - tags
+    - triggers
+
+image:
+  <<: *image_definition
+  only:
+    - master
+
+image-3.5:
+  <<: *image_definition
+  variables:
+    IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG-python3.5
+    DOCKERFILE: Dockerfile-3.5
+
+image-2.7:
+  <<: *image_definition
+  variables:
+    IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG-python2.7
+    DOCKERFILE: Dockerfile-2.7
