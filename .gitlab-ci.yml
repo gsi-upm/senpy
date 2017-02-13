@@ -5,7 +5,7 @@ image: docker:latest
 # improved performance.
 variables:
   DOCKER_DRIVER: overlay
-  IMAGE_NAME: $REGISTRY_IMAGE:$CI_BUILD_TAG
+  IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_BUILD_TAG
   DOCKERFILE: Dockerfile
 
 stages:
