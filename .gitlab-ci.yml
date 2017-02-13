@@ -22,7 +22,7 @@ stages:
   stage: test
   script:
     - python setup.py test
-  
+ 
 test-3.5:
   <<: *test_definition
   image: "python:3.5"
