@@ -29,6 +29,7 @@ stages:
     - pip install --use-wheel -r requirements.txt
     - pip install --use-wheel -r test-requirements.txt
     - py.test --cov=senpy --cov-report term-missing
+    - python 
     
 test-3.5:
   <<: *test_definition

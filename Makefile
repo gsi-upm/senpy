@@ -2,7 +2,7 @@ PYVERSIONS=3.5 3.4 2.7
 PYMAIN=$(firstword $(PYVERSIONS))
 NAME=senpy
 REPO=gsiupm
-VERSION=$(shell cat $(NAME)/VERSION)
+VERSION=$(shell git describe --tags)
 TARNAME=$(NAME)-$(subst -,.,$(VERSION)).tar.gz 
 IMAGENAME=$(REPO)/$(NAME):$(VERSION)
 TEST_COMMAND=gitlab-runner exec docker --cache-dir=/tmp/gitlabrunner --docker-volumes /tmp/gitlabrunner:/tmp/gitlabrunner --env CI_PROJECT_NAME=$(NAME)
@@ -36,7 +36,7 @@ quick_test: $(addprefix test-,$(PYMAIN))
 test: $(addprefix test-,$(PYVERSIONS))
 
 debug-%:
-	(docker start $(NAME)-debug && docker attach $(NAME)-debug) || docker run -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti --name $(NAME)-debug '$(IMAGENAME)-python$*'
+	(docker start $(NAME)-debug && docker attach $(NAME)-debug) || docker run -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti --name $(NAME)-debug '$(IMAGENAME)-python$* pip install -r test-requirements.txt'
 
 debug: debug-$(PYMAIN)
 
@@ -63,8 +63,8 @@ upload: test $(addprefix upload-,$(PYVERSIONS))
 	docker push '$(REPO)/$(NAME)'
 
 clean:
-	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1;}}' | xargs docker rm 2>/dev/null|| true
-	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
+	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1;}}' | xargs docker rm -v 2>/dev/null|| true
+	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
 	@docker rmi $(NAME)-debug 2>/dev/null || true
 
 upload_git:
