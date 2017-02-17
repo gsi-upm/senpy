@@ -35,11 +35,3 @@ class Client(object):
                                        code=response.status_code,
                                        content=response.content))
             raise ex
-
-
-if __name__ == '__main__':
-    c = Client('http://senpy.cluster.gsi.dit.upm.es/api/')
-    resp = c.analyse('hello')
-    # print(resp)
-    print(resp.entries)
-    resp.validate()

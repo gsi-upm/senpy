@@ -115,7 +115,7 @@ class SenpyMixin(object):
 
         return ser_or_down(self._plain_dict())
 
-    def jsonld(self, with_context=True, context_uri=None):
+    def jsonld(self, with_context=False, context_uri=None):
         ser = self.serializable()
 
         if with_context:
@@ -230,6 +230,11 @@ def from_dict(indict):
     return cls(**indict)
 
 
+def from_json(injson):
+    indict = json.loads(injson)
+    return from_dict(indict)
+
+
 def from_schema(name, schema_file=None, base_classes=None):
     base_classes = base_classes or []
     base_classes.append(BaseModel)
@@ -274,6 +279,15 @@ class Error(SenpyMixin, BaseException):
         super(Error, self).__init__(self, message, message)
         self._error = _ErrorModel(message=message, *args, **kwargs)
         self.message = message
+
+    def __getitem__(self, key):
+        return self._error[key]
+
+    def __setitem__(self, key, value):
+        self._error[key] = value
+
+    def __delitem__(self, key):
+        del self._error[key]
 
     def __getattr__(self, key):
         if key != '_error' and hasattr(self._error, key):

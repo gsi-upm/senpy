@@ -1,9 +1,18 @@
-from python:3.4
+from python:3.4-slim
 
 WORKDIR /usr/src/app
 ADD requirements.txt /usr/src/app/
-RUN pip install -r requirements.txt
+RUN pip install --use-wheel -r requirements.txt
 ADD . /usr/src/app/
-RUN pip install .
+RUN pip install --use-wheel .
 
-ENTRYPOINT ["python", "-m", "senpy", "-f", ".", "--host", "0.0.0.0"]
+
+VOLUME /data/
+
+RUN mkdir /senpy-plugins/
+
+WORKDIR /senpy-plugins/
+ONBUILD ADD . /senpy-plugins/
+ONBUILD RUN python -m senpy -f /senpy-plugins
+
+ENTRYPOINT ["python", "-m", "senpy", "-f", "/senpy-plugins/", "--host", "0.0.0.0"]

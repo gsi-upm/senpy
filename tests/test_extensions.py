@@ -2,6 +2,11 @@ from __future__ import print_function
 import os
 import logging
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 from functools import partial
 from senpy.extensions import Senpy
 from senpy.models import Error
@@ -13,8 +18,9 @@ class ExtensionsTest(TestCase):
     def setUp(self):
         self.app = Flask("test_extensions")
         self.dir = os.path.join(os.path.dirname(__file__))
-        self.senpy = Senpy(plugin_folder=self.dir, default_plugins=False)
-        self.senpy.init_app(self.app)
+        self.senpy = Senpy(plugin_folder=self.dir,
+                           app=self.app,
+                           default_plugins=False)
         self.senpy.activate_plugin("Dummy", sync=True)
 
     def test_init(self):
@@ -69,7 +75,11 @@ class ExtensionsTest(TestCase):
     def test_noplugin(self):
         """ Don't analyse if there isn't any plugin installed """
         self.senpy.deactivate_all(sync=True)
-        self.assertRaises(Error, partial(self.senpy.analyse, input="tupni"))
+        self.assertRaises(Error, partial(self.senpy.analyse,
+                                         input="tupni"))
+        self.assertRaises(Error, partial(self.senpy.analyse,
+                                         input="tupni",
+                                         algorithm='Dummy'))
 
     def test_analyse(self):
         """ Using a plugin """
@@ -81,6 +91,18 @@ class ExtensionsTest(TestCase):
         assert r1.analysis[0].id[:5] == "Dummy"
         assert r2.analysis[0].id[:5] == "Dummy"
 
+    def test_analyse_error(self):
+        mm = mock.MagicMock()
+        mm.analyse.side_effect = Error('error on analysis', status=900)
+        self.senpy.plugins['MOCK'] = mm
+        resp = self.senpy.analyse(input='nothing', algorithm='MOCK')
+        assert resp['message'] == 'error on analysis'
+        assert resp['status'] == 900
+        mm.analyse.side_effect = Exception('generic exception on analysis')
+        resp = self.senpy.analyse(input='nothing', algorithm='MOCK')
+        assert resp['message'] == 'generic exception on analysis'
+        assert resp['status'] == 500
+
     def test_filtering(self):
         """ Filtering plugins """
         assert len(self.senpy.filter_plugins(name="Dummy")) > 0
@@ -90,3 +112,7 @@ class ExtensionsTest(TestCase):
         assert not len(
             self.senpy.filter_plugins(
                 name="Dummy", is_activated=True))
+
+    def test_load_default_plugins(self):
+        senpy = Senpy(plugin_folder=self.dir, default_plugins=True)
+        assert len(senpy.plugins) > 1

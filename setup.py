@@ -12,8 +12,6 @@ except AttributeError:
     install_reqs = parse_requirements("requirements.txt")
     test_reqs = parse_requirements("test-requirements.txt")
 
-# reqs is a list of requirement
-# e.g. ['django==1.5.1', 'mezzanine==1.4.6']
 install_reqs = [str(ir.req) for ir in install_reqs]
 test_reqs = [str(ir.req) for ir in test_reqs]
 

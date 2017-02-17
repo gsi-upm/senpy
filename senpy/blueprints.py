@@ -102,9 +102,8 @@ def plugins():
 
 
 @api_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
-@api_blueprint.route('/plugins/<plugin>/<action>', methods=['POST', 'GET'])
 @basic_api
-def plugin(plugin=None, action="list"):
+def plugin(plugin=None):
     sp = current_app.senpy
     if plugin == 'default' and sp.default_plugin:
         response = sp.default_plugin
@@ -113,11 +112,4 @@ def plugin(plugin=None, action="list"):
         response = sp.plugins[plugin]
     else:
         return Error(message="Plugin not found", status=404)
-    if action == "list":
-        return response
-    method = "{}_plugin".format(action)
-    if (hasattr(sp, method)):
-        getattr(sp, method)(plugin)
-        return Response(message="Ok")
-    else:
-        return Error(message="action '{}' not allowed".format(action))
+    return response

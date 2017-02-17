@@ -1,11 +1,10 @@
 import os
 import logging
-import json
 
 from senpy.extensions import Senpy
+from senpy import models
 from flask import Flask
 from unittest import TestCase
-from gevent import sleep
 from itertools import product
 
 
@@ -14,7 +13,7 @@ def check_dict(indic, template):
 
 
 def parse_resp(resp):
-    return json.loads(resp.data.decode('utf-8'))
+    return models.from_json(resp.data.decode('utf-8'))
 
 
 class BlueprintsTest(TestCase):
@@ -57,6 +56,17 @@ class BlueprintsTest(TestCase):
         assert "@context" in js
         assert "entries" in js
 
+    def test_error(self):
+        """
+        The dummy plugin returns an empty response,\
+        it should contain the context
+        """
+        resp = self.client.get("/api/?i=My aloha mohame&algo=DOESNOTEXIST")
+        self.assertCode(resp, 404)
+        js = parse_resp(resp)
+        logging.debug("Got response: %s", js)
+        assert isinstance(js, models.Error)
+
     def test_list(self):
         """ List the plugins """
         resp = self.client.get("/api/plugins/")
@@ -94,25 +104,6 @@ class BlueprintsTest(TestCase):
         assert "@id" in js
         assert js["@id"] == "Dummy_0.1"
 
-    def test_activate(self):
-        """ Activate and deactivate one plugin """
-        resp = self.client.get("/api/plugins/Dummy/deactivate")
-        self.assertCode(resp, 200)
-        sleep(0.5)
-        resp = self.client.get("/api/plugins/Dummy/")
-        self.assertCode(resp, 200)
-        js = parse_resp(resp)
-        assert "is_activated" in js
-        assert not js["is_activated"]
-        resp = self.client.get("/api/plugins/Dummy/activate")
-        self.assertCode(resp, 200)
-        sleep(0.5)
-        resp = self.client.get("/api/plugins/Dummy/")
-        self.assertCode(resp, 200)
-        js = parse_resp(resp)
-        assert "is_activated" in js
-        assert js["is_activated"]
-
     def test_default(self):
         """ Show only one plugin"""
         resp = self.client.get("/api/plugins/default/")
@@ -121,11 +112,6 @@ class BlueprintsTest(TestCase):
         logging.debug(js)
         assert "@id" in js
         assert js["@id"] == "Dummy_0.1"
-        resp = self.client.get("/api/plugins/Dummy/deactivate")
-        self.assertCode(resp, 200)
-        sleep(0.5)
-        resp = self.client.get("/api/plugins/default/")
-        self.assertCode(resp, 404)
 
     def test_context(self):
         resp = self.client.get("/api/contexts/context.jsonld")

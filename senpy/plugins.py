@@ -50,6 +50,7 @@ class SentimentPlugin(SenpyPlugin, models.SentimentPlugin):
 
 class EmotionPlugin(SentimentPlugin, models.EmotionPlugin):
     def __init__(self, info, *args, **kwargs):
+        super(EmotionPlugin, self).__init__(info, *args, **kwargs)
         self.minEmotionValue = float(info.get("minEmotionValue", 0))
         self.maxEmotionValue = float(info.get("maxEmotionValue", 0))
         self["@type"] = "onyx:EmotionAnalysis"

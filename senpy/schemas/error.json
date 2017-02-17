@@ -13,7 +13,7 @@
           "type": "list",
           "items": {"type": "object"}
         },
-        "code": {
+        "status": {
           "type": "int"
         },
         "required": ["message"]

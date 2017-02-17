@@ -106,8 +106,12 @@ class Senpy(object):
             resp = plug.analyse(**nif_params)
             resp.analysis.append(plug)
             logger.debug("Returning analysis result: {}".format(resp))
+        except Error as ex:
+            logger.exception('Error returning analysis result')
+            resp = ex
         except Exception as ex:
             resp = Error(message=str(ex), status=500)
+            logger.exception('Error returning analysis result')
         return resp
 
     @property
@@ -119,10 +123,6 @@ class Senpy(object):
             return candidate
         else:
             return None
-
-    def parameters(self, algo):
-        return getattr(
-            self.plugins.get(algo) or self.default_plugin, "extra_params", {})
 
     def activate_all(self, sync=False):
         ps = []
@@ -194,17 +194,6 @@ class Senpy(object):
             th = Thread(target=deact)
             th.start()
 
-    def reload_plugin(self, name):
-        logger.debug("Reloading {}".format(name))
-        plugin = self.plugins[name]
-        try:
-            del self.plugins[name]
-            nplug = self._load_plugin(plugin.module, plugin.path)
-            self.plugins[nplug.name] = nplug
-        except Exception as ex:
-            logger.error('Error reloading {}: {}'.format(name, ex))
-            self.plugins[name] = plugin
-
     @classmethod
     def validate_info(cls, info):
         return all(x in info for x in ('name', 'module', 'version'))
@@ -219,6 +208,7 @@ class Senpy(object):
         if requirements:
             pip_args = []
             pip_args.append('install')
+            pip_args.append('--use-wheel')
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
@@ -233,32 +223,27 @@ class Senpy(object):
         name = info["name"]
         sys.path.append(root)
         (fp, pathname, desc) = imp.find_module(module, [root, ])
+        cls._install_deps(info)
+        tmp = imp.load_module(module, fp, pathname, desc)
+        sys.path.remove(root)
+        candidate = None
+        for _, obj in inspect.getmembers(tmp):
+            if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
+                logger.debug(("Found plugin class:"
+                              " {}@{}").format(obj, inspect.getmodule(obj)))
+                candidate = obj
+                break
+        if not candidate:
+            logger.debug("No valid plugin for: {}".format(module))
+            return
+        module = candidate(info=info)
+        repo_path = root
         try:
-            cls._install_deps(info)
-            tmp = imp.load_module(module, fp, pathname, desc)
-            sys.path.remove(root)
-            candidate = None
-            for _, obj in inspect.getmembers(tmp):
-                if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
-                    logger.debug(("Found plugin class:"
-                                  " {}@{}").format(obj, inspect.getmodule(
-                                      obj)))
-                    candidate = obj
-                    break
-            if not candidate:
-                logger.debug("No valid plugin for: {}".format(module))
-                return
-            module = candidate(info=info)
-            repo_path = root
             module._repo = Repo(repo_path)
         except InvalidGitRepositoryError:
             logger.debug("The plugin {} is not in a Git repository".format(
                 module))
             module._repo = None
-        except Exception as ex:
-            logger.error("Exception importing {}: {}".format(module, ex))
-            logger.error("Trace: {}".format(traceback.format_exc()))
-            return None, None
         return name, module
 
     @classmethod

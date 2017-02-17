@@ -26,12 +26,29 @@ from gevent.wsgi import WSGIServer
 from gevent.monkey import patch_all
 import logging
 import os
+import sys
 import argparse
 import senpy
 
 patch_all(thread=False)
 
 SERVER_PORT = os.environ.get("PORT", 5000)
+
+
+def info(type, value, tb):
+    if hasattr(sys, 'ps1') or not sys.stderr.isatty():
+        #  we are in interactive mode or we don't have a tty-like
+        #  device, so we call the default hook
+        sys.__excepthook__(type, value, tb)
+    else:
+        import traceback
+        import pdb
+        # we are NOT in interactive mode, print the exception...
+        traceback.print_exception(type, value, tb)
+        print
+        # ...then start the debugger in post-mortem mode.
+        # pdb.pm() # deprecated
+        pdb.post_mortem(tb)  # more "modern"
 
 
 def main():
@@ -84,6 +101,8 @@ def main():
     rl.setLevel(getattr(logging, args.level))
     app = Flask(__name__)
     app.debug = args.debug
+    if args.debug:
+        sys.excepthook = info
     sp = Senpy(app, args.plugins_folder, default_plugins=args.default_plugins)
     if args.only_install:
         sp.install_deps()
