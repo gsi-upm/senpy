@@ -28,8 +28,8 @@ stages:
     - source .venv/$PYTHON_VERSION/bin/activate
     - pip install --use-wheel -r requirements.txt
     - pip install --use-wheel -r test-requirements.txt
-    - python setup.py test
- 
+    - py.test --cov=senpy --cov-report term-missing
+    
 test-3.5:
   <<: *test_definition
   image: "python:3.5"
