@@ -104,7 +104,7 @@ class Senpy(object):
         nif_params.update(specific_params)
         try:
             resp = plug.analyse(**nif_params)
-            resp.analysis.append(plug)
+            resp.analysis.append(plug._plain_dict())
             logger.debug("Returning analysis result: {}".format(resp))
         except Exception as ex:
             resp = Error(message=str(ex), status=500)
