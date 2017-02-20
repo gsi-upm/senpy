@@ -107,6 +107,7 @@ class Senpy(object):
             resp.analysis.append(plug)
             logger.debug("Returning analysis result: {}".format(resp))
         except Exception as ex:
+            logging.exception('Got exception analysing data')
             resp = Error(message=str(ex), status=500)
         return resp
 
