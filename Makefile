@@ -87,7 +87,7 @@ git_commit:
 git_tag:
 	git tag ${VERSION}
 
-upload_git:
+git_push:
 	git push --tags origin master
 
 pip_upload:

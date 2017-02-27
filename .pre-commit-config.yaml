@@ -1,0 +1,5 @@
+-   repo: git://github.com/pre-commit/pre-commit-hooks
+    sha: e626cd57090d8df0be21e4df0f4e55cc3511d6ab
+    hooks:
+    -   id: flake8
+    -   id: check-json

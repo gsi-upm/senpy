@@ -56,6 +56,8 @@ image-2.7:
 
 image-latest:
   stage: release
+  variables:
+    IMAGENAME: $CI_REGISTRY_IMAGE
   before_script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
