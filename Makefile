@@ -13,7 +13,7 @@ FORCE:
 
 version: FORCE
 	@echo $(VERSION) > $(NAME)/VERSION
-	@echo $(NAME) $(VERSION)
+	@echo $(VERSION)
 
 yapf:
 	yapf -i -r senpy
@@ -79,9 +79,14 @@ clean:
 	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
 	@docker rmi $(NAME)-debug 2>/dev/null || true
 
-upload_git:
+
+git_commit:
 	git commit -a
+
+git_tag:
 	git tag ${VERSION}
+
+upload_git:
 	git push --tags origin master
 
 pip_upload:

@@ -38,10 +38,6 @@ test-3.5:
   <<: *test_definition
   image: "python:3.5"
 
-test-3.4:
-  <<: *test_definition
-  image: "python:3.4"
-
 test-2.7:
   <<: *test_definition
   image: "python:2.7"

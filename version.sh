@@ -1,2 +1,2 @@
 #!/bin/sh
-VERSION=$(git describe --long --tags --dirty)
+git describe --long --tags --dirty
