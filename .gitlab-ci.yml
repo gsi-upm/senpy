@@ -37,7 +37,6 @@ test-2.7:
     - make -e push-$PYTHON_VERSION
   only:
     - tags
-    - master
     - triggers
 
 push-3.5:
@@ -54,19 +53,27 @@ push-2.7:
     VERSION: $CI_BUILD_TAG
     IMAGENAME: $CI_REGISTRY_IMAGE
 
-push-latest:
-  stage: push
+push-main:
+  <<: *image_definition
   variables:
+    PYTHON_VERSION: main
+    VERSION: $CI_BUILD_TAG
     IMAGENAME: $CI_REGISTRY_IMAGE
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
-  script:
-    - make -e push-latest
+
+push-latest:
+  <<: *image_definition
+  variables:
+    PYTHON_VERSION: latest
+    VERSION: $CI_BUILD_TAG
+    IMAGENAME: $CI_REGISTRY_IMAGE
   only:
     - master
+    - tags
     - triggers
 
 clean :
   stage: clean
   script:
     - make -e clean
+  only:
+    - master

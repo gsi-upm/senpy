@@ -99,7 +99,9 @@ push-latest: build-$(PYMAIN)
 	docker push '$(IMAGEWTAG)'
 
 push-%: build-%
-	docker push $(IMAGEWTAG)-python$*
+	docker push $(IMAGE):$(VERSION)-python$*
+
+push-main: push-$(PYMAIN)
 
 ci:
 	gitlab-runner exec docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --env CI_PROJECT_NAME=$(NAME) ${action}
