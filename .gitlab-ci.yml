@@ -6,7 +6,6 @@ image: gsiupm/dockermake:latest
 variables:
   DOCKER_DRIVER: overlay
   DOCKERFILE: Dockerfile
-  VERSION: $CI_BUILD_REF
   IMAGENAME: $CI_REGISTRY_IMAGE
 
 stages:
@@ -44,28 +43,18 @@ push-3.5:
   <<: *image_definition
   variables:
     PYTHON_VERSION: "3.5"
-    VERSION: $CI_BUILD_TAG
 
 push-2.7:
   <<: *image_definition
   variables:
     PYTHON_VERSION: "2.7"
-    VERSION: $CI_BUILD_TAG
-
-push-main:
-  <<: *image_definition
-  variables:
-    PYTHON_VERSION: main
-    VERSION: $CI_BUILD_TAG
 
 push-latest:
   <<: *image_definition
   variables:
     PYTHON_VERSION: latest
-    VERSION: $CI_BUILD_TAG
   only:
     - master
-    - tags
     - triggers
 
 clean :
