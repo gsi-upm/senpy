@@ -4,7 +4,8 @@ NAME=senpy
 REPO=gsiupm
 VERSION=$(shell git describe --tags --dirty 2>/dev/null)
 TARNAME=$(NAME)-$(VERSION).tar.gz 
-IMAGENAME=$(REPO)/$(NAME):$(VERSION)
+IMAGENAME=$(REPO)/$(NAME)
+IMAGEWTAG=$(IMAGENAME):$(VERSION)
 action="test-${PYMAIN}"
 
 all: build run
@@ -35,14 +36,14 @@ quick_build: $(addprefix build-, $(PYMAIN))
 build: $(addprefix build-, $(PYVERSIONS))
 
 build-%: version Dockerfile-%
-	docker build -t '$(IMAGENAME)-python$*' -f Dockerfile-$* .;
+	docker build -t '$(IMAGEWTAG)-python$*' -f Dockerfile-$* .;
 
 quick_test: $(addprefix test-,$(PYMAIN))
 
 dev-%:
 	@docker start $(NAME)-dev || (\
 		$(MAKE) build-$*; \
-		docker run -d -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -p 5000:5000 -ti --name $(NAME)-dev '$(IMAGENAME)-python$*'; \
+		docker run -d -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -p 5000:5000 -ti --name $(NAME)-dev '$(IMAGEWTAG)-python$*'; \
 	)\
 
 	docker exec -ti $(NAME)-dev bash
@@ -52,7 +53,7 @@ dev: dev-$(PYMAIN)
 test-all: $(addprefix test-,$(PYVERSIONS))
 
 test-%: build-%
-	docker run --rm --entrypoint /usr/local/bin/python -w /usr/src/app $(IMAGENAME)-python$*  setup.py test
+	docker run --rm --entrypoint /usr/local/bin/python -w /usr/src/app $(IMAGEWTAG)-python$*  setup.py test
 
 test: test-$(PYMAIN)
 
@@ -65,15 +66,6 @@ pip_test-%: sdist
 	docker run --rm -v $$PWD/dist:/dist/ -ti python:$* pip install /dist/$(TARNAME);
 
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
-
-upload-%: test-%
-	docker push '$(IMAGENAME)-python$*'
-
-upload: test $(addprefix upload-,$(PYVERSIONS))
-	docker tag '$(IMAGENAME)-python$(PYMAIN)' '$(IMAGENAME)'
-	docker tag '$(IMAGENAME)-python$(PYMAIN)' '$(REPO)/$(NAME)'
-	docker push '$(IMAGENAME)'
-	docker push '$(REPO)/$(NAME)'
 
 clean:
 	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1;}}' | xargs docker rm -v 2>/dev/null|| true
@@ -96,16 +88,18 @@ pip_upload:
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
 run-%: build-%
-	docker run --rm -p 5000:5000 -ti '$(IMAGENAME)-python$(PYMAIN)' --default-plugins
+	docker run --rm -p 5000:5000 -ti '$(IMAGEWTAG)-python$(PYMAIN)' --default-plugins
 
 run: run-$(PYMAIN)
 
 push-latest: build-$(PYMAIN)
-	docker tag $(IMAGENAME)-python$(PYMAIN) $(IMAGENAME)
-	docker push $(IMAGENAME)
+	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
+	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGENAME)'
+	docker push '$(IMAGENAME)'
+	docker push '$(IMAGEWTAG)'
 
 push-%: build-%
-	docker push $(IMAGENAME)-python$*
+	docker push $(IMAGEWTAG)-python$*
 
 ci:
 	gitlab-runner exec docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --env CI_PROJECT_NAME=$(NAME) ${action}
