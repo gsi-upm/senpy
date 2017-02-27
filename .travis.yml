@@ -1,8 +1,13 @@
+sudo: required
+
+services:
+  - docker
+
 language: python
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-install: "pip install -r requirements.txt"
+
+env:
+  - PYV=2.7
+  - PYV=3.4
+  - PYV=3.5
 # run nosetests - Tests
-script: nosetests
+script: make test-$PYV
