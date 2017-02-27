@@ -32,27 +32,28 @@ test-2.7:
 
 .image: &image_definition
   stage: images
-  variables:
-    PYTHON_VERSION: "3.5"
-    VERSION: $CI_BUILD_TAG
-    IMAGENAME: $CI_REGISTRY_IMAGE
   before_script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
     - make -e push-$PYTHON_VERSION
   only:
     - tags
+    - master
     - triggers
 
 image-3.5:
   <<: *image_definition
   variables:
     PYTHON_VERSION: "3.5"
+    VERSION: $CI_BUILD_TAG
+    IMAGENAME: $CI_REGISTRY_IMAGE
 
 image-2.7:
   <<: *image_definition
   variables:
     PYTHON_VERSION: "2.7"
+    VERSION: $CI_BUILD_TAG
+    IMAGENAME: $CI_REGISTRY_IMAGE
 
 image-latest:
   stage: release
