@@ -42,6 +42,7 @@ class ExtensionsTest(TestCase):
         info = {
             'name': 'TestPip',
             'module': 'dummy',
+            'description': None,
             'requirements': ['noop'],
             'version': 0
         }

@@ -1,7 +1,7 @@
 ---
 name: Ekman2VAD
 module: ekman2vad
-description: Plugin to convert from Ekman to VAD
+description: Plugin to convert emotion sets from Ekman to VAD
 version: 0.1
 onyx:doesConversion:
   - onyx:conversionFrom: emoml:big6

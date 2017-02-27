@@ -284,7 +284,7 @@ class Senpy(object):
 
     @classmethod
     def validate_info(cls, info):
-        return all(x in info for x in ('name', 'module', 'version'))
+        return all(x in info for x in ('name', 'module', 'description', 'version'))
 
     def install_deps(self):
         for i in self.plugins.values():

@@ -1,4 +1,4 @@
-image: docker:latest
+image: gsiupm/dockermake:latest
 
 
 # When using dind, it's wise to use the overlayfs driver for
@@ -6,56 +6,40 @@ image: docker:latest
 variables:
   DOCKER_DRIVER: overlay
   DOCKERFILE: Dockerfile
-
-before_script:
-  - sh version.sh > senpy/VERSION
+  VERSION: $CI_BUILD_REF
 
 stages:
   - test
   - images
   - release
+  - clean
 
 .test: &test_definition
-  variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/pip-cache"
-  cache:
-    paths:
-      - .eggs/
-      - "$CI_PROJECT_DIR/pip-cache"
-      - .venv
-    key: "$CI_PROJECT_NAME"
   stage: test
   script:
-    - pip install --use-wheel -U pip setuptools virtualenv
-    - virtualenv .venv/$PYTHON_VERSION
-    - source .venv/$PYTHON_VERSION/bin/activate
-    - pip install --use-wheel -r requirements.txt
-    - pip install --use-wheel -r test-requirements.txt
-    - py.test --cov=senpy --cov-report term-missing
-    - python 
+    - make -e test-$PYTHON_VERSION
     
 test-3.5:
   <<: *test_definition
-  image: "python:3.5"
-
-test-3.4:
-  <<: *test_definition
-  image: "python:3.4"
+  variables:
+    PYTHON_VERSION: "3.5"
 
 test-2.7:
   <<: *test_definition
-  image: "python:2.7"
+  variables:
+    PYTHON_VERSION: "2.7"
 
 
 .image: &image_definition
+  stage: images
   variables:
     PYTHON_VERSION: "3.5"
+    VERSION: $CI_BUILD_TAG
+    IMAGENAME: $CI_REGISTRY_IMAGE
   before_script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
-    - docker build -f Dockerfile-3.5 . -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG-$PYTHON_VERSION
-    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG-$PYTHON_VERSION
-  stage: images
+    - make -e push-$PYTHON_VERSION
   only:
     - tags
     - triggers
@@ -75,10 +59,12 @@ image-latest:
   before_script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
-    - docker build -f Dockerfile . -t $CI_REGISTRY_IMAGE
-    - docker tag $CI_REGISTRY_IMAGE $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
-    - docker push $CI_REGISTRY_IMAGE
-    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
+    - make -e push-latest
   only:
     - master
     - triggers
+
+clean :
+  stage: clean
+  script:
+    - make -e clean

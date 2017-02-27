@@ -38,9 +38,9 @@ If you want to install senpy globally, use sudo instead of the ``--user`` flag.
 
 Docker Image
 ************
-Build the image or use the pre-built one: ``docker run -ti -p 5000:5000 gsiupm/senpy --host 0.0.0.0 --default-plugins``.
+Build the image or use the pre-built one: ``docker run -ti -p 5000:5000 gsiupm/senpy --default-plugins``.
 
-To add custom plugins, add a volume and tell senpy where to find the plugins: ``docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --host 0.0.0.0 --default-plugins -f /plugins``
+To add custom plugins, add a volume and tell senpy where to find the plugins: ``docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --default-plugins -f /plugins``
 
 Usage
 -----

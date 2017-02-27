@@ -1,21 +1,22 @@
 from python:{{PYVERSION}}
 
-RUN mkdir /cache/
-ENV PIP_CACHE_DIR=/cache/
+MAINTAINER J. Fernando Sánchez <jf.sanchez@upm.es>
 
-WORKDIR /usr/src/app
-ADD requirements.txt /usr/src/app/
-RUN pip install --use-wheel -r requirements.txt
-ADD . /usr/src/app/
-RUN pip install .
-
+RUN mkdir /cache/ /senpy-plugins /data/
 
 VOLUME /data/
 
-RUN mkdir /senpy-plugins/
+ENV PIP_CACHE_DIR=/cache/
 
-WORKDIR /senpy-plugins/
-ONBUILD ADD . /senpy-plugins/
+ONBUILD COPY . /senpy-plugins/
 ONBUILD RUN python -m senpy --only-install -f /senpy-plugins
+ONBUILD WORKDIR /senpy-plugins/
+
+
+WORKDIR /usr/src/app
+COPY test-requirements.txt requirements.txt /usr/src/app/
+RUN pip install --use-wheel -r test-requirements.txt -r requirements.txt
+COPY . /usr/src/app/
+RUN pip install --no-deps --no-index .
 
 ENTRYPOINT ["python", "-m", "senpy", "-f", "/senpy-plugins/", "--host", "0.0.0.0"]
