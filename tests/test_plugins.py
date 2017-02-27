@@ -77,6 +77,7 @@ class PluginsTest(TestCase):
         })
         a.activate()
 
+        assert a.shelf_file == self.shelf_file
         res1 = a.analyse(input=1)
         assert res1.entries[0].nif__isString == 1
         res2 = a.analyse(input=1)
@@ -103,3 +104,19 @@ class PluginsTest(TestCase):
         assert b.sh['a'] == 'fromA'
         b.sh['a'] = 'fromB'
         assert b.sh['a'] == 'fromB'
+
+    def test_extra_params(self):
+        ''' Should be able to set extra parameters'''
+        a = ShelfDummyPlugin(info={
+            'name': 'shelve',
+            'version': 'test',
+            'shelf_file': self.shelf_file,
+            'extra_params': {
+                'example': {
+                    'aliases': ['example', 'ex'],
+                    'required': True,
+                    'default': 'nonsense'
+                }
+            }
+        })
+        assert 'example' in a.extra_params

@@ -1,0 +1,15 @@
+{
+    "name": "Dummy",
+    "module": "dummy",
+    "description": "I am dummy",
+    "author": "@balkian",
+    "version": "0.1",
+    "extra_params": {
+        "example": {
+            "@id": "example_parameter",
+            "aliases": ["example", "ex"],
+            "required": false,
+            "default": 0
+        }
+    }
+}

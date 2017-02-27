@@ -6,7 +6,6 @@ logger = logging.getLogger(__name__)
 
 
 class Client(object):
-
     def __init__(self, endpoint):
         self.endpoint = endpoint
 
@@ -15,9 +14,7 @@ class Client(object):
 
     def request(self, path=None, method='GET', **params):
         url = '{}{}'.format(self.endpoint, path)
-        response = requests.request(method=method,
-                                    url=url,
-                                    params=params)
+        response = requests.request(method=method, url=url, params=params)
         try:
             resp = models.from_dict(response.json())
             resp.validate(resp)
@@ -30,8 +27,9 @@ class Client(object):
                           '#### Response:\n'
                           '\tCode: {code}'
                           '\tContent: {content}'
-                          '\n').format(error=ex,
-                                       url=url,
-                                       code=response.status_code,
-                                       content=response.content))
+                          '\n').format(
+                              error=ex,
+                              url=url,
+                              code=response.status_code,
+                              content=response.content))
             raise ex

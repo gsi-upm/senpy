@@ -17,10 +17,11 @@
 """
 Blueprints for Senpy
 """
-from flask import (Blueprint, request, current_app,
-                   render_template, url_for, jsonify)
+from flask import (Blueprint, request, current_app, render_template, url_for,
+                   jsonify)
 from .models import Error, Response, Plugins, read_schema
-from .api import WEB_PARAMS, parse_params
+from .api import WEB_PARAMS, API_PARAMS, parse_params
+from .version import __version__
 from functools import wraps
 
 import logging
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 api_blueprint = Blueprint("api", __name__)
 demo_blueprint = Blueprint("demo", __name__)
+ns_blueprint = Blueprint("ns", __name__)
 
 
 def get_params(req):
@@ -43,12 +45,21 @@ def get_params(req):
 
 @demo_blueprint.route('/')
 def index():
-    return render_template("index.html")
+    return render_template("index.html", version=__version__)
 
 
 @api_blueprint.route('/contexts/<entity>.jsonld')
 def context(entity="context"):
-    return jsonify({"@context": Response.context})
+    context = Response._context
+    context['@vocab'] = url_for('ns.index', _external=True)
+    return jsonify({"@context": context})
+
+
+@ns_blueprint.route('/')  # noqa: F811
+def index():
+    context = Response._context
+    context['@vocab'] = url_for('.ns', _external=True)
+    return jsonify({"@context": context})
 
 
 @api_blueprint.route('/schemas/<schema>')
@@ -62,26 +73,39 @@ def schema(schema="definitions"):
 def basic_api(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        print('Getting request:')
-        print(request)
         raw_params = get_params(request)
-        web_params = parse_params(raw_params, spec=WEB_PARAMS)
+        headers = {'X-ORIGINAL-PARAMS': raw_params}
+        # Get defaults
+        web_params = parse_params({}, spec=WEB_PARAMS)
+        api_params = parse_params({}, spec=API_PARAMS)
 
-        if hasattr(request, 'params'):
-            request.params.update(raw_params)
-        else:
-            request.params = raw_params
+        outformat = 'json-ld'
         try:
+            print('Getting request:')
+            print(request)
+            web_params = parse_params(raw_params, spec=WEB_PARAMS)
+            api_params = parse_params(raw_params, spec=API_PARAMS)
+            if hasattr(request, 'params'):
+                request.params.update(api_params)
+            else:
+                request.params = api_params
             response = f(*args, **kwargs)
         except Error as ex:
             response = ex
-        in_headers = web_params["inHeaders"] != "0"
-        headers = {'X-ORIGINAL-PARAMS': raw_params}
+
+        in_headers = web_params['inHeaders'] != "0"
+        expanded = api_params['expanded-jsonld']
+        outformat = api_params['outformat']
+
         return response.flask(
             in_headers=in_headers,
             headers=headers,
-            context_uri=url_for(
-                'api.context', entity=type(response).__name__, _external=True))
+            prefix=url_for('.api', _external=True),
+            context_uri=url_for('api.context',
+                                entity=type(response).__name__,
+                                _external=True),
+            outformat=outformat,
+            expanded=expanded)
 
     return decorated_function
 
@@ -106,10 +130,11 @@ def plugins():
 def plugin(plugin=None):
     sp = current_app.senpy
     if plugin == 'default' and sp.default_plugin:
-        response = sp.default_plugin
-        plugin = response.name
-    elif plugin in sp.plugins:
-        response = sp.plugins[plugin]
+        return sp.default_plugin
+    plugins = sp.filter_plugins(
+        id='plugins/{}'.format(plugin)) or sp.filter_plugins(name=plugin)
+    if plugins:
+        response = list(plugins.values())[0]
     else:
         return Error(message="Plugin not found", status=404)
     return response

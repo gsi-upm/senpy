@@ -16,6 +16,9 @@ import jsonref
 import jsonschema
 
 from flask import Response as FlaskResponse
+from pyld import jsonld
+
+from rdflib import Graph
 
 import logging
 
@@ -72,31 +75,60 @@ base_context = Context.load(CONTEXT_PATH)
 
 
 class SenpyMixin(object):
-    context = base_context["@context"]
+    _context = base_context["@context"]
 
-    def flask(self, in_headers=True, headers=None, **kwargs):
+    def flask(self,
+              in_headers=True,
+              headers=None,
+              outformat='json-ld',
+              **kwargs):
         """
         Return the values and error to be used in flask.
         So far, it returns a fixed context. We should store/generate different
         contexts if the plugin adds more aliases.
         """
         headers = headers or {}
-        kwargs["with_context"] = True
-        js = self.jsonld(**kwargs)
-        if in_headers:
-            url = js["@context"]
-            del js["@context"]
+        kwargs["with_context"] = not in_headers
+        content, mimetype = self.serialize(format=outformat,
+                                           with_mime=True,
+                                           **kwargs)
+
+        if outformat == 'json-ld' and in_headers:
             headers.update({
-                "Link": ('<%s>;'
-                         'rel="http://www.w3.org/ns/json-ld#context";'
-                         ' type="application/ld+json"' % url)
+                "Link":
+                ('<%s>;'
+                    'rel="http://www.w3.org/ns/json-ld#context";'
+                    ' type="application/ld+json"' % kwargs.get('context_uri'))
             })
         return FlaskResponse(
-            json.dumps(
-                js, indent=2, sort_keys=True),
+            response=content,
             status=getattr(self, "status", 200),
             headers=headers,
-            mimetype="application/json")
+            mimetype=mimetype)
+
+    def serialize(self, format='json-ld', with_mime=False, **kwargs):
+        js = self.jsonld(**kwargs)
+        if format == 'json-ld':
+            content = json.dumps(js, indent=2, sort_keys=True)
+            mimetype = "application/json"
+        elif format in ['turtle', ]:
+            logger.debug(js)
+            content = json.dumps(js, indent=2, sort_keys=True)
+            g = Graph().parse(
+                data=content,
+                format='json-ld',
+                base=kwargs.get('prefix'),
+                context=self._context)
+            logger.debug(
+                'Parsing with prefix: {}'.format(kwargs.get('prefix')))
+            content = g.serialize(format='turtle').decode('utf-8')
+            mimetype = 'text/{}'.format(format)
+        else:
+            raise Error('Unknown outformat: {}'.format(format))
+        if with_mime:
+            return content, mimetype
+        else:
+            return content
 
     def serializable(self):
         def ser_or_down(item):
@@ -115,28 +147,30 @@ class SenpyMixin(object):
 
         return ser_or_down(self._plain_dict())
 
-    def jsonld(self, with_context=False, context_uri=None):
+    def jsonld(self,
+               with_context=True,
+               context_uri=None,
+               prefix=None,
+               expanded=False):
         ser = self.serializable()
 
-        if with_context:
-            context = []
-            if context_uri:
-                context = context_uri
-            else:
-                context = self.context.copy()
-            if hasattr(self, 'prefix'):
-                # This sets @base for the document, which will be used in
-                # all relative URIs. For example, if a uri is "Example" and
-                # prefix =s "http://example.com", the absolute URI after
-                # expanding with JSON-LD will be "http://example.com/Example"
-
-                prefix_context = {"@base": self.prefix}
-                if isinstance(context, list):
-                    context.append(prefix_context)
-                else:
-                    context = [context, prefix_context]
-            ser["@context"] = context
-        return ser
+        result = jsonld.compact(
+            ser,
+            self._context,
+            options={
+                'base': prefix,
+                'expandContext': self._context,
+                'senpy': prefix
+            })
+        if context_uri:
+            result['@context'] = context_uri
+        if expanded:
+            result = jsonld.expand(
+                result, options={'base': prefix,
+                                 'expandContext': self._context})
+        if not with_context:
+            del result['@context']
+        return result
 
     def to_JSON(self, *args, **kwargs):
         js = json.dumps(self.jsonld(*args, **kwargs), indent=4, sort_keys=True)
@@ -161,13 +195,14 @@ class BaseModel(SenpyMixin, dict):
         if 'id' in kwargs:
             self.id = kwargs.pop('id')
         elif kwargs.pop('_auto_id', True):
-            self.id = '_:{}_{}'.format(
-                type(self).__name__, time.time())
+            self.id = '_:{}_{}'.format(type(self).__name__, time.time())
         temp = dict(*args, **kwargs)
 
-        for obj in [self.schema, ] + self.schema.get('allOf', []):
+        for obj in [
+                self.schema,
+        ] + self.schema.get('allOf', []):
             for k, v in obj.get('properties', {}).items():
-                if 'default' in v:
+                if 'default' in v and k not in temp:
                     temp[k] = copy.deepcopy(v['default'])
 
         for i in temp:
@@ -175,10 +210,6 @@ class BaseModel(SenpyMixin, dict):
             if nk != i:
                 temp[nk] = temp[i]
                 del temp[i]
-        if 'context' in temp:
-            context = temp['context']
-            del temp['context']
-            self.__dict__['context'] = Context.load(context)
         try:
             temp['@type'] = getattr(self, '@type')
         except AttributeError:
@@ -239,10 +270,11 @@ def from_schema(name, schema_file=None, base_classes=None):
     base_classes = base_classes or []
     base_classes.append(BaseModel)
     schema_file = schema_file or '{}.json'.format(name)
-    class_name = '{}{}'.format(i[0].upper(), i[1:])
+    class_name = '{}{}'.format(name[0].upper(), name[1:])
     newclass = type(class_name, tuple(base_classes), {})
     setattr(newclass, '@type', name)
     setattr(newclass, 'schema', read_schema(schema_file))
+    setattr(newclass, 'class_name', class_name)
     register(newclass, name)
     return newclass
 
@@ -253,29 +285,31 @@ def _add_from_schema(*args, **kwargs):
     del generatedClass
 
 
-for i in ['response',
-          'results',
-          'entry',
-          'sentiment',
-          'analysis',
-          'emotionSet',
-          'emotion',
-          'emotionModel',
-          'suggestion',
-          'plugin',
-          'emotionPlugin',
-          'sentimentPlugin',
-          'plugins']:
+for i in [
+        'analysis',
+        'emotion',
+        'emotionConversion',
+        'emotionConversionPlugin',
+        'emotionAnalysis',
+        'emotionModel',
+        'emotionPlugin',
+        'emotionSet',
+        'entry',
+        'plugin',
+        'plugins',
+        'response',
+        'results',
+        'sentiment',
+        'sentimentPlugin',
+        'suggestion',
+]:
     _add_from_schema(i)
 
 _ErrorModel = from_schema('error')
 
 
 class Error(SenpyMixin, BaseException):
-    def __init__(self,
-                 message,
-                 *args,
-                 **kwargs):
+    def __init__(self, message, *args, **kwargs):
         super(Error, self).__init__(self, message, message)
         self._error = _ErrorModel(message=message, *args, **kwargs)
         self.message = message

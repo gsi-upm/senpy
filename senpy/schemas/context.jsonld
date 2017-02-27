@@ -6,34 +6,51 @@
     "prov": "http://www.w3.org/ns/prov#",
     "nif": "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#",
     "marl": "http://www.gsi.dit.upm.es/ontologies/marl/ns#",
-    "onyx": "http://www.gsi.dit.upm.es/ontologies/onyx#",
-    "wnaffect": "http://www.gsi.dit.upm.es/ontologies/wnaffect#",
+    "onyx": "http://www.gsi.dit.upm.es/ontologies/onyx/ns#",
+    "wna": "http://www.gsi.dit.upm.es/ontologies/wnaffect/ns#",
+    "emoml": "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "topics": {
-        "@id": "dc:subject"
+      "@id": "dc:subject"
     },
     "entities": {
-    "@id": "me:hasEntities"
+      "@id": "me:hasEntities"
     },
     "suggestions": {
-        "@id": "me:hasSuggestions",
-        "@container": "@set"
+      "@id": "me:hasSuggestions",
+      "@container": "@set"
     },
     "emotions": {
-        "@id": "onyx:hasEmotionSet",
-        "@container": "@set"
+      "@id": "onyx:hasEmotionSet",
+      "@container": "@set"
     },
     "sentiments": {
-        "@id": "marl:hasOpinion",
-        "@container": "@set"
+      "@id": "marl:hasOpinion",
+      "@container": "@set"
     },
     "entries": {
-        "@id": "prov:used",
-        "@container": "@set"
+      "@id": "prov:used",
+      "@container": "@set"
     },
     "analysis": {
-        "@id": "prov:wasGeneratedBy"
-
+      "@id": "AnalysisInvolved",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "prov:wasGeneratedBy": {
+      "@type": "@id"
+    },
+    "onyx:usesEmotionModel": {
+      "@type": "@id"
+    },
+    "onyx:hasEmotionCategory": {
+      "@type": "@id"
+    },
+    "onyx:conversionFrom": {
+      "@type": "@id"
+    },
+    "onyx:conversionTo": {
+      "@type": "@id"
     }
   }
 }

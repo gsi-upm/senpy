@@ -1,0 +1,21 @@
+---
+name: sentiment140
+module: sentiment140
+description: "Connects to the sentiment140 free API: http://sentiment140.com"
+author: "@balkian"
+version: '0.2'
+url: "https://github.com/gsi-upm/senpy-plugins-community"
+extra_params:
+  language:
+    "@id": lang_sentiment140
+    aliases:
+    - language
+    - l
+    required: false
+    options:
+    - es
+    - en
+    - auto
+requirements: {}
+maxPolarityValue: 1
+minPolarityValue: 0

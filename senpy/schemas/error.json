@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "description": "Base schema for all Senpy objects",
   "type": "object",
-  "$allOf": [
+  "allOf": [
     {"$ref": "atom.json"},
     {
       "properties": {
@@ -10,14 +10,14 @@
           "type": "string"
         },
         "errors": {
-          "type": "list",
+          "type": "array",
           "items": {"type": "object"}
         },
         "status": {
-          "type": "int"
-        },
-        "required": ["message"]
-      }
+          "type": "number"
+        }
+      },
+      "required": ["message"]
     }
   ]
 }

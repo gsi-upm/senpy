@@ -9,9 +9,10 @@ from senpy.models import Results, Error
 
 
 class Call(dict):
-
     def __init__(self, obj):
         self.obj = obj.jsonld()
+        self.status_code = 200
+        self.content = self.json()
 
     def json(self):
         return self.obj
@@ -29,14 +30,14 @@ class ModelsTest(TestCase):
         with patch('requests.request', return_value=success) as patched:
             resp = client.analyse('hello')
             assert isinstance(resp, Results)
-        patched.assert_called_with(url=endpoint + '/',
-                                   method='GET',
-                                   params={'input': 'hello'})
+        patched.assert_called_with(
+            url=endpoint + '/', method='GET', params={'input': 'hello'})
         error = Call(Error('Nothing'))
         with patch('requests.request', return_value=error) as patched:
             resp = client.analyse(input='hello', algorithm='NONEXISTENT')
             assert isinstance(resp, Error)
-        patched.assert_called_with(url=endpoint + '/',
-                                   method='GET',
-                                   params={'input': 'hello',
-                                           'algorithm': 'NONEXISTENT'})
+        patched.assert_called_with(
+            url=endpoint + '/',
+            method='GET',
+            params={'input': 'hello',
+                    'algorithm': 'NONEXISTENT'})

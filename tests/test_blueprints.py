@@ -25,6 +25,8 @@ class BlueprintsTest(TestCase):
         self.dir = os.path.join(os.path.dirname(__file__), "..")
         self.senpy.add_folder(self.dir)
         self.senpy.activate_plugin("Dummy", sync=True)
+        self.senpy.activate_plugin("DummyRequired", sync=True)
+        self.senpy.default_plugin = 'Dummy'
 
     def assertCode(self, resp, code):
         self.assertEqual(resp.status_code, code)
@@ -34,12 +36,12 @@ class BlueprintsTest(TestCase):
         Calling with no arguments should ask the user for more arguments
         """
         resp = self.client.get("/api/")
-        self.assertCode(resp, 404)
+        self.assertCode(resp, 400)
         js = parse_resp(resp)
         logging.debug(js)
-        assert js["status"] == 404
+        assert js["status"] == 400
         atleast = {
-            "status": 404,
+            "status": 400,
             "message": "Missing or invalid parameters",
         }
         assert check_dict(js, atleast)
@@ -55,6 +57,28 @@ class BlueprintsTest(TestCase):
         logging.debug("Got response: %s", js)
         assert "@context" in js
         assert "entries" in js
+
+    def test_analysis_extra(self):
+        """
+        Extra params that have a default should
+        """
+        resp = self.client.get("/api/?i=My aloha mohame&algo=Dummy")
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        logging.debug("Got response: %s", js)
+        assert "@context" in js
+        assert "entries" in js
+
+    def test_analysis_extra_required(self):
+        """
+        Extra params that have a required argument that does not
+        have a default should raise an error.
+        """
+        resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired")
+        self.assertCode(resp, 400)
+        js = parse_resp(resp)
+        logging.debug("Got response: %s", js)
+        assert isinstance(js, models.Error)
 
     def test_error(self):
         """
@@ -102,7 +126,7 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         logging.debug(js)
         assert "@id" in js
-        assert js["@id"] == "Dummy_0.1"
+        assert js["@id"] == "plugins/Dummy_0.1"
 
     def test_default(self):
         """ Show only one plugin"""
@@ -111,7 +135,7 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         logging.debug(js)
         assert "@id" in js
-        assert js["@id"] == "Dummy_0.1"
+        assert js["@id"] == "plugins/Dummy_0.1"
 
     def test_context(self):
         resp = self.client.get("/api/contexts/context.jsonld")

@@ -32,39 +32,48 @@ $(document).ready(function() {
     var availablePlugins = document.getElementById('availablePlugins');
     plugins = response.plugins;
     for (r in plugins){
-      if (plugins[r]["name"]){
-        if (plugins[r]["name"] == defaultPlugin["name"]){
-          if (plugins[r]["is_activated"]){
-            html+= "<option value=\""+plugins[r]["name"]+"\" selected=\"selected\">"+plugins[r]["name"]+"</option>"
+      plugin = plugins[r]
+      if (plugin["name"]){
+        if (plugin["name"] == defaultPlugin["name"]){
+          if (plugin["is_activated"]){
+            html+= "<option value=\""+plugin["name"]+"\" selected=\"selected\">"+plugin["name"]+"</option>"
           }else{
-            html+= "<option value=\""+plugins[r]["name"]+"\" selected=\"selected\" disabled=\"disabled\">"+plugins[r]["name"]+"</option>"
+            html+= "<option value=\""+plugin["name"]+"\" selected=\"selected\" disabled=\"disabled\">"+plugin["name"]+"</option>"
           }
         }
         else{
-          if (plugins[r]["is_activated"]){
-            html+= "<option value=\""+plugins[r]["name"]+"\">"+plugins[r]["name"]+"</option>"
+          if (plugin["is_activated"]){
+            html+= "<option value=\""+plugin["name"]+"\">"+plugin["name"]+"</option>"
           }
           else{
-            html+= "<option value=\""+plugins[r]["name"]+"\" disabled=\"disabled\">"+plugins[r]["name"]+"</option>"
+            html+= "<option value=\""+plugin["name"]+"\" disabled=\"disabled\">"+plugin["name"]+"</option>"
           }
         }
       }
-      if (plugins[r]["extra_params"]){
-        plugins_params[plugins[r]["name"]]={};
-        for (param in plugins[r]["extra_params"]){
-          if (typeof plugins[r]["extra_params"][param] !="string"){
+      if (plugin["extra_params"]){
+        plugins_params[plugin["name"]]={};
+        for (param in plugin["extra_params"]){
+          if (typeof plugin["extra_params"][param] !="string"){
             var params = new Array();
-            var alias = plugins[r]["extra_params"][param]["aliases"][0];
+            var alias = plugin["extra_params"][param]["aliases"][0];
             params[alias]=new Array();
-            for (option in plugins[r]["extra_params"][param]["options"]){
-              params[alias].push(plugins[r]["extra_params"][param]["options"][option])
+            for (option in plugin["extra_params"][param]["options"]){
+              params[alias].push(plugin["extra_params"][param]["options"][option])
             }
-            plugins_params[plugins[r]["name"]][alias] = (params[alias])
+            plugins_params[plugin["name"]][alias] = (params[alias])
           }
         }
       }
       var pluginList = document.createElement('li');
-      pluginList.innerHTML = "<a href=https://github.com/gsi-upm/senpy-plugins-community>" + plugins[r]["name"] + "</a>" + ": " + plugins[r]["description"]
+      
+      newHtml = ""
+      if(plugin.url) {
+        newHtml= "<a href="+plugin.url+">" + plugin.name + "</a>";
+      }else {
+        newHtml= plugin["name"];
+      }
+      newHtml += ": " + replaceURLWithHTMLLinks(plugin.description);
+      pluginList.innerHTML = newHtml;
       availablePlugins.appendChild(pluginList)
     }
     document.getElementById('plugins').innerHTML = html;
@@ -96,6 +105,10 @@ function change_params(){
 
 function load_JSON(){
       url = "/api";
+      var container = document.getElementById('results');
+      var rawcontainer = document.getElementById("jsonraw");
+      rawcontainer.innerHTML = '';
+      container.innerHTML = '';
       var plugin = document.getElementById("plugins").options[document.getElementById("plugins").selectedIndex].value;
       var input = encodeURIComponent(document.getElementById("input").value);
       url += "?algo="+plugin+"&i="+input
@@ -108,18 +121,14 @@ function load_JSON(){
         }
       }
       var response = JSON.parse($.ajax({type: "GET", url: url , async: false}).responseText);
-      var container = document.getElementById('results');
       var options = {
         mode: 'view'
       };
-      try { 
-        container.removeChild(container.firstChild);
-      }
-      catch(err) {
-      }
       var editor = new JSONEditor(container, options, response);
-      document.getElementById("jsonraw").innerHTML = replaceURLWithHTMLLinks(JSON.stringify(response, undefined, 2))
+      editor.expandAll();
+      rawcontainer.innerHTML = replaceURLWithHTMLLinks(JSON.stringify(response, undefined, 2))
       document.getElementById("input_request").innerHTML = "<a href='"+url+"'>"+url+"</a>"
+      document.getElementById("results-div").style.display = 'block';
       
 
 }

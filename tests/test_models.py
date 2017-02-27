@@ -3,20 +3,25 @@ import logging
 import jsonschema
 
 import json
+import rdflib
 from unittest import TestCase
-from senpy.models import Entry, Results, Sentiment, EmotionSet, Error
+from senpy.models import (Emotion,
+                          EmotionAnalysis,
+                          EmotionSet,
+                          Entry,
+                          Error,
+                          Results,
+                          Sentiment)
 from senpy.plugins import SenpyPlugin
 from pprint import pprint
 
 
 class ModelsTest(TestCase):
     def test_jsonld(self):
-        prueba = {"id": "test",
-                  "analysis": [],
-                  "entries": []}
+        prueba = {"id": "test", "analysis": [], "entries": []}
         r = Results(**prueba)
         print("Response's context: ")
-        pprint(r.context)
+        pprint(r._context)
 
         assert r.id == "test"
 
@@ -30,14 +35,11 @@ class ModelsTest(TestCase):
         assert "id" not in j
 
         r6 = Results(**prueba)
-        e = Entry({
-            "@id": "ohno",
-            "nif:isString": "Just testing"
-        })
+        e = Entry({"@id": "ohno", "nif:isString": "Just testing"})
         r6.entries.append(e)
         logging.debug("Reponse 6: %s", r6)
-        assert ("marl" in r6.context)
-        assert ("entries" in r6.context)
+        assert ("marl" in r6._context)
+        assert ("entries" in r6._context)
         j6 = r6.jsonld(with_context=True)
         logging.debug("jsonld: %s", j6)
         assert ("@context" in j6)
@@ -113,5 +115,35 @@ class ModelsTest(TestCase):
         s = str(r)
         assert "_testing" not in s
 
-    def test_frame_response(self):
+    def test_turtle(self):
+        """Any model should be serializable as a turtle file"""
+        ana = EmotionAnalysis()
+        res = Results()
+        res.analysis.append(ana)
+        entry = Entry(text='Just testing')
+        eSet = EmotionSet()
+        emotion = Emotion()
+        entry.emotions.append(eSet)
+        res.entries.append(entry)
+        eSet.onyx__hasEmotion.append(emotion)
+        eSet.prov__wasGeneratedBy = ana.id
+        triples = ('ana a :Analysis',
+                   'entry a :entry',
+                   '      nif:isString "Just testing"',
+                   '      onyx:hasEmotionSet eSet',
+                   'eSet a onyx:EmotionSet',
+                   '     prov:wasGeneratedBy ana',
+                   '     onyx:hasEmotion emotion',
+                   'emotion a onyx:Emotion',
+                   'res a :results',
+                   '    me:AnalysisInvoloved ana',
+                   '    prov:used entry')
+
+        t = res.serialize(format='turtle')
+        print(t)
+        g = rdflib.Graph().parse(data=t, format='turtle')
+        assert len(g) == len(triples)
+
+    def test_convert_emotions(self):
+        """It should be possible to convert between different emotion models"""
         pass

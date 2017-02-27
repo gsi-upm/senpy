@@ -74,7 +74,7 @@ def main():
     parser.add_argument(
         '--host',
         type=str,
-        default="127.0.0.1",
+        default="0.0.0.0",
         help='Use 0.0.0.0 to accept requests from any host.')
     parser.add_argument(
         '--port',
@@ -93,8 +93,7 @@ def main():
         '-i',
         action='store_true',
         default=False,
-        help='Do not run a server, only install plugin dependencies'
-    )
+        help='Do not run a server, only install plugin dependencies')
     args = parser.parse_args()
     logging.basicConfig()
     rl = logging.getLogger()

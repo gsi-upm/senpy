@@ -16,7 +16,7 @@ from unittest import TestCase
 
 class ExtensionsTest(TestCase):
     def setUp(self):
-        self.app = Flask("test_extensions")
+        self.app = Flask('test_extensions')
         self.dir = os.path.join(os.path.dirname(__file__))
         self.senpy = Senpy(plugin_folder=self.dir,
                            app=self.app,
@@ -45,7 +45,7 @@ class ExtensionsTest(TestCase):
             'requirements': ['noop'],
             'version': 0
         }
-        root = os.path.join(self.dir, 'dummy_plugin')
+        root = os.path.join(self.dir, 'plugins', 'dummy_plugin')
         name, module = self.senpy._load_plugin_from_info(info, root=root)
         assert name == 'TestPip'
         assert module
@@ -55,7 +55,7 @@ class ExtensionsTest(TestCase):
     def test_installing(self):
         """ Enabling a plugin """
         self.senpy.activate_all(sync=True)
-        assert len(self.senpy.plugins) == 2
+        assert len(self.senpy.plugins) >= 3
         assert self.senpy.plugins["Sleep"].is_activated
 
     def test_disabling(self):
@@ -75,11 +75,12 @@ class ExtensionsTest(TestCase):
     def test_noplugin(self):
         """ Don't analyse if there isn't any plugin installed """
         self.senpy.deactivate_all(sync=True)
-        self.assertRaises(Error, partial(self.senpy.analyse,
-                                         input="tupni"))
-        self.assertRaises(Error, partial(self.senpy.analyse,
-                                         input="tupni",
-                                         algorithm='Dummy'))
+        self.assertRaises(Error, partial(self.senpy.analyse, input="tupni"))
+        self.assertRaises(Error,
+                          partial(
+                              self.senpy.analyse,
+                              input="tupni",
+                              algorithm='Dummy'))
 
     def test_analyse(self):
         """ Using a plugin """
@@ -88,17 +89,20 @@ class ExtensionsTest(TestCase):
         r1 = self.senpy.analyse(
             algorithm="Dummy", input="tupni", output="tuptuo")
         r2 = self.senpy.analyse(input="tupni", output="tuptuo")
-        assert r1.analysis[0].id[:5] == "Dummy"
-        assert r2.analysis[0].id[:5] == "Dummy"
+        assert r1.analysis[0] == "plugins/Dummy_0.1"
+        assert r2.analysis[0] == "plugins/Dummy_0.1"
+        assert r1.entries[0].text == 'input'
 
     def test_analyse_error(self):
         mm = mock.MagicMock()
-        mm.analyse.side_effect = Error('error on analysis', status=900)
+        mm.analyse_entry.side_effect = Error('error on analysis', status=900)
         self.senpy.plugins['MOCK'] = mm
         resp = self.senpy.analyse(input='nothing', algorithm='MOCK')
         assert resp['message'] == 'error on analysis'
         assert resp['status'] == 900
         mm.analyse.side_effect = Exception('generic exception on analysis')
+        mm.analyse_entry.side_effect = Exception(
+            'generic exception on analysis')
         resp = self.senpy.analyse(input='nothing', algorithm='MOCK')
         assert resp['message'] == 'generic exception on analysis'
         assert resp['status'] == 500
@@ -110,8 +114,7 @@ class ExtensionsTest(TestCase):
         assert self.senpy.filter_plugins(name="Dummy", is_activated=True)
         self.senpy.deactivate_plugin("Dummy", sync=True)
         assert not len(
-            self.senpy.filter_plugins(
-                name="Dummy", is_activated=True))
+            self.senpy.filter_plugins(name="Dummy", is_activated=True))
 
     def test_load_default_plugins(self):
         senpy = Senpy(plugin_folder=self.dir, default_plugins=True)

@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>Playground</title>
+    <title>Playground {{version}}</title>
 
   </head>
   <script src="static/js/jquery-2.1.1.min.js" ></script>
@@ -25,49 +25,68 @@
         <h3 id="header-title">
           <a href="https://github.com/gsi-upm/senpy" target="_blank">
             <img id="header-logo" class="imsg-responsive" src="static/img/header.png"/></a> Playground
-
         </h3>
+          <h4>v{{ version}}</h4>
       </div>
 
       <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a class="active" href="#about">About</a></li>
-        <li role="presentation"><a class="active" href="#test">Test it</a></li>
+        <li role="presentation" ><a class="active" href="#about">About</a></li>
+        <li role="presentation"class="active"><a class="active" href="#test">Test it</a></li>
       </ul>
 
       <div class="tab-content">
-        <div class="tab-pane active" id="about">
+        <div class="tab-pane" id="about">
+
           <div class="row">
-            <div class="col-lg-6 ">
-              <div class="well">
-                <h2>Test Senpy</h2>
-                <div>
-                  <p class="text-center">
-                    <a class="btn btn-lg btn-primary" href="#test" role="button">Test it »</a>
+                <div class="col-lg-6">
+                  <h2>About Senpy</h2>
+                  <p>Senpy is a framework to build semantic sentiment and emotion analysis services. It does so by using a mix of web and semantic technologies, such as JSON-LD, RDFlib and Flask.</p>
+                  <p>Senpy makes it easy to develop and publish your own analysis algorithms (plugins in senpy terms).
+                  </p>
+                  <p>
+                    This website is the senpy Playground, which allows you to test the instance of senpy in this server. It provides a user-friendly interface to the functions exposed by the senpy API.
+                    </p>
+                  <p>
+                    Once you get comfortable with the parameters and results, you are encouraged to issue your own requests to the API endpoint, which should be <a href="/api">here</a>.
+                  </p>
+                  <p>
+                    These are some of the things you can do with the API:
+                    <ul>
+                      <li>List all available plugins: <a href="/api/plugins">/api/plugins</a></li>
+                      <li>Get information about the default plugin: <a href="/api/plugins/default">/api/plugins/default</a></li>
+                      <li>Download the JSON-LD context used: <a href="/api/contexts/Results.jsonld">/api/contexts/Results.jsonld</a></li>
+                    </ul>
+
                   </p>
                   
                 </div>
-                
-              </div>
+            <div class="col-lg-6 ">
               <div class="panel panel-default">
-                <div class="panel-heading"><i class="fa fa-sign-in"></i> Follow us on <a href="http://www.github.com/gsi-upm/senpy">GitHub</a></div>
-              </div>
-              <div class="panel panel-default">
-                <div class="panel-heading"><i class="fa fa-child"></i> Enjoy.</div>
+                <div class="panel-heading">
+                Available Plugins
+                </div>
+                <div class="panel-body"><ul id=availablePlugins></ul></div>
               </div>
             </div>
             <div class="col-lg-6 ">
-              <div class="well">
-                <h2>Available Plugins</h2>
-                <div>
-                <span><ul id=availablePlugins></ul></span>
-                </div>
-                
+              <a href="http://senpy.readthedocs.io">
+              <div class="panel panel-default">
+                <div class="panel-heading"><i class="fa fa-book"></i> If you are new to senpy, you might want to read senpy's documentation</div>
+              </div>
+              </a>
+              <a href="http://www.github.com/gsi-upm/senpy">
+              <div class="panel panel-default">
+                <div class="panel-heading"><i class="fa fa-sign-in"></i> Feel free to follow us on GitHub</div>
+              </div>
+              </a>
+              <div class="panel panel-default">
+                <div class="panel-heading"><i class="fa fa-child"></i> Enjoy.</div>
               </div>
             </div>     
           </div>
         </div>
 
-        <div class="tab-pane" id="test">
+        <div class="tab-pane active" id="test">
           <div class="well">
             <form id="form" onsubmit="return getPlugins();" accept-charset="utf-8">
               <div id="inputswrapper">
@@ -81,30 +100,32 @@ I cannot believe it!</textarea></div>
                         <div id ="params">
                         </div>
                 </br>
-                <a id="preview" class="btn btn-lg btn-primary" href="#" onclick="load_JSON()">Analyse!</a>
+                <a id="preview" class="btn btn-lg btn-primary" onclick="load_JSON()">Analyse!</a>
                 <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
+              </div>
             </form>
-              <span id="input_request"></span>
+          </div>
+            <span id="input_request"></span>
+            <div id="results-div">
               <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a class="active" href="#viewer">Viewer</a></li>
                 <li role="presentation"><a class="active" href="#raw">Raw</a></li>
               </ul>
-              <div class="tab-content">
+              <div class="tab-content" id="results-container">
                 
                 <div class="tab-pane active" id="viewer">
-                    <div id="content">
-                      <pre id="results"></pre>
-                    </div>
+                  <div id="content">
+                    <pre id="results" class="results"></pre>
+                  </div>
                 </div>
                 
                 <div class="tab-pane" id="raw">
-                    <div id="content">
-                       <pre id="jsonraw"></pre>
-                    </div>
+                  <div id="content">
+                    <pre id="jsonraw" class="results"></pre>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
         </div>
         <a href="http://www.gsi.dit.upm.es" target="_blank"><img class="center-block" src="static/img/gsi.png"/>  </a> 
 

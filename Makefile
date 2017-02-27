@@ -2,12 +2,18 @@ PYVERSIONS=3.5 3.4 2.7
 PYMAIN=$(firstword $(PYVERSIONS))
 NAME=senpy
 REPO=gsiupm
-VERSION=$(shell git describe --tags)
-TARNAME=$(NAME)-$(subst -,.,$(VERSION)).tar.gz 
+VERSION=$(shell ./version.sh)
+TARNAME=$(NAME)-$(VERSION).tar.gz 
 IMAGENAME=$(REPO)/$(NAME):$(VERSION)
 TEST_COMMAND=gitlab-runner exec docker --cache-dir=/tmp/gitlabrunner --docker-volumes /tmp/gitlabrunner:/tmp/gitlabrunner --env CI_PROJECT_NAME=$(NAME)
 
 all: build run
+
+FORCE:
+
+version: FORCE
+	@echo $(VERSION) > $(NAME)/VERSION
+	@echo $(NAME) $(VERSION)
 
 yapf:
 	yapf -i -r senpy
@@ -36,7 +42,13 @@ quick_test: $(addprefix test-,$(PYMAIN))
 test: $(addprefix test-,$(PYVERSIONS))
 
 debug-%:
-	(docker start $(NAME)-debug && docker attach $(NAME)-debug) || docker run -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti --name $(NAME)-debug '$(IMAGENAME)-python$* pip install -r test-requirements.txt'
+	@docker start $(NAME)-debug || (\
+		$(MAKE) build-$*; \
+		docker run -d -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -p 5000:5000 -ti --name $(NAME)-debug '$(IMAGENAME)-python$*'; \
+		docker exec -ti $(NAME)-debug pip install -r test-requirements.txt; \
+	)\
+
+	docker attach $(NAME)-debug
 
 debug: debug-$(PYMAIN)
 
@@ -77,7 +89,9 @@ pip_upload:
 
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
-run: build
-	docker run --rm -p 5000:5000 -ti '$(IMAGENAME)-python$(PYMAIN)'
+run-%: build-%
+	docker run --rm -p 5000:5000 -ti '$(IMAGENAME)-python$(PYMAIN)' --default-plugins
+
+run: run-$(PYMAIN)
 
 .PHONY: test test-% build-% build test pip_test run yapf dev

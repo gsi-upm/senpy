@@ -2,46 +2,127 @@ Developing new plugins
 ----------------------
 Each plugin represents a different analysis process.There are two types of files that are needed by senpy for loading a plugin:
 
-Plugins Interface
-=======
 - Definition file, has the ".senpy" extension.
 - Code file, is a python file.
+
+This separation will allow us to deploy plugins that use the same code but employ different parameters.
+For instance, one could use the same classifier and processing in several plugins, but train with different datasets.
+This scenario is particularly useful for evaluation purposes.
+
+The only limitation is that the name of each plugin needs to be unique.
 
 Plugins Definitions
 ===================
 
-The definition file can be written in JSON or YAML, where the data representation consists on attribute-value pairs.
-The principal attributes are:
+The definition file contains all the attributes of the plugin, and can be written in YAML or JSON.
+The most important attributes are:
 
-* name: plugin name used in senpy to call the plugin.
-* module: indicates the module that will be loaded
+* **name**: unique name that senpy will use internally to identify the plugin.
+* **module**: indicates the module that contains the plugin code, which will be automatically loaded by senpy.
+* **version**
+* extra_params: used to specify parameters that the plugin accepts that are not already part of the senpy API. Those parameters may be required, and have aliased names. For instance:
 
-.. code:: python
+  .. code:: yaml
+
+            extra_params:
+                hello_param:
+                    aliases: # required
+                        - hello_param
+                        - hello
+                    required: true
+                    default: Hi you
+                    values:
+                        - Hi you
+                        - Hello y'all
+                        - Howdy
+
+  Parameter validation will fail if a required parameter without a default has not been provided, or if the definition includes a set of values and the provided one does not match one of them.
+
+
+A complete example:
+
+.. code:: yaml
+          
+          name: <Name of the plugin>
+          module: <Python file>
+          version: 0.1
+
+And the json equivalent:
+
+.. code:: json
 
           {
-            "name" : "senpyPlugin",
-            "module" : "{python code file}"
+            "name": "<Name of the plugin>",
+            "module": "<Python file>",
+            "version": "0.1"
           }
 
-.. code:: python
-          
-          name: senpyPlugin
-          module: {python code file}
 
 Plugins Code
-=================
+============
 
 The basic methods in a plugin are:
 
 * __init__
 * activate: used to load memory-hungry resources
 * deactivate: used to free up resources
-* analyse: called in every user requests. It takes in the parameters supplied by a user and should return a senpy Response.
+* analyse_entry: called in every user requests. It takes in the parameters supplied by a user and should yield one or more ``Entry`` objects.
 
 Plugins are loaded asynchronously, so don't worry if the activate method takes too long. The plugin will be marked as activated once it is finished executing the method.
 
+
+Example plugin
+==============
+
+In this section, we will implement a basic sentiment analysis plugin.
+To determine the polarity of each entry, the plugin will compare the length of the string to a threshold.
+This threshold will be included in the definition file.
+
+The definition file would look like this:
+
+.. code:: yaml
+
+          name: helloworld
+          module: helloworld
+          version: 0.0
+          threshold: 10
+
+
+Now, in a file named ``helloworld.py``:
+
+.. code:: python
+
+          #!/bin/env python
+          #helloworld.py
+
+          from senpy.plugins import SenpyPlugin
+          from senpy.models import Sentiment
+
+
+          class HelloWorld(SenpyPlugin):
+
+              def analyse_entry(entry, params):
+                  '''Basically do nothing with each entry'''
+
+                  sentiment = Sentiment()
+                  if len(entry.text) < self.threshold:
+                      sentiment['marl:hasPolarity'] = 'marl:Positive'
+                  else:
+                      sentiment['marl:hasPolarity'] = 'marl:Negative'
+                  entry.sentiments.append(sentiment)
+                  yield entry
+
+
 F.A.Q.
 ======
+Why does the analyse function yield instead of return?
+??????????????????????????????????????????????????????
+
+This is so that plugins may add new entries to the response or filter some of them.
+For instance, a `context detection` plugin may add a new entry for each context in the original entry.
+On the other hand, a conveersion plugin may leave out those entries that do not contain relevant information.
+
+
 If I'm using a classifier, where should I train it?
 ???????????????????????????????????????????????????
 
@@ -78,17 +159,17 @@ This example ilustrate how to implement the Sentiment140 service as a plugin in 
 .. code:: python
 
           class Sentiment140Plugin(SentimentPlugin):
-              def analyse(self, **params):
+              def analyse_entry(self, entry, params):
+                  text = entry.text
                   lang = params.get("language", "auto")
                   res = requests.post("http://www.sentiment140.com/api/bulkClassifyJson",
                                       json.dumps({"language": lang,
-                                                  "data": [{"text": params["input"]}]
+                                                  "data": [{"text": text}]
                                                   }
                                                  )
                                       )
 
                   p = params.get("prefix", None)
-                  response = Results(prefix=p)
                   polarity_value = self.maxPolarityValue*int(res.json()["data"][0]
                                                              ["polarity"]) * 0.25
                   polarity = "marl:Neutral"
@@ -98,18 +179,13 @@ This example ilustrate how to implement the Sentiment140 service as a plugin in 
                   elif polarity_value < neutral_value:
                       polarity = "marl:Negative"
 
-                  entry = Entry(id="Entry0",
-                                nif__isString=params["input"])
                   sentiment = Sentiment(id="Sentiment0",
                                       prefix=p,
                                       marl__hasPolarity=polarity,
                                       marl__polarityValue=polarity_value)
                   sentiment.prov__wasGeneratedBy = self.id
-                  entry.sentiments = []
                   entry.sentiments.append(sentiment)
-                  entry.language = lang
-                  response.entries.append(entry)
-                  return response
+                  yield entry
 
 
 Where can I define extra parameters to be introduced in the request to my plugin?
@@ -143,9 +219,9 @@ The extraction of this paremeter is used in the analyse method of the Plugin int
 Where can I set up variables for using them in my plugin?
 ?????????????????????????????????????????????????????????
 
-You can add these variables in the definition file with the extracture of attribute-value pair.
+You can add these variables in the definition file with the structure of attribute-value pairs.
 
-Once you have added your variables, the next step is to extract them into the plugin. The plugin's __init__ method has a parameter called `info` where you can extract the values of the variables. This info parameter has the structure of a python dictionary.
+Every field added to the definition file is available to the plugin instance.
 
 Can I activate a DEBUG mode for my plugin?
 ???????????????????????????????????????????
@@ -154,7 +230,15 @@ You can activate the DEBUG mode by the command-line tool using the option -d.
 
 .. code:: bash
 
-   python -m senpy -d
+   senpy -d
+
+
+Additionally, with the ``--pdb`` option you will be dropped into a pdb post mortem shell if an exception is raised.
+
+.. code:: bash
+
+   senpy --pdb
+
 
 Where can I find more code examples?
 ????????????????????????????????????

@@ -24,7 +24,8 @@
           "@id": "http://micro.blog/status1#char=16,77",
           "nif:beginIndex": 16,
           "nif:endIndex": 77,
-          "nif:anchorOf": "put your Windows Phone on your newest #open technology program"
+          "nif:anchorOf": "put your Windows Phone on your newest #open technology program",
+          "prov:wasGeneratedBy": "me:SgAnalysis1"
         }
       ],
       "sentiments": [

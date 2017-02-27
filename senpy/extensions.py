@@ -1,14 +1,14 @@
 """
+Main class for Senpy.
+It orchestrates plugin (de)activation and analysis.
 """
 from future import standard_library
 standard_library.install_aliases()
 
-from .plugins import SentimentPlugin
-from .models import Error
-from .blueprints import api_blueprint, demo_blueprint
+from .plugins import SentimentPlugin, SenpyPlugin
+from .models import Error, Entry, Results
+from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 from .api import API_PARAMS, NIF_PARAMS, parse_params
-
-from git import Repo, InvalidGitRepositoryError
 
 from threading import Thread
 
@@ -30,18 +30,21 @@ class Senpy(object):
 
     def __init__(self,
                  app=None,
-                 plugin_folder="plugins",
+                 plugin_folder=".",
                  default_plugins=False):
         self.app = app
-
         self._search_folders = set()
         self._plugin_list = []
         self._outdated = True
+        self._default = None
 
         self.add_folder(plugin_folder)
         if default_plugins:
-            base_folder = os.path.join(os.path.dirname(__file__), "plugins")
-            self.add_folder(base_folder)
+            self.add_folder('plugins', from_root=True)
+        else:
+            # Add only conversion plugins
+            self.add_folder(os.path.join('plugins', 'conversion'),
+                            from_root=True)
 
         if app is not None:
             self.init_app(app)
@@ -60,9 +63,12 @@ class Senpy(object):
         else:
             app.teardown_request(self.teardown)
         app.register_blueprint(api_blueprint, url_prefix="/api")
+        app.register_blueprint(ns_blueprint, url_prefix="/ns")
         app.register_blueprint(demo_blueprint, url_prefix="/")
 
-    def add_folder(self, folder):
+    def add_folder(self, folder, from_root=False):
+        if from_root:
+            folder = os.path.join(os.path.dirname(__file__), folder)
         logger.debug("Adding folder: %s", folder)
         if os.path.isdir(folder):
             self._search_folders.add(folder)
@@ -70,10 +76,9 @@ class Senpy(object):
         else:
             logger.debug("Not a folder: %s", folder)
 
-    def analyse(self, **params):
-        algo = None
-        logger.debug("analysing with params: {}".format(params))
+    def _find_plugin(self, params):
         api_params = parse_params(params, spec=API_PARAMS)
+        algo = None
         if "algorithm" in api_params and api_params["algorithm"]:
             algo = api_params["algorithm"]
         elif self.plugins:
@@ -97,32 +102,114 @@ class Senpy(object):
                 status=400,
                 message=("The algorithm '{}'"
                          " is not activated yet").format(algo))
-        plug = self.plugins[algo]
+        return self.plugins[algo]
+
+    def _get_params(self, params, plugin):
         nif_params = parse_params(params, spec=NIF_PARAMS)
-        extra_params = plug.get('extra_params', {})
+        extra_params = plugin.get('extra_params', {})
         specific_params = parse_params(params, spec=extra_params)
         nif_params.update(specific_params)
+        return nif_params
+
+    def _get_entries(self, params):
+        entry = None
+        if params['informat'] == 'text':
+            entry = Entry(text=params['input'])
+        else:
+            raise NotImplemented('Only text input format implemented')
+        yield entry
+
+    def analyse(self, **api_params):
+        logger.debug("analysing with params: {}".format(api_params))
+        plugin = self._find_plugin(api_params)
+        nif_params = self._get_params(api_params, plugin)
+        resp = Results()
+        if 'with_parameters' in api_params:
+            resp.parameters = nif_params
         try:
-            resp = plug.analyse(**nif_params)
-            resp.analysis.append(plug)
+            entries = []
+            for i in self._get_entries(nif_params):
+                entries += list(plugin.analyse_entry(i, nif_params))
+            resp.entries = entries
+            self.convert_emotions(resp, plugin, nif_params)
+            resp.analysis.append(plugin.id)
             logger.debug("Returning analysis result: {}".format(resp))
         except Error as ex:
             logger.exception('Error returning analysis result')
             resp = ex
         except Exception as ex:
-            resp = Error(message=str(ex), status=500)
             logger.exception('Error returning analysis result')
+            resp = Error(message=str(ex), status=500)
         return resp
+
+    def _conversion_candidates(self, fromModel, toModel):
+        candidates = self.filter_plugins(**{'@type': 'emotionConversionPlugin'})
+        for name, candidate in candidates.items():
+            for pair in candidate.onyx__doesConversion:
+                logging.debug(pair)
+
+                if pair['onyx:conversionFrom'] == fromModel \
+                   and pair['onyx:conversionTo'] == toModel:
+                    # logging.debug('Found candidate: {}'.format(candidate))
+                    yield candidate
+
+    def convert_emotions(self, resp, plugin, params):
+        """
+        Conversion of all emotions in a response.
+        In addition to converting from one model to another, it has
+        to include the conversion plugin to the analysis list.
+        Needless to say, this is far from an elegant solution, but it works.
+        @todo refactor and clean up
+        """
+        fromModel = plugin.get('onyx:usesEmotionModel', None)
+        toModel = params.get('emotionModel', None)
+        output = params.get('conversion', None)
+        logger.debug('Asked for model: {}'.format(toModel))
+        logger.debug('Analysis plugin uses model: {}'.format(fromModel))
+
+        if not toModel:
+            return
+        try:
+            candidate = next(self._conversion_candidates(fromModel, toModel))
+        except StopIteration:
+            e = Error(('No conversion plugin found for: '
+                       '{} -> {}'.format(fromModel, toModel)))
+            e.original_response = resp
+            e.parameters = params
+            raise e
+        newentries = []
+        for i in resp.entries:
+            if output == "full":
+                newemotions = i.emotions.copy()
+            else:
+                newemotions = []
+            for j in i.emotions:
+                for k in candidate.convert(j, fromModel, toModel, params):
+                    k.prov__wasGeneratedBy = candidate.id
+                    if output == 'nested':
+                        k.prov__wasDerivedFrom = j
+                    newemotions.append(k)
+            i.emotions = newemotions
+            newentries.append(i)
+        resp.entries = newentries
+        resp.analysis.append(candidate.id)
 
     @property
     def default_plugin(self):
-        candidates = self.filter_plugins(is_activated=True)
-        if len(candidates) > 0:
-            candidate = list(candidates.values())[0]
-            logger.debug("Default: {}".format(candidate.name))
-            return candidate
+        candidate = self._default
+        if not candidate:
+            candidates = self.filter_plugins(is_activated=True)
+            if len(candidates) > 0:
+                candidate = list(candidates.values())[0]
+        logger.debug("Default: {}".format(candidate))
+        return candidate
+
+    @default_plugin.setter
+    def default_plugin(self, value):
+        if isinstance(value, SenpyPlugin):
+            self._default = value
         else:
-            return None
+            self._default = self.plugins[value]
 
     def activate_all(self, sync=False):
         ps = []
@@ -164,6 +251,7 @@ class Senpy(object):
                     plugin.name, ex, traceback.format_exc())
                 logger.error(msg)
                 raise Error(msg)
+
         if sync:
             act()
         else:
@@ -184,8 +272,8 @@ class Senpy(object):
                 plugin.deactivate()
                 logger.info("Plugin deactivated: {}".format(plugin.name))
             except Exception as ex:
-                logger.error("Error deactivating plugin {}: {}".format(
-                    plugin.name, ex))
+                logger.error(
+                    "Error deactivating plugin {}: {}".format(plugin.name, ex))
                 logger.error("Trace: {}".format(traceback.format_exc()))
 
         if sync:
@@ -237,13 +325,6 @@ class Senpy(object):
             logger.debug("No valid plugin for: {}".format(module))
             return
         module = candidate(info=info)
-        repo_path = root
-        try:
-            module._repo = Repo(repo_path)
-        except InvalidGitRepositoryError:
-            logger.debug("The plugin {} is not in a Git repository".format(
-                module))
-            module._repo = None
         return name, module
 
     @classmethod
@@ -261,7 +342,7 @@ class Senpy(object):
             for root, dirnames, filenames in os.walk(search_folder):
                 for filename in fnmatch.filter(filenames, '*.senpy'):
                     name, plugin = self._load_plugin(root, filename)
-                    if plugin and name not in self._plugin_list:
+                    if plugin and name:
                         plugins[name] = plugin
 
         self._outdated = False
@@ -282,8 +363,8 @@ class Senpy(object):
 
         def matches(plug):
             res = all(getattr(plug, k, None) == v for (k, v) in kwargs.items())
-            logger.debug("matching {} with {}: {}".format(plug.name, kwargs,
-                                                          res))
+            logger.debug(
+                "matching {} with {}: {}".format(plug.name, kwargs, res))
             return res
 
         if not kwargs:

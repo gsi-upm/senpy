@@ -8,7 +8,7 @@ body {
 }
 #inputswrapper {
     min-height:100%;
-    background: white;
+    /* background: white; */
     position:relative;
     min-width: 800px;
     height: 100%;
@@ -50,24 +50,15 @@ body {
 #form {
   width: 100%;
 }
-#results {
+.results {
     overflow: auto;
-    padding: 20px;
-    background: lightgray;
-     -moz-border-radius: 20px;
-     -webkit-border-radius: 20px;
-     -khtml-border-radius: 20px;
-     border-radius: 20px;
+    /* padding: 20px; */
+    background: white;
+     /* -moz-border-radius: 20px; */
+     /* -webkit-border-radius: 20px; */
+     /* -khtml-border-radius: 20px; */
+     /* border-radius: 20px; */
 
-}
-#jsonraw {
-    overflow: auto;
-    padding: 20px;
-    background: lightgray;
-     -moz-border-radius: 20px;
-     -webkit-border-radius: 20px;
-     -khtml-border-radius: 20px;
-     border-radius: 20px;
 }
 #input_request { 
     margin-top: 5px;
@@ -155,4 +146,9 @@ textarea{
 }
 #header {
   font-family: 'Architects Daughter', cursive;
+}
+
+#results-div {
+    /* background: white; */
+    display: none;
 }

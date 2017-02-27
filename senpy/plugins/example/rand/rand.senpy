@@ -1,0 +1,10 @@
+---
+name: rand
+module: rand
+description: A sample plugin that returns a random sentiment annotation
+author: "@balkian"
+version: '0.1'
+url: "https://github.com/gsi-upm/senpy-plugins-community"
+requirements: {}
+marl:maxPolarityValue: '1'
+marl:minPolarityValue: "-1"

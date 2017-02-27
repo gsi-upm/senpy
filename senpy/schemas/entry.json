@@ -11,23 +11,28 @@
     },
     "sentiments": {
       "type": "array",
-      "items": {"$ref": "sentiment.json" }
+      "items": {"$ref": "sentiment.json" },
+      "default": []
     },
     "emotions": {
       "type": "array",
-      "items": {"$ref": "emotionSet.json" }
+      "items": {"$ref": "emotionSet.json" },
+      "default": []
     },
     "entities": {
       "type": "array",
-      "items": {"$ref": "entity.json" }
+      "items": {"$ref": "entity.json" },
+      "default": []
     },
     "topics": {
       "type": "array",
-      "items": {"$ref": "topic.json" }
+      "items": {"$ref": "topic.json" },
+      "default": []
     },
     "suggestions": {
       "type": "array",
-      "items": {"$ref": "suggestion.json" }
+      "items": {"$ref": "suggestion.json" },
+      "default": []
     }
   },
   "required": ["@id", "nif:isString"]

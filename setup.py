@@ -1,7 +1,8 @@
 import pip
 from setuptools import setup
-from pip.req import parse_requirements
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
+from pip.req import parse_requirements
+from senpy import __version__
 
 try:
     install_reqs = parse_requirements(
@@ -15,7 +16,6 @@ except AttributeError:
 install_reqs = [str(ir.req) for ir in install_reqs]
 test_reqs = [str(ir.req) for ir in test_reqs]
 
-from senpy import __version__
 
 setup(
     name='senpy',

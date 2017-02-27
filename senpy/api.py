@@ -7,6 +7,31 @@ API_PARAMS = {
     "algorithm": {
         "aliases": ["algorithm", "a", "algo"],
         "required": False,
+    },
+    "outformat": {
+        "@id": "outformat",
+        "aliases": ["outformat", "o"],
+        "default": "json-ld",
+        "required": True,
+        "options": ["json-ld", "turtle"],
+    },
+    "expanded-jsonld": {
+        "@id": "expanded-jsonld",
+        "aliases": ["expanded", "expanded-jsonld"],
+        "required": True,
+        "default": 0
+    },
+    "emotionModel": {
+        "@id": "emotionModel",
+        "aliases": ["emotionModel", "emoModel"],
+        "required": False
+    },
+    "conversion": {
+        "@id": "conversion",
+        "description": "How to show the elements that have (not) been converted",
+        "required": True,
+        "options": ["filtered", "nested", "full"],
+        "default": "full"
     }
 }
 
@@ -47,13 +72,6 @@ NIF_PARAMS = {
         "default": "direct",
         "options": ["direct", "url", "file"],
     },
-    "outformat": {
-        "@id": "outformat",
-        "aliases": ["outformat", "o"],
-        "default": "json-ld",
-        "required": False,
-        "options": ["json-ld"],
-    },
     "language": {
         "@id": "language",
         "aliases": ["language", "l"],
@@ -76,12 +94,12 @@ NIF_PARAMS = {
 
 
 def parse_params(indict, spec=NIF_PARAMS):
-    outdict = {}
+    logger.debug("Parsing: {}\n{}".format(indict, spec))
+    outdict = indict.copy()
     wrong_params = {}
     for param, options in iteritems(spec):
         if param[0] != "@":  # Exclude json-ld properties
-            logger.debug("Param: %s - Options: %s", param, options)
-            for alias in options["aliases"]:
+            for alias in options.get("aliases", []):
                 if alias in indict:
                     outdict[param] = indict[alias]
             if param not in outdict:
@@ -95,8 +113,9 @@ def parse_params(indict, spec=NIF_PARAMS):
                    outdict[param] not in spec[param]["options"]:
                     wrong_params[param] = spec[param]
     if wrong_params:
+        logger.debug("Error parsing: %s", wrong_params)
         message = Error(
-            status=404,
+            status=400,
             message="Missing or invalid parameters",
             parameters=outdict,
             errors={param: error

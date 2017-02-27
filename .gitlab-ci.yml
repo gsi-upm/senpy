@@ -7,6 +7,9 @@ variables:
   DOCKER_DRIVER: overlay
   DOCKERFILE: Dockerfile
 
+before_script:
+  - sh version.sh > senpy/VERSION
+
 stages:
   - test
   - images
