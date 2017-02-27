@@ -44,28 +44,24 @@ push-3.5:
   variables:
     PYTHON_VERSION: "3.5"
     VERSION: $CI_BUILD_TAG
-    IMAGENAME: $CI_REGISTRY_IMAGE
 
 push-2.7:
   <<: *image_definition
   variables:
     PYTHON_VERSION: "2.7"
     VERSION: $CI_BUILD_TAG
-    IMAGENAME: $CI_REGISTRY_IMAGE
 
 push-main:
   <<: *image_definition
   variables:
     PYTHON_VERSION: main
     VERSION: $CI_BUILD_TAG
-    IMAGENAME: $CI_REGISTRY_IMAGE
 
 push-latest:
   <<: *image_definition
   variables:
     PYTHON_VERSION: latest
     VERSION: $CI_BUILD_TAG
-    IMAGENAME: $CI_REGISTRY_IMAGE
   only:
     - master
     - tags
