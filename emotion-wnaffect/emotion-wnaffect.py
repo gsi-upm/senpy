@@ -15,7 +15,6 @@ from pattern.en import parse
 from senpy.plugins import EmotionPlugin, SenpyPlugin, ShelfMixin
 from senpy.models import Results, EmotionSet, Entry, Emotion
 
-logger = logging.getLogger(__name__)
 
 class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
     
@@ -67,27 +66,25 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
                                    'sadness': 'sadness'}
 
 
-        self._load_emotions(self._info['hierarchy_path'])
+        self._load_emotions(self.hierarchy_path)
                 
         if 'total_synsets' not in self.sh:
-            total_synsets = self._load_synsets(self._info['synsets_path'])
+            total_synsets = self._load_synsets(self.synsets_path)
             self.sh['total_synsets'] = total_synsets
         
         self._total_synsets = self.sh['total_synsets']
         
         if 'wn16' not in self.sh:
-            self._wn16_path = self._info['wn16_path']
+            self._wn16_path = self.wn16_path
             wn16 = WordNetCorpusReader(os.path.abspath("{0}".format(self._wn16_path)), nltk.data.find(self._wn16_path))
             self.sh['wn16'] = wn16
         
         self._wn16 = self.sh['wn16']
 
 
-        logger.info("EmoText plugin is ready to go!")
 
     def deactivate(self, *args, **kwargs):
         self.save()
-        logger.info("EmoText plugin is being deactivated...")
 
     def _my_preprocessor(self, text):
 
@@ -166,11 +163,9 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
 
         return feature_set
 
-    def analyse(self, **params):
+    def analyse_entry(self, entry, params):
 
-        logger.debug("Analysing with params {}".format(params))
-
-        text_input = params.get("input", None)
+        text_input = entry.get("text", None)
 
         text=self._my_preprocessor(text_input)
 
@@ -178,8 +173,6 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
 
         response = Results()
 
-        entry = Entry(id="Entry",
-                      text=text_input)
         emotionSet = EmotionSet(id="Emotions0")
         emotions = emotionSet.onyx__hasEmotion
 
@@ -188,5 +181,5 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
                                     onyx__hasEmotionIntensity=feature_text[i]))
 
         entry.emotions = [emotionSet]
-        response.entries.append(entry)
-        return response
+
+        yield entry

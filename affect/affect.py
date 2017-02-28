@@ -19,7 +19,7 @@ class unifiedPlugin(SentimentPlugin):
 
 
     def deactivate(self, *args, **kwargs):
-        self.close()
+        self.save()
      
     
     def analyse(self, **kwargs):

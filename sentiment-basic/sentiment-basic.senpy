@@ -12,7 +12,11 @@
             "default": "es"
         }
     },
-    "requirements": {},
+    "requirements": [
+        "nltk>=3.0.5",
+        "scipy>=0.14.0",
+        "textblob"
+    ],
     "sentiword_path": "SentiWordNet_3.0.txt",
     "pos_path": "unigram_spanish.pickle"
 }

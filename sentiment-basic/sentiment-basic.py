@@ -13,24 +13,16 @@ from os import path
 from senpy.plugins import SentimentPlugin, SenpyPlugin
 from senpy.models import Results, Entry, Sentiment
 
-logger = logging.getLogger(__name__)
 
 class SentiTextPlugin(SentimentPlugin):
 
-    def __init__(self, info, *args, **kwargs):
-        super(SentiTextPlugin, self).__init__(info, *args, **kwargs)
-        self.id = info['module']
-        base = path.abspath(path.dirname(__file__))
-        self.swn_path = path.join(base, info['sentiword_path'])
-        self.pos_path = path.join(base, info['pos_path'])
-        self._swn = None
-        self._pos_tagger = None
-
     def _load_swn(self):
+        self.swn_path = path.join(path.abspath(path.dirname(__file__)), self.sentiword_path)
         swn = SentiWordNet(self.swn_path)
         return swn
 
     def _load_pos_tagger(self):
+        self.pos_path = path.join(path.abspath(path.dirname(__file__)), self.pos_path)
         with open(self.pos_path, 'r') as f:
             tagger = pickle.load(f)
         return tagger
@@ -38,12 +30,6 @@ class SentiTextPlugin(SentimentPlugin):
     def activate(self, *args, **kwargs):
         self._swn = self._load_swn()
         self._pos_tagger = self._load_pos_tagger()
-        logger.info("SentiText plugin is ready to go!")
-
-    def deactivate(self, *args, **kwargs):
-        logger.info("SentiText plugin is being deactivated...")
-
-
 
     def _remove_punctuation(self, tokens):
         return [t for t in tokens if t not in string.punctuation]
@@ -80,10 +66,9 @@ class SentiTextPlugin(SentimentPlugin):
         return None
 
 
-    def analyse(self, **params):
-        logger.debug("Analysing with params {}".format(params))
+    def analyse_entry(self, entry, params):
 
-        text = params.get("input", None)
+        text = entry.get("text", None)
         tokens = self._tokenize(text)
         tokens = self._pos(tokens)
         
@@ -95,7 +80,6 @@ class SentiTextPlugin(SentimentPlugin):
                 if len(lemmas) == 0:
                     continue
                 tokens[i]['lemmas'][w[0]] = lemmas
-        logger.debug("Tokens: {}".format(tokens))
         
         trans = TextBlob(unicode(text)).translate(from_lang='es',to='en')
         useful_synsets = {}
@@ -107,7 +91,6 @@ class SentiTextPlugin(SentimentPlugin):
                     continue
                 eq_synset = self._compare_synsets(synsets, tokens, s_i)
                 useful_synsets[s_i][t_w] = eq_synset
-        logger.debug("Synsets used for analysis: {}".format(useful_synsets))
 
         scores = {}
         for i in tokens:
@@ -128,12 +111,10 @@ class SentiTextPlugin(SentimentPlugin):
                             score['score'] = f_score
                             scores[i][word] = score
                             break
-        logger.debug("All scores (some not used): {}".format(scores))
 
 
         lang = params.get("language", "auto")
         p = params.get("prefix", None)
-        response = Results()
 
         for i in scores:
             n_pos = 0.0
@@ -158,17 +139,11 @@ class SentiTextPlugin(SentimentPlugin):
             elif g_score < 0.5:
                 polarity = 'marl:Negative'
 
-            entry = Entry(id="Entry"+str(i),
-                      nif_isString=tokens[i]['sentence'])
-
             opinion = Sentiment(id="Opinion0"+'_'+str(i),
                           marl__hasPolarity=polarity,
                           marL__polarityValue=float("{0:.2f}".format(g_score)))
 
-            opinion["prov:wasGeneratedBy"] = self.id
 
-            entry.sentiments = []
             entry.sentiments.append(opinion)
-            entry.language = lang
-            response.entries.append(entry)
-        return response
+
+        yield entry

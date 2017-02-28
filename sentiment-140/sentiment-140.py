@@ -6,17 +6,19 @@ from senpy.models import Results, Sentiment, Entry
 
 
 class Sentiment140Plugin(SentimentPlugin):
-    def analyse(self, **params):
+    
+    def analyse(self,entry,params):
+        
         lang = params.get("language", "auto")
         res = requests.post("http://www.sentiment140.com/api/bulkClassifyJson",
                             json.dumps({"language": lang,
-                                        "data": [{"text": params["input"]}]
+                                        "data": [{"text": entry.get("text",None)}]
                                         }
                                        )
                             )
 
         p = params.get("prefix", None)
-        response = Results(prefix=p)
+        
         polarity_value = self.maxPolarityValue*int(res.json()["data"][0]
                                                    ["polarity"]) * 0.25
         polarity = "marl:Neutral"
@@ -25,16 +27,10 @@ class Sentiment140Plugin(SentimentPlugin):
             polarity = "marl:Positive"
         elif polarity_value < neutral_value:
             polarity = "marl:Negative"
-
-        entry = Entry(id="Entry0",
-                      nif__isString=params["input"])
         sentiment = Sentiment(id="Sentiment0",
                             prefix=p,
                             marl__hasPolarity=polarity,
                             marl__polarityValue=polarity_value)
-        sentiment.prov__wasGeneratedBy = self.id
-        entry.sentiments = []
         entry.sentiments.append(sentiment)
-        entry.language = lang
-        response.entries.append(entry)
-        return response
+
+        yield entry
