@@ -288,7 +288,7 @@ class Senpy(object):
 
     def install_deps(self):
         for i in self.plugins.values():
-            self._install_deps(i._info)
+            self._install_deps(i)
 
     @classmethod
     def _install_deps(cls, info=None):
