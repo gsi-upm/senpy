@@ -143,7 +143,3 @@ class ModelsTest(TestCase):
         print(t)
         g = rdflib.Graph().parse(data=t, format='turtle')
         assert len(g) == len(triples)
-
-    def test_convert_emotions(self):
-        """It should be possible to convert between different emotion models"""
-        pass

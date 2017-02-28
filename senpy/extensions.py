@@ -13,6 +13,7 @@ from .api import API_PARAMS, NIF_PARAMS, parse_params
 from threading import Thread
 
 import os
+import copy
 import fnmatch
 import inspect
 import sys
@@ -180,7 +181,7 @@ class Senpy(object):
         newentries = []
         for i in resp.entries:
             if output == "full":
-                newemotions = i.emotions.copy()
+                newemotions = copy.copy(i.emotions)
             else:
                 newemotions = []
             for j in i.emotions:

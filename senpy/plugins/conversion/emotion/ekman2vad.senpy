@@ -7,7 +7,7 @@ onyx:doesConversion:
   - onyx:conversionFrom: emoml:big6
     onyx:conversionTo: emoml:fsre-dimensions
   - onyx:conversionFrom: emoml:fsre-dimensions
-    onyx:conversionTo: wna:WNAModel
+    onyx:conversionTo: emoml:big6
 centroids:
   emoml:big6anger:
     A: 6.95
@@ -31,5 +31,5 @@ centroids:
     V: 2.21
 aliases:
   A: emoml:arousal
-  V: emoml:potency
+  V: emoml:valence
   D: emoml:dominance

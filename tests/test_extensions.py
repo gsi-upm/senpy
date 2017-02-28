@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+from copy import deepcopy
 import logging
 
 try:
@@ -9,7 +10,7 @@ except ImportError:
 
 from functools import partial
 from senpy.extensions import Senpy
-from senpy.models import Error
+from senpy.models import Error, Results, Entry, EmotionSet, Emotion
 from flask import Flask
 from unittest import TestCase
 
@@ -52,6 +53,7 @@ class ExtensionsTest(TestCase):
         assert module
         import noop
         dir(noop)
+        self.senpy.install_deps()
 
     def test_installing(self):
         """ Enabling a plugin """
@@ -120,3 +122,42 @@ class ExtensionsTest(TestCase):
     def test_load_default_plugins(self):
         senpy = Senpy(plugin_folder=self.dir, default_plugins=True)
         assert len(senpy.plugins) > 1
+
+    def test_convert_emotions(self):
+        self.senpy.activate_all()
+        plugin = {
+            'id': 'imaginary',
+            'onyx:usesEmotionModel': 'emoml:fsre-dimensions'
+        }
+        eSet1 = EmotionSet()
+        eSet1['onyx:hasEmotion'].append(Emotion({
+            'emoml:arousal': 1,
+            'emoml:potency': 0,
+            'emoml:valence': 0
+        }))
+        response = Results({
+            'entries': [Entry({
+                'text': 'much ado about nothing',
+                'emotions': [eSet1]
+            })]
+        })
+        params = {'emotionModel': 'emoml:big6',
+                  'conversion': 'full'}
+        r1 = deepcopy(response)
+        self.senpy.convert_emotions(r1,
+                                    plugin,
+                                    params)
+        assert len(r1.entries[0].emotions) == 2
+        params['conversion'] = 'nested'
+        r2 = deepcopy(response)
+        self.senpy.convert_emotions(r2,
+                                    plugin,
+                                    params)
+        assert len(r2.entries[0].emotions) == 1
+        assert r2.entries[0].emotions[0]['prov:wasDerivedFrom'] == eSet1
+        params['conversion'] = 'filtered'
+        r3 = deepcopy(response)
+        self.senpy.convert_emotions(r3,
+                                    plugin,
+                                    params)
+        assert len(r3.entries[0].emotions) == 1

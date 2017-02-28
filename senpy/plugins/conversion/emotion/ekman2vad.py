@@ -10,24 +10,26 @@ import math
 class WNA2VAD(EmotionConversionPlugin):
 
     def _ekman_to_vad(self, ekmanSet):
-        potency = 0
+        """Sum the VAD value of all categories found."""
+        valence = 0
         arousal = 0
         dominance = 0
         for e in ekmanSet.onyx__hasEmotion:
             category = e.onyx__hasEmotionCategory
             centroid = self.centroids[category]
-            potency += centroid['V']
+            valence += centroid['V']
             arousal += centroid['A']
             dominance += centroid['D']
-        e = Emotion({'emoml:potency': potency,
+        e = Emotion({'emoml:valence': valence,
                      'emoml:arousal': arousal,
-                     'emoml:dominance': dominance})
+                     'emoml:potency': dominance})
         return e
 
     def _vad_to_ekman(self, VADEmotion):
+        """Find the closest category"""
         V = VADEmotion['emoml:valence']
-        A = VADEmotion['emoml:potency']
-        D = VADEmotion['emoml:dominance']
+        A = VADEmotion['emoml:arousal']
+        D = VADEmotion['emoml:potency']
         emotion = ''
         value = 10000000000000000000000.0
         for state in self.centroids:
@@ -50,7 +52,7 @@ class WNA2VAD(EmotionConversionPlugin):
             e.onyx__hasEmotion.append(self._ekman_to_vad(emotionSet))
         elif fromModel == 'emoml:fsre-dimensions':
             for i in emotionSet.onyx__hasEmotion:
-                e.onyx__hasEmotion.append(self._vad_to_ekman(e))
+                e.onyx__hasEmotion.append(self._vad_to_ekman(i))
         else:
             raise Error('EMOTION MODEL NOT KNOWN')
         yield e
