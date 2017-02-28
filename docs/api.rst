@@ -62,6 +62,7 @@ NIF API
    :query o outformat: one of `turtle` (default), `text`, `json-ld`
    :query p prefix: prefix for the URIs
    :query algo algorithm: algorithm/plugin to use for the analysis. For a list of options, see :http:get:`/api/plugins`. If not provided, the default plugin will be used (:http:get:`/api/plugins/default`).
+   :query algo emotionModel: desired emotion model in the results. If the requested algorithm does not use that emotion model, there are conversion plugins specifically for this. If none of the plugins match, an error will be returned, which includes the results *as is*.
 
    :reqheader Accept: the response content type depends on
                       :mailheader:`Accept` header
@@ -69,6 +70,7 @@ NIF API
                             header of request
    :statuscode 200: no error
    :statuscode 404: service not found
+   :statuscode 400: error while processing the request
 
 .. http:post:: /api
 
@@ -93,51 +95,53 @@ NIF API
         {
             "@context": {
                    ...
-            }, 
-            "sentiment140": {
-                "name": "sentiment140", 
-                "is_activated": true, 
-                "version": "0.1", 
-                "extra_params": {
-                    "@id": "extra_params_sentiment140_0.1", 
-                    "language": {
-                        "required": false, 
-                        "@id": "lang_sentiment140", 
-                        "options": [
-                            "es", 
-                            "en", 
-                            "auto"
-                        ], 
-                        "aliases": [
-                            "language", 
-                            "l"
-                        ]
-                    }
-                }, 
-                "@id": "sentiment140_0.1"
-            }, 
-            "rand": {
-                "name": "rand", 
-                "is_activated": true, 
-                "version": "0.1", 
-                "extra_params": {
-                    "@id": "extra_params_rand_0.1", 
-                    "language": {
-                        "required": false, 
-                        "@id": "lang_rand", 
-                        "options": [
-                            "es", 
-                            "en", 
-                            "auto"
-                        ], 
-                        "aliases": [
-                            "language", 
-                            "l"
-                        ]
-                    }
-                }, 
-                "@id": "rand_0.1"
-            }
+            },
+            "@type": "plugins",
+            "plugins": [
+                  {
+                    "name": "sentiment140", 
+                    "is_activated": true, 
+                    "version": "0.1", 
+                    "extra_params": {
+                        "@id": "extra_params_sentiment140_0.1", 
+                        "language": {
+                            "required": false, 
+                            "@id": "lang_sentiment140", 
+                            "options": [
+                                "es", 
+                                "en", 
+                                "auto"
+                            ], 
+                            "aliases": [
+                                "language", 
+                                "l"
+                            ]
+                        }
+                    }, 
+                    "@id": "sentiment140_0.1"
+                }, {
+                    "name": "rand", 
+                    "is_activated": true, 
+                    "version": "0.1", 
+                    "extra_params": {
+                        "@id": "extra_params_rand_0.1", 
+                        "language": {
+                            "required": false, 
+                            "@id": "lang_rand", 
+                            "options": [
+                                "es", 
+                                "en", 
+                                "auto"
+                            ], 
+                            "aliases": [
+                                "language", 
+                                "l"
+                            ]
+                        }
+                    }, 
+                    "@id": "rand_0.1"
+                }
+            ]
         }
 
 
@@ -148,7 +152,7 @@ NIF API
 
    .. sourcecode:: http
 
-      GET /api/plugins/rand HTTP/1.1
+      GET /api/plugins/rand/ HTTP/1.1
       Host: localhost
       Accept: application/json, text/javascript
 
@@ -159,6 +163,7 @@ NIF API
 
       {
           "@id": "rand_0.1",
+          "@type": "sentimentPlugin",
           "extra_params": {
               "@id": "extra_params_rand_0.1",
               "language": {
@@ -185,24 +190,3 @@ NIF API
 
    Return the information about the default plugin.
 
-.. http:get:: /api/plugins/<pluginname>/{de}activate
-
-   {De}activate a plugin.
-
-   **Example request**:
-
-   .. sourcecode:: http
-
-      GET /api/plugins/rand/deactivate HTTP/1.1
-      Host: localhost
-      Accept: application/json, text/javascript
-
-
-   **Example response**:
-
-   .. sourcecode:: http
-
-       {
-          "@context": {}, 
-          "message": "Ok"
-       }

@@ -18,7 +18,6 @@ class Client(object):
         try:
             resp = models.from_dict(response.json())
             resp.validate(resp)
-            return resp
         except Exception as ex:
             logger.error(('There seems to be a problem with the response:\n'
                           '\tURL: {url}\n'
@@ -33,3 +32,6 @@ class Client(object):
                               code=response.status_code,
                               content=response.content))
             raise ex
+        if isinstance(resp, models.Error):
+            raise resp
+        return resp

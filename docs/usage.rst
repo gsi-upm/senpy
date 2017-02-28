@@ -48,8 +48,8 @@ Once the server is launched, there is a basic endpoint in the server, which prov
 
 In case you want to know the different endpoints of the server, there is more information available in the NIF API section_.
 
-Video example
-=============
+CLI
+===
 
 This video shows how to use senpy through command-line tool.
 
@@ -58,16 +58,17 @@ https://asciinema.org/a/9uwef1ghkjk062cw2t4mhzpyk
 Request example in python
 =========================
 
-This example shows how to make a request to a plugin.
+This example shows how to make a request to the default plugin:
 
 .. code:: python
 
-    import requests
-    import json
+    from senpy.client import Client
 
-    r = requests.get('http://127.0.0.1:5000/api/?algo=rand&i=Testing')
-    response = r.content.decode('utf-8')
-    response_json = json.loads(response)
+    c = Client('http://127.0.0.1:5000/api/')
+    r = c.analyse('hello world')
+
+    for entry in r.entries:
+          print('{} -> {}'.format(entry.text, entry.emotions))
 
 
 

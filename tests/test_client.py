@@ -34,8 +34,11 @@ class ModelsTest(TestCase):
             url=endpoint + '/', method='GET', params={'input': 'hello'})
         error = Call(Error('Nothing'))
         with patch('requests.request', return_value=error) as patched:
-            resp = client.analyse(input='hello', algorithm='NONEXISTENT')
-            assert isinstance(resp, Error)
+            try:
+                client.analyse(input='hello', algorithm='NONEXISTENT')
+                raise Exception('Exceptions should be raised. This is not golang')
+            except Error:
+                pass
         patched.assert_called_with(
             url=endpoint + '/',
             method='GET',
