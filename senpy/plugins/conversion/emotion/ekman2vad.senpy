@@ -1,6 +1,6 @@
 ---
 name: Ekman2VAD
-module: ekman2vad
+module: senpy.plugins.conversion.centroids
 description: Plugin to convert emotion sets from Ekman to VAD
 version: 0.1
 onyx:doesConversion:
@@ -29,6 +29,9 @@ centroids:
     A: 5.21
     D: 2.82
     V: 2.21
+centroids_direction:
+  - emoml:big6
+  - emoml:fsre-dimensions
 aliases:
   A: emoml:arousal
   V: emoml:valence

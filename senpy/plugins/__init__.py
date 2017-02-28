@@ -7,7 +7,7 @@ import pickle
 import logging
 import tempfile
 import copy
-from . import models
+from .. import models
 
 logger = logging.getLogger(__name__)
 

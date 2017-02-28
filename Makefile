@@ -41,12 +41,12 @@ build-%: version Dockerfile-%
 quick_test: $(addprefix test-,$(PYMAIN))
 
 dev-%:
-	@docker start $(NAME)-dev || (\
+	@docker start $(NAME)-dev$* || (\
 		$(MAKE) build-$*; \
-		docker run -d -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -p 5000:5000 -ti --name $(NAME)-dev '$(IMAGEWTAG)-python$*'; \
+		docker run -d -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti --name $(NAME)-dev$* '$(IMAGEWTAG)-python$*'; \
 	)\
 
-	docker exec -ti $(NAME)-dev bash
+	docker exec -ti $(NAME)-dev$* bash
 
 dev: dev-$(PYMAIN)
 

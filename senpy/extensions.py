@@ -17,7 +17,7 @@ import copy
 import fnmatch
 import inspect
 import sys
-import imp
+import importlib
 import logging
 import traceback
 import yaml
@@ -181,7 +181,7 @@ class Senpy(object):
         newentries = []
         for i in resp.entries:
             if output == "full":
-                newemotions = copy.copy(i.emotions)
+                newemotions = copy.deepcopy(i.emotions)
             else:
                 newemotions = []
             for j in i.emotions:
@@ -304,17 +304,23 @@ class Senpy(object):
             pip.main(pip_args)
 
     @classmethod
+    def _load_module(cls, name, root):
+        sys.path.append(root)
+        tmp = importlib.import_module(name)
+        sys.path.remove(root)
+        return tmp
+
+    @classmethod
     def _load_plugin_from_info(cls, info, root):
         if not cls.validate_info(info):
             logger.warn('The module info is not valid.\n\t{}'.format(info))
             return None, None
         module = info["module"]
         name = info["name"]
-        sys.path.append(root)
-        (fp, pathname, desc) = imp.find_module(module, [root, ])
+
         cls._install_deps(info)
-        tmp = imp.load_module(module, fp, pathname, desc)
-        sys.path.remove(root)
+        tmp = cls._load_module(module, root)
+
         candidate = None
         for _, obj in inspect.getmembers(tmp):
             if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
