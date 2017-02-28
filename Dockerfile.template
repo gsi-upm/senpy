@@ -6,7 +6,7 @@ RUN mkdir /cache/ /senpy-plugins /data/
 
 VOLUME /data/
 
-ENV PIP_CACHE_DIR=/cache/
+ENV PIP_CACHE_DIR=/cache/ SENPY_DATA=/data
 
 ONBUILD COPY . /senpy-plugins/
 ONBUILD RUN python -m senpy --only-install -f /senpy-plugins

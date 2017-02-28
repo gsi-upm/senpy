@@ -3,6 +3,7 @@ standard_library.install_aliases()
 
 import inspect
 import os.path
+import os
 import pickle
 import logging
 import tempfile
@@ -92,8 +93,8 @@ class ShelfMixin(object):
     @property
     def shelf_file(self):
         if 'shelf_file' not in self or not self['shelf_file']:
-            self.shelf_file = os.path.join(tempfile.gettempdir(),
-                                           self.name + '.p')
+            sd = os.environ.get('SENPY_DATA', tempfile.gettempdir())
+            self.shelf_file = os.path.join(sd, self.name + '.p')
         return self['shelf_file']
 
     def save(self):
