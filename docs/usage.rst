@@ -74,3 +74,7 @@ This example shows how to make a request to the default plugin:
 
 .. _section: http://senpy.readthedocs.org/en/latest/api.html
 
+
+Conversion
+==========
+See :doc:`conversion`
