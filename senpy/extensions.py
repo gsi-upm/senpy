@@ -253,7 +253,7 @@ class Senpy(object):
                 logger.error(msg)
                 raise Error(msg)
 
-        if sync:
+        if sync or 'async' in plugin and not plugin.async:
             act()
         else:
             th = Thread(target=act)
@@ -277,7 +277,7 @@ class Senpy(object):
                     "Error deactivating plugin {}: {}".format(plugin.name, ex))
                 logger.error("Trace: {}".format(traceback.format_exc()))
 
-        if sync:
+        if sync or 'async' in plugin and not plugin.async:
             deact()
         else:
             th = Thread(target=deact)
