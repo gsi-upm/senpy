@@ -85,8 +85,6 @@ git_push:
 pip_upload:
 	python setup.py sdist upload ;
 
-pip_test: $(addprefix pip_test-,$(PYVERSIONS))
-
 run-%: build-%
 	docker run --rm -p 5000:5000 -ti '$(IMAGEWTAG)-python$(PYMAIN)' --default-plugins
 
@@ -100,6 +98,10 @@ push-latest: build-$(PYMAIN)
 
 push-%: build-%
 	docker push $(IMAGENAME):$(VERSION)-python$*
+
+push: $(addprefix push-,$(PYVERSIONS))
+	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
+	docker push  $(IMAGENAME):$(VERSION)
 
 ci:
 	gitlab-runner exec docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --env CI_PROJECT_NAME=$(NAME) ${action}

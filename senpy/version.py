@@ -8,8 +8,12 @@ DEFAULT_FILE = os.path.join(ROOT, 'VERSION')
 
 
 def read_version(versionfile=DEFAULT_FILE):
-    with open(versionfile) as f:
-        return f.read().strip()
+    try:
+        with open(versionfile) as f:
+            return f.read().strip()
+    except IOError:
+        logger.error('Running an unknown version of senpy. Be careful!.')
+        return '0.0'
 
 
 __version__ = read_version()
