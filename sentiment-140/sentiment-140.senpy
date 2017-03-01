@@ -1,7 +1,7 @@
 {
     "name": "sentiment-140",
     "module": "sentiment-140",
-    "description": "What my plugin broadly does",
+    "description": "Sentiment classifier using rule-based classification for English and Spanish. This plugin uses sentiment140 data to perform classification. For more information: http://help.sentiment140.com/for-students/",
     "author": "@balkian",
     "version": "0.1",
     "extra_params": {

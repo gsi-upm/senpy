@@ -13,11 +13,17 @@ class DaedalusPlugin(SentimentPlugin):
     def analyse_entry(self, entry, params):
 
         txt = entry.get("text",None)
-        model = params["model"] # general_es / general_es / general_fr
+        model = "general" # general_es / general_es / general_fr
         api = 'http://api.meaningcloud.com/sentiment-2.1'
         lang = params.get("language")
         key = params["apiKey"]
-        parameters = {'key': key,'model': model,'lang': lang,'of': 'json','txt': txt,'src': 'its-not-a-real-python-sdk'}
+        parameters = {'key': key,
+                      'model': model,
+                      'lang': lang,
+                      'of': 'json',
+                      'txt': txt,
+                      'src': 'its-not-a-real-python-sdk'
+                      }
         r = requests.post(api, params=parameters)
 
         value = r.json().get('score_tag', None)

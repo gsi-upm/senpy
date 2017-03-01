@@ -113,7 +113,7 @@ class SentiTextPlugin(SentimentPlugin):
                             break
 
 
-        lang = params.get("language", "auto")
+        lang = params.get("language", "en")
         p = params.get("prefix", None)
 
         for i in scores:

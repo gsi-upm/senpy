@@ -7,7 +7,7 @@ from senpy.models import Results, Sentiment, Entry
 
 class Sentiment140Plugin(SentimentPlugin):
     
-    def analyse(self,entry,params):
+    def analyse_entry(self,entry,params):
         
         lang = params.get("language", "auto")
         res = requests.post("http://www.sentiment140.com/api/bulkClassifyJson",

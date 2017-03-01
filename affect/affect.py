@@ -14,14 +14,6 @@ logger = logging.getLogger(__name__)
 
 class unifiedPlugin(SentimentPlugin):
 
-    def activate(self, *args, **kwargs):
-        pass
-
-
-    def deactivate(self, *args, **kwargs):
-        self.save()
-     
-    
     def analyse(self, **kwargs):
         params = dict(kwargs)
         txt = params["input"]

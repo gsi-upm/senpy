@@ -4,7 +4,7 @@ This plugin allows to choose sentiment and emotion plugins to retrieve a respons
 
 You can adjust the parameters of the plugin as follows:
 
-	- Sentiments plugins: EmoTextANEW, EmoTextWAF(only english)
-	- Emotions plugins: sentiText, vaderSentiment,meaningCloud(requires API KEY)
+	- Sentiments plugins: emotion-wnaffect, emotion-anew(only english)
+	- Emotions plugins: sentiment-tass, sentiment-vader,sentiment-meaningCloud(requires API KEY)
 	- Endpoint: the endpoint where the used plugins are. (default: http://senpy.cluster.gsi.dit.upm.es/api/)
 	- Language: english(en) or spanish(es)

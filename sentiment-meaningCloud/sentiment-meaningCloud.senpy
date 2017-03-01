@@ -11,12 +11,6 @@
             "options": ["en","es"],
             "default": "en"
         },
-        "model": {
-            "aliases": ["model"],
-            "required": true,
-            "options": ["general"],
-            "default": "general"
-        },
         "apiKey":{
             "aliases":["meaningCloud-key","apiKey"],
             "required":true
