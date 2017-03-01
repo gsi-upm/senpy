@@ -95,7 +95,7 @@ run: run-$(PYMAIN)
 push-latest: build-$(PYMAIN)
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGENAME)'
-	docker push '$(IMAGENAME)'
+	docker push '$(IMAGENAME):latest'
 	docker push '$(IMAGEWTAG)'
 
 push-%: build-%
