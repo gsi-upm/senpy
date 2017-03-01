@@ -2,8 +2,6 @@
 Main class for Senpy.
 It orchestrates plugin (de)activation and analysis.
 """
-from future import standard_library
-standard_library.install_aliases()
 
 from .plugins import SentimentPlugin, SenpyPlugin
 from .models import Error, Entry, Results

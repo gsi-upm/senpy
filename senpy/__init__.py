@@ -17,7 +17,9 @@
 """
 Sentiment analysis server in Python
 """
-from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+
 from .version import __version__
 
 import logging

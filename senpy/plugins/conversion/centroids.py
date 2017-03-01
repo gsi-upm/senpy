@@ -13,7 +13,7 @@ class CentroidConversion(EmotionConversionPlugin):
         for e in original.onyx__hasEmotion:
             category = e.onyx__hasEmotionCategory
             if category in self.centroids:
-                for dim, value in self.centroids[category].iteritems():
+                for dim, value in self.centroids[category].items():
                     try:
                         res[dim] += value
                     except Exception:
