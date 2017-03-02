@@ -23,7 +23,8 @@ Through PIP
 
 .. code:: bash
 
-   pip install --user senpy
+   make version
+   pip install -U --user senpy
 
    
 Alternatively, you can use the development version:
