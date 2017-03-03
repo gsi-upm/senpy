@@ -12,5 +12,6 @@
         "nltk>=3.0.5",
         "lxml>=3.4.2",
         "pattern",
-    ]
+    ],
+    "async":False
 }
