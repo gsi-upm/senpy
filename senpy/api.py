@@ -26,6 +26,13 @@ API_PARAMS = {
         "aliases": ["emotionModel", "emoModel"],
         "required": False
     },
+    "plugin_type": {
+        "@id": "pluginType",
+        "description": 'What kind of plugins to list',
+        "aliases": ["pluginType", "plugin_type"],
+        "required": True,
+        "default": "analysisPlugin"
+    },
     "conversion": {
         "@id": "conversion",
         "description": "How to show the elements that have (not) been converted",

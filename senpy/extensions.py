@@ -5,7 +5,8 @@ It orchestrates plugin (de)activation and analysis.
 from future import standard_library
 standard_library.install_aliases()
 
-from .plugins import SentimentPlugin, SenpyPlugin
+from . import plugins
+from .plugins import SenpyPlugin
 from .models import Error, Entry, Results
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 from .api import API_PARAMS, NIF_PARAMS, parse_params
@@ -367,6 +368,22 @@ class Senpy(object):
 
     def filter_plugins(self, **kwargs):
         """ Filter plugins by different criteria """
+        ptype = kwargs.pop('plugin_type', None)
+        logger.debug('#' * 100)
+        logger.debug('ptype {}'.format(ptype))
+        if ptype:
+            try:
+                ptype = ptype[0].upper() + ptype[1:]
+                pclass = getattr(plugins, ptype)
+                logger.debug('Class: {}'.format(pclass))
+                candidates = filter(lambda x: isinstance(x, pclass),
+                                    self.plugins.values())
+            except AttributeError:
+                raise Error('{} is not a valid type'.format(ptype))
+        else:
+            candidates = self.plugins.values()
+
+        logger.debug(candidates)
 
         def matches(plug):
             res = all(getattr(plug, k, None) == v for (k, v) in kwargs.items())
@@ -374,15 +391,11 @@ class Senpy(object):
                 "matching {} with {}: {}".format(plug.name, kwargs, res))
             return res
 
-        if not kwargs:
-            return self.plugins
-        else:
-            return {n: p for n, p in self.plugins.items() if matches(p)}
+        if kwargs:
+            candidates = filter(matches, candidates)
+        return {p.name: p for p in candidates}
 
-    def sentiment_plugins(self):
-        """ Return only the sentiment plugins """
-        return {
-            p: plugin
-            for p, plugin in self.plugins.items()
-            if isinstance(plugin, SentimentPlugin)
-        }
+    @property
+    def analysis_plugins(self):
+        """ Return only the analysis plugins """
+        return self.filter_plugins(plugin_type='analysisPlugin')

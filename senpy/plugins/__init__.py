@@ -30,6 +30,15 @@ class SenpyPlugin(models.Plugin):
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
 
+    def activate(self):
+        pass
+
+    def deactivate(self):
+        pass
+
+
+class AnalysisPlugin(SenpyPlugin):
+
     def analyse(self, *args, **kwargs):
         raise NotImplemented(
             'Your method should implement either analyse or analyse_entry')
@@ -48,30 +57,27 @@ class SenpyPlugin(models.Plugin):
         for i in results.entries:
             yield i
 
-    def activate(self):
-        pass
 
-    def deactivate(self):
-        pass
+class ConversionPlugin(SenpyPlugin):
+    pass
 
 
-class SentimentPlugin(models.SentimentPlugin, SenpyPlugin):
+class SentimentPlugin(models.SentimentPlugin, AnalysisPlugin):
     def __init__(self, info, *args, **kwargs):
         super(SentimentPlugin, self).__init__(info, *args, **kwargs)
         self.minPolarityValue = float(info.get("minPolarityValue", 0))
         self.maxPolarityValue = float(info.get("maxPolarityValue", 1))
 
 
-class EmotionPlugin(models.EmotionPlugin, SenpyPlugin):
+class EmotionPlugin(models.EmotionPlugin, AnalysisPlugin):
     def __init__(self, info, *args, **kwargs):
         super(EmotionPlugin, self).__init__(info, *args, **kwargs)
         self.minEmotionValue = float(info.get("minEmotionValue", -1))
         self.maxEmotionValue = float(info.get("maxEmotionValue", 1))
 
 
-class EmotionConversionPlugin(models.EmotionConversionPlugin, SenpyPlugin):
-    def __init__(self, info, *args, **kwargs):
-        super(EmotionConversionPlugin, self).__init__(info, *args, **kwargs)
+class EmotionConversionPlugin(models.EmotionConversionPlugin, ConversionPlugin):
+    pass
 
 
 class ShelfMixin(object):

@@ -121,7 +121,9 @@ def api():
 @basic_api
 def plugins():
     sp = current_app.senpy
-    dic = Plugins(plugins=list(sp.plugins.values()))
+    ptype = request.params.get('plugin_type')
+    plugins = sp.filter_plugins(plugin_type=ptype)
+    dic = Plugins(plugins=list(plugins.values()))
     return dic
 
 
