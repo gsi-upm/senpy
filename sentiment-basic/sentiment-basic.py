@@ -13,6 +13,8 @@ from os import path
 from senpy.plugins import SentimentPlugin, SenpyPlugin
 from senpy.models import Results, Entry, Sentiment
 
+logger = logging.getLogger(__name__)
+
 
 class SentiTextPlugin(SentimentPlugin):
 
@@ -68,20 +70,23 @@ class SentiTextPlugin(SentimentPlugin):
 
     def analyse_entry(self, entry, params):
 
+        language = params.get("language","eng")
         text = entry.get("text", None)
         tokens = self._tokenize(text)
         tokens = self._pos(tokens)
         
-        
         for i in tokens:
             tokens[i]['lemmas'] = {}
             for w in tokens[i]['tokens']:
-                lemmas = wn.lemmas(w[0], lang='spa')
+                lemmas = wn.lemmas(w[0], lang=language)
                 if len(lemmas) == 0:
                     continue
                 tokens[i]['lemmas'][w[0]] = lemmas
-        
-        trans = TextBlob(unicode(text)).translate(from_lang='es',to='en')
+
+        if language == "eng":
+            trans = TextBlob(unicode(text))
+        else:
+            trans = TextBlob(unicode(text)).translate(from_lang=TextBlob(unicode(text)).detect_language(),to='en')
         useful_synsets = {}
         for s_i, t_s in enumerate(trans.sentences):
             useful_synsets[s_i] = {}
@@ -112,8 +117,6 @@ class SentiTextPlugin(SentimentPlugin):
                             scores[i][word] = score
                             break
 
-
-        lang = params.get("language", "en")
         p = params.get("prefix", None)
 
         for i in scores:

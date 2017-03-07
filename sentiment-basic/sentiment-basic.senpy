@@ -9,6 +9,14 @@
         "scipy>=0.14.0",
         "textblob"
     ],
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": true,
+            "options": ["eng","spa", "ita", "fra", "auto"],
+            "default": "auto"
+        },
+    },
     "sentiword_path": "SentiWordNet_3.0.txt",
     "pos_path": "unigram_spanish.pickle"
 }
