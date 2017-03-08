@@ -13,7 +13,7 @@
         "language": {
             "aliases": ["language", "l"],
             "required": true,
-            "options": ["eng","spa", "ita", "fra", "auto"],
+            "options": ["en","es", "it", "fr", "auto"],
             "default": "auto"
         },
     },

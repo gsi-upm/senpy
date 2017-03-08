@@ -70,23 +70,23 @@ class SentiTextPlugin(SentimentPlugin):
 
     def analyse_entry(self, entry, params):
 
-        language = params.get("language","eng")
+        language = params.get("language")
         text = entry.get("text", None)
         tokens = self._tokenize(text)
         tokens = self._pos(tokens)
-        
+        sufixes = {'es':'spa','en':'eng','it':'ita','fr':'fra'}
         for i in tokens:
             tokens[i]['lemmas'] = {}
             for w in tokens[i]['tokens']:
-                lemmas = wn.lemmas(w[0], lang=language)
+                lemmas = wn.lemmas(w[0], lang=sufixes[language])
                 if len(lemmas) == 0:
                     continue
                 tokens[i]['lemmas'][w[0]] = lemmas
 
-        if language == "eng":
+        if language == "en":
             trans = TextBlob(unicode(text))
         else:
-            trans = TextBlob(unicode(text)).translate(from_lang=TextBlob(unicode(text)).detect_language(),to='en')
+            trans = TextBlob(unicode(text)).translate(from_lang=language,to='en')
         useful_synsets = {}
         for s_i, t_s in enumerate(trans.sentences):
             useful_synsets[s_i] = {}
