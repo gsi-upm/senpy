@@ -1,5 +1,5 @@
 ---
-name: Ekman2PAD
+name: Ekman2FSRE
 module: senpy.plugins.conversion.centroids
 description: Plugin to convert emotion sets from Ekman to VAD
 version: 0.1
@@ -27,7 +27,7 @@ centroids:
     V: 2.21
 centroids_direction:
   - emoml:big6
-  - emoml:pad
+  - emoml:fsre-dimensions
 aliases: # These are aliases for any key in the centroid, to avoid repeating a long name several times
   A: emoml:arousal
   V: emoml:valence
