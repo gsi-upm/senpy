@@ -23,7 +23,6 @@ Through PIP
 
 .. code:: bash
 
-   make version
    pip install -U --user senpy
 
    
@@ -43,6 +42,53 @@ Build the image or use the pre-built one: ``docker run -ti -p 5000:5000 gsiupm/s
 
 To add custom plugins, add a volume and tell senpy where to find the plugins: ``docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --default-plugins -f /plugins``
 
+
+Developing
+----------
+
+Developing/debugging
+********************
+This command will run the senpy container using the latest image available, mounting your current folder so you get your latest code:
+
+.. code:: bash
+
+
+    # Python 3.5
+    make dev
+    # Python 2.7
+    make dev-2.7
+
+Building a docker image
+***********************
+
+.. code:: bash
+
+
+    # Python 3.5
+    make build-3.5
+    # Python 2.7
+    make build-2.7
+
+Testing
+*******
+
+.. code:: bash
+
+
+    make test
+
+Running
+*******
+This command will run the senpy server listening on localhost:5000
+
+.. code:: bash
+
+
+    # Python 3.5
+    make run-3.5
+    # Python 2.7
+    make run-2.7
+
 Usage
 -----
 
@@ -50,11 +96,13 @@ However, the easiest and recommended way is to just use the command-line tool to
 
 .. code:: bash
 
+
    senpy
 
 or, alternatively:
 
 .. code:: bash
+
 
     python -m senpy
 
