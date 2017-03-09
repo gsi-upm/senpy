@@ -24,7 +24,7 @@ class DaedalusPlugin(SentimentPlugin):
                       'txt': txt,
                       'src': 'its-not-a-real-python-sdk'
                       }
-        r = requests.post(api, params=parameters)
+        r = requests.post(api, params=parameters, timeout=3)
 
         value = r.json().get('score_tag', None)
         if not value:
