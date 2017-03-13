@@ -31,6 +31,9 @@ $(document).ready(function() {
     html="";
     var availablePlugins = document.getElementById('availablePlugins');
     plugins = response.plugins;
+    if (! $.isArray(plugins)) {
+      plugins = [plugins]
+    }
     for (r in plugins){
       plugin = plugins[r]
       if (plugin["name"]){
