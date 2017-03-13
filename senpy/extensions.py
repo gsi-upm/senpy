@@ -7,7 +7,7 @@ standard_library.install_aliases()
 
 from . import plugins
 from .plugins import SenpyPlugin
-from .models import Error, Entry, Results
+from .models import Error, Entry, Results, from_dict
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 from .api import API_PARAMS, NIF_PARAMS, parse_params
 
@@ -78,70 +78,101 @@ class Senpy(object):
         else:
             logger.debug("Not a folder: %s", folder)
 
-    def _find_plugin(self, params):
-        api_params = parse_params(params, spec=API_PARAMS)
-        algo = None
-        if "algorithm" in api_params and api_params["algorithm"]:
-            algo = api_params["algorithm"]
-        elif self.plugins:
-            algo = self.default_plugin and self.default_plugin.name
-        if not algo:
+    def _find_plugins(self, params):
+        if not self.analysis_plugins:
             raise Error(
                 status=404,
                 message=("No plugins found."
-                         " Please install one.").format(algo))
-        if algo not in self.plugins:
-            logger.debug(("The algorithm '{}' is not valid\n"
-                          "Valid algorithms: {}").format(algo,
-                                                         self.plugins.keys()))
+                         " Please install one."))
+        api_params = parse_params(params, spec=API_PARAMS)
+        algos = None
+        if "algorithm" in api_params and api_params["algorithm"]:
+            algos = api_params["algorithm"].split(',')
+        elif self.default_plugin:
+            algos = [self.default_plugin.name, ]
+        else:
             raise Error(
                 status=404,
-                message="The algorithm '{}' is not valid".format(algo))
+                message="No default plugin found, and None provided")
 
-        if not self.plugins[algo].is_activated:
-            logger.debug("Plugin not activated: {}".format(algo))
-            raise Error(
-                status=400,
-                message=("The algorithm '{}'"
-                         " is not activated yet").format(algo))
-        return self.plugins[algo]
+        plugins = list()
+        for algo in algos:
+            if algo not in self.plugins:
+                logger.debug(("The algorithm '{}' is not valid\n"
+                              "Valid algorithms: {}").format(algo,
+                                                             self.plugins.keys()))
+                raise Error(
+                    status=404,
+                    message="The algorithm '{}' is not valid".format(algo))
 
-    def _get_params(self, params, plugin):
+            if not self.plugins[algo].is_activated:
+                logger.debug("Plugin not activated: {}".format(algo))
+                raise Error(
+                    status=400,
+                    message=("The algorithm '{}'"
+                             " is not activated yet").format(algo))
+            plugins.append(self.plugins[algo])
+        return plugins
+
+    def _get_params(self, params, plugin=None):
         nif_params = parse_params(params, spec=NIF_PARAMS)
-        extra_params = plugin.get('extra_params', {})
-        specific_params = parse_params(params, spec=extra_params)
-        nif_params.update(specific_params)
+        if plugin:
+            extra_params = plugin.get('extra_params', {})
+            specific_params = parse_params(params, spec=extra_params)
+            nif_params.update(specific_params)
         return nif_params
 
     def _get_entries(self, params):
-        entry = None
         if params['informat'] == 'text':
+            results = Results()
             entry = Entry(text=params['input'])
+            results.entries.append(entry)
+        elif params['informat'] == 'json-ld':
+            results = from_dict(params['input'])
         else:
-            raise NotImplemented('Only text input format implemented')
-        yield entry
+            raise NotImplemented('Informat {} is not implemented'.format(params['informat']))
+        return results
+
+    def _process_entries(self, entries, plugins, nif_params):
+        if not plugins:
+            for i in entries:
+                yield i
+            return
+        plugin = plugins[0]
+        specific_params = self._get_params(nif_params, plugin)
+        results = plugin.analyse_entries(entries, specific_params)
+        for i in self._process_entries(results, plugins[1:], nif_params):
+            yield i
+
+    def _process_response(self, resp, plugins, nif_params):
+        entries = resp.entries
+        resp.entries = []
+        for plug in plugins:
+            resp.analysis.append(plug.id)
+        for i in self._process_entries(entries, plugins, nif_params):
+            resp.entries.append(i)
+        return resp
 
     def analyse(self, **api_params):
+        """
+        Main method that analyses a request, either from CLI or HTTP.
+        It uses a dictionary of parameters, provided by the user.
+        """
         logger.debug("analysing with params: {}".format(api_params))
-        plugin = self._find_plugin(api_params)
-        nif_params = self._get_params(api_params, plugin)
-        resp = Results()
+        plugins = self._find_plugins(api_params)
+        nif_params = self._get_params(api_params)
+        resp = self._get_entries(nif_params)
         if 'with_parameters' in api_params:
             resp.parameters = nif_params
         try:
-            entries = []
-            for i in self._get_entries(nif_params):
-                entries += list(plugin.analyse_entry(i, nif_params))
-            resp.entries = entries
-            self.convert_emotions(resp, plugin, nif_params)
-            resp.analysis.append(plugin.id)
+            resp = self._process_response(resp, plugins, nif_params)
+            self.convert_emotions(resp, plugins, nif_params)
             logger.debug("Returning analysis result: {}".format(resp))
-        except Error as ex:
+        except (Error, Exception) as ex:
+            if not isinstance(ex, Error):
+                ex = Error(message=str(ex), status=500)
             logger.exception('Error returning analysis result')
-            resp = ex
-        except Exception as ex:
-            logger.exception('Error returning analysis result')
-            resp = Error(message=str(ex), status=500)
+            raise ex
         return resp
 
     def _conversion_candidates(self, fromModel, toModel):
@@ -155,7 +186,7 @@ class Senpy(object):
                     # logging.debug('Found candidate: {}'.format(candidate))
                     yield candidate
 
-    def convert_emotions(self, resp, plugin, params):
+    def convert_emotions(self, resp, plugins, params):
         """
         Conversion of all emotions in a response.
         In addition to converting from one model to another, it has
@@ -163,29 +194,35 @@ class Senpy(object):
         Needless to say, this is far from an elegant solution, but it works.
         @todo refactor and clean up
         """
-        fromModel = plugin.get('onyx:usesEmotionModel', None)
         toModel = params.get('emotionModel', None)
-        output = params.get('conversion', None)
-        logger.debug('Asked for model: {}'.format(toModel))
-        logger.debug('Analysis plugin uses model: {}'.format(fromModel))
-
         if not toModel:
             return
-        try:
-            candidate = next(self._conversion_candidates(fromModel, toModel))
-        except StopIteration:
-            e = Error(('No conversion plugin found for: '
-                       '{} -> {}'.format(fromModel, toModel)))
-            e.original_response = resp
-            e.parameters = params
-            raise e
+
+        logger.debug('Asked for model: {}'.format(toModel))
+        output = params.get('conversion', None)
+        candidates = {}
+        for plugin in plugins:
+            try:
+                fromModel = plugin.get('onyx:usesEmotionModel', None)
+                candidates[plugin.id] = next(self._conversion_candidates(fromModel, toModel))
+                logger.debug('Analysis plugin {} uses model: {}'.format(plugin.id, fromModel))
+            except StopIteration:
+                e = Error(('No conversion plugin found for: '
+                           '{} -> {}'.format(fromModel, toModel)))
+                e.original_response = resp
+                e.parameters = params
+                raise e
         newentries = []
+        resp.analysis = set(resp.analysis)
         for i in resp.entries:
             if output == "full":
                 newemotions = copy.deepcopy(i.emotions)
             else:
                 newemotions = []
             for j in i.emotions:
+                plugname = j['prov:wasGeneratedBy']
+                candidate = candidates[plugname]
+                resp.analysis.add(candidate.id)
                 for k in candidate.convert(j, fromModel, toModel, params):
                     k.prov__wasGeneratedBy = candidate.id
                     if output == 'nested':
@@ -194,7 +231,6 @@ class Senpy(object):
             i.emotions = newemotions
             newentries.append(i)
         resp.entries = newentries
-        resp.analysis.append(candidate.id)
 
     @property
     def default_plugin(self):

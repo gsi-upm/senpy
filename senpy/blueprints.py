@@ -113,8 +113,11 @@ def basic_api(f):
 @api_blueprint.route('/', methods=['POST', 'GET'])
 @basic_api
 def api():
-    response = current_app.senpy.analyse(**request.params)
-    return response
+    try:
+        response = current_app.senpy.analyse(**request.params)
+        return response
+    except Error as ex:
+        return ex
 
 
 @api_blueprint.route('/plugins/', methods=['POST', 'GET'])

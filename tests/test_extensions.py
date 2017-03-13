@@ -10,7 +10,7 @@ except ImportError:
 
 from functools import partial
 from senpy.extensions import Senpy
-from senpy.models import Error, Results, Entry, EmotionSet, Emotion
+from senpy.models import Error, Results, Entry, EmotionSet, Emotion, Plugin
 from flask import Flask
 from unittest import TestCase
 
@@ -98,17 +98,26 @@ class ExtensionsTest(TestCase):
 
     def test_analyse_error(self):
         mm = mock.MagicMock()
-        mm.analyse_entry.side_effect = Error('error on analysis', status=900)
+        mm.id = 'magic_mock'
+        mm.analyse_entries.side_effect = Error('error on analysis', status=500)
         self.senpy.plugins['MOCK'] = mm
-        resp = self.senpy.analyse(input='nothing', algorithm='MOCK')
-        assert resp['message'] == 'error on analysis'
-        assert resp['status'] == 900
+        try:
+            self.senpy.analyse(input='nothing', algorithm='MOCK')
+            assert False
+        except Error as ex:
+            assert ex['message'] == 'error on analysis'
+            assert ex['status'] == 500
+
         mm.analyse.side_effect = Exception('generic exception on analysis')
-        mm.analyse_entry.side_effect = Exception(
+        mm.analyse_entries.side_effect = Exception(
             'generic exception on analysis')
-        resp = self.senpy.analyse(input='nothing', algorithm='MOCK')
-        assert resp['message'] == 'generic exception on analysis'
-        assert resp['status'] == 500
+
+        try:
+            self.senpy.analyse(input='nothing', algorithm='MOCK')
+            assert False
+        except Error as ex:
+            assert ex['message'] == 'generic exception on analysis'
+            assert ex['status'] == 500
 
     def test_filtering(self):
         """ Filtering plugins """
@@ -125,11 +134,12 @@ class ExtensionsTest(TestCase):
 
     def test_convert_emotions(self):
         self.senpy.activate_all()
-        plugin = {
+        plugin = Plugin({
             'id': 'imaginary',
             'onyx:usesEmotionModel': 'emoml:fsre-dimensions'
-        }
+        })
         eSet1 = EmotionSet()
+        eSet1.prov__wasGeneratedBy = plugin['id']
         eSet1['onyx:hasEmotion'].append(Emotion({
             'emoml:arousal': 1,
             'emoml:potency': 0,
@@ -145,19 +155,19 @@ class ExtensionsTest(TestCase):
                   'conversion': 'full'}
         r1 = deepcopy(response)
         self.senpy.convert_emotions(r1,
-                                    plugin,
+                                    [plugin, ],
                                     params)
         assert len(r1.entries[0].emotions) == 2
         params['conversion'] = 'nested'
         r2 = deepcopy(response)
         self.senpy.convert_emotions(r2,
-                                    plugin,
+                                    [plugin, ],
                                     params)
         assert len(r2.entries[0].emotions) == 1
         assert r2.entries[0].emotions[0]['prov:wasDerivedFrom'] == eSet1
         params['conversion'] = 'filtered'
         r3 = deepcopy(response)
         self.senpy.convert_emotions(r3,
-                                    plugin,
+                                    [plugin, ],
                                     params)
         assert len(r3.entries[0].emotions) == 1

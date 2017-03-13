@@ -57,6 +57,12 @@ class AnalysisPlugin(SenpyPlugin):
         for i in results.entries:
             yield i
 
+    def analyse_entries(self, entries, parameters):
+        for entry in entries:
+            logger.debug('Analysing entry with plugin {}: {}'.format(self, entry))
+            for result in self.analyse_entry(entry, parameters):
+                yield result
+
 
 class ConversionPlugin(SenpyPlugin):
     pass
