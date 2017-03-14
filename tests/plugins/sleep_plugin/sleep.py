@@ -1,8 +1,8 @@
-from senpy.plugins import SenpyPlugin
+from senpy.plugins import AnalysisPlugin
 from time import sleep
 
 
-class SleepPlugin(SenpyPlugin):
+class SleepPlugin(AnalysisPlugin):
     def activate(self, *args, **kwargs):
         sleep(self.timeout)
 

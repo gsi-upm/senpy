@@ -37,6 +37,12 @@
       "@type": "@id",
       "@container": "@set"
     },
+    "plugins": {
+      "@container": "@list"
+    },
+    "options": {
+      "@container": "@set"
+    },
     "prov:wasGeneratedBy": {
       "@type": "@id"
     },
