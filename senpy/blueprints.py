@@ -92,6 +92,9 @@ def basic_api(f):
             response = f(*args, **kwargs)
         except Error as ex:
             response = ex
+            logger.error(ex)
+            if current_app.debug:
+                raise
 
         in_headers = web_params['inHeaders'] != "0"
         expanded = api_params['expanded-jsonld']
@@ -113,11 +116,8 @@ def basic_api(f):
 @api_blueprint.route('/', methods=['POST', 'GET'])
 @basic_api
 def api():
-    try:
-        response = current_app.senpy.analyse(**request.params)
-        return response
-    except Error as ex:
-        return ex
+    response = current_app.senpy.analyse(**request.params)
+    return response
 
 
 @api_blueprint.route('/plugins/', methods=['POST', 'GET'])

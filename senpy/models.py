@@ -214,6 +214,7 @@ class BaseModel(SenpyMixin, dict):
             temp['@type'] = getattr(self, '@type')
         except AttributeError:
             logger.warn('Creating an instance of an unknown model')
+
         super(BaseModel, self).__init__(temp)
 
     def _get_key(self, key):
@@ -252,13 +253,32 @@ def register(rsubclass, rtype=None):
     _subtypes[rtype or rsubclass.__name__] = rsubclass
 
 
-def from_dict(indict):
-    target = indict.get('@type', None)
-    if target and target in _subtypes:
-        cls = _subtypes[target]
-    else:
-        cls = BaseModel
-    return cls(**indict)
+def from_dict(indict, cls=None):
+    if not cls:
+        target = indict.get('@type', None)
+        try:
+            if target and target in _subtypes:
+                cls = _subtypes[target]
+            else:
+                cls = BaseModel
+        except Exception:
+            cls = BaseModel
+    outdict = dict()
+    for k, v in indict.items():
+        if k == '@context':
+            pass
+        elif isinstance(v, dict):
+            v = from_dict(indict[k])
+        elif isinstance(v, list):
+            for ix, v2 in enumerate(v):
+                if isinstance(v2, dict):
+                    v[ix] = from_dict(v2)
+        outdict[k] = v
+    return cls(**outdict)
+
+
+def from_string(string, **kwargs):
+    return from_dict(json.loads(string), **kwargs)
 
 
 def from_json(injson):
@@ -308,7 +328,7 @@ for i in [
 _ErrorModel = from_schema('error')
 
 
-class Error(SenpyMixin, BaseException):
+class Error(SenpyMixin, Exception):
     def __init__(self, message, *args, **kwargs):
         super(Error, self).__init__(self, message, message)
         self._error = _ErrorModel(message=message, *args, **kwargs)

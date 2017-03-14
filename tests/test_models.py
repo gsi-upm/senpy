@@ -13,7 +13,9 @@ from senpy.models import (Emotion,
                           Results,
                           Sentiment,
                           Plugins,
-                          Plugin)
+                          Plugin,
+                          from_string,
+                          from_dict)
 from senpy import plugins
 from pprint import pprint
 
@@ -167,3 +169,22 @@ class ModelsTest(TestCase):
         assert isinstance(plugs.plugins, list)
         js = plugs.jsonld()
         assert isinstance(js['plugins'], list)
+
+    def test_from_string(self):
+        results = {
+            '@type': 'results',
+            '@id': 'prueba',
+            'entries': [{
+                '@id': 'entry1',
+                '@type': 'entry',
+                'text': 'TEST'
+            }]
+        }
+        recovered = from_dict(results)
+        assert isinstance(recovered, Results)
+        assert isinstance(recovered.entries[0], Entry)
+
+        string = json.dumps(results)
+        recovered = from_string(string)
+        assert isinstance(recovered, Results)
+        assert isinstance(recovered.entries[0], Entry)

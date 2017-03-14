@@ -19,6 +19,7 @@ def parse_resp(resp):
 class BlueprintsTest(TestCase):
     def setUp(self):
         self.app = Flask("test_extensions")
+        self.app.debug = False
         self.client = self.app.test_client()
         self.senpy = Senpy()
         self.senpy.init_app(self.app)

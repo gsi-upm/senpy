@@ -70,7 +70,7 @@ NIF_PARAMS = {
         "aliases": ["f", "informat"],
         "required": False,
         "default": "text",
-        "options": ["turtle", "text"],
+        "options": ["turtle", "text", "json-ld"],
     },
     "intype": {
         "@id": "intype",

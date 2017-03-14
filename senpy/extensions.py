@@ -7,7 +7,7 @@ standard_library.install_aliases()
 
 from . import plugins
 from .plugins import SenpyPlugin
-from .models import Error, Entry, Results, from_dict
+from .models import Error, Entry, Results, from_string
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 from .api import API_PARAMS, NIF_PARAMS, parse_params
 
@@ -128,7 +128,7 @@ class Senpy(object):
             entry = Entry(text=params['input'])
             results.entries.append(entry)
         elif params['informat'] == 'json-ld':
-            results = from_dict(params['input'])
+            results = from_string(params['input'], cls=Results)
         else:
             raise NotImplemented('Informat {} is not implemented'.format(params['informat']))
         return results
@@ -171,7 +171,7 @@ class Senpy(object):
         except (Error, Exception) as ex:
             if not isinstance(ex, Error):
                 ex = Error(message=str(ex), status=500)
-            logger.exception('Error returning analysis result')
+            logger.error('Error returning analysis result')
             raise ex
         return resp
 
@@ -236,7 +236,8 @@ class Senpy(object):
     def default_plugin(self):
         candidate = self._default
         if not candidate:
-            candidates = self.filter_plugins(is_activated=True)
+            candidates = self.filter_plugins(plugin_type='analysisPlugin',
+                                             is_activated=True)
             if len(candidates) > 0:
                 candidate = list(candidates.values())[0]
         logger.debug("Default: {}".format(candidate))

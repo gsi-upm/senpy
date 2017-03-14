@@ -6,6 +6,7 @@ VERSION=$(shell git describe --tags --dirty 2>/dev/null)
 TARNAME=$(NAME)-$(VERSION).tar.gz 
 IMAGENAME=$(REPO)/$(NAME)
 IMAGEWTAG=$(IMAGENAME):$(VERSION)
+DEVPORT=5000
 action="test-${PYMAIN}"
 
 all: build run
@@ -43,7 +44,7 @@ quick_test: $(addprefix test-,$(PYMAIN))
 dev-%:
 	@docker start $(NAME)-dev$* || (\
 		$(MAKE) build-$*; \
-		docker run -d -w /usr/src/app/ -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti --name $(NAME)-dev$* '$(IMAGEWTAG)-python$*'; \
+		docker run -d -w /usr/src/app/ -p $(DEVPORT):5000 -v $$PWD:/usr/src/app --entrypoint=/bin/bash -ti --name $(NAME)-dev$* '$(IMAGEWTAG)-python$*'; \
 	)\
 
 	docker exec -ti $(NAME)-dev$* bash
@@ -86,7 +87,7 @@ pip_upload:
 	python setup.py sdist upload ;
 
 run-%: build-%
-	docker run --rm -p 5000:5000 -ti '$(IMAGEWTAG)-python$(PYMAIN)' --default-plugins
+	docker run --rm -p $(DEVPORT):5000 -ti '$(IMAGEWTAG)-python$(PYMAIN)' --default-plugins
 
 run: run-$(PYMAIN)
 

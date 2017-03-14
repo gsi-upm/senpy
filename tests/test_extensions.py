@@ -96,6 +96,27 @@ class ExtensionsTest(TestCase):
         assert r2.analysis[0] == "plugins/Dummy_0.1"
         assert r1.entries[0].text == 'input'
 
+    def test_analyse_jsonld(self):
+        """ Using a plugin with JSON-LD input"""
+        js_input = '''{
+        "@id": "prueba",
+        "@type": "results",
+        "entries": [
+          {"@id": "entry1",
+           "text": "tupni",
+           "@type": "entry"
+          }
+        ]
+        }'''
+        r1 = self.senpy.analyse(algorithm="Dummy",
+                                input=js_input,
+                                informat="json-ld",
+                                output="tuptuo")
+        r2 = self.senpy.analyse(input="tupni", output="tuptuo")
+        assert r1.analysis[0] == "plugins/Dummy_0.1"
+        assert r2.analysis[0] == "plugins/Dummy_0.1"
+        assert r1.entries[0].text == 'input'
+
     def test_analyse_error(self):
         mm = mock.MagicMock()
         mm.id = 'magic_mock'
