@@ -11,8 +11,10 @@ from senpy.models import (Emotion,
                           Entry,
                           Error,
                           Results,
-                          Sentiment)
-from senpy.plugins import SenpyPlugin
+                          Sentiment,
+                          Plugins,
+                          Plugin)
+from senpy import plugins
 from pprint import pprint
 
 
@@ -53,8 +55,8 @@ class ModelsTest(TestCase):
         assert (received["entries"][0]["nif:isString"] != "Not testing")
 
     def test_id(self):
-        ''' Adding the id after creation should overwrite the automatic ID
-        '''
+        """ Adding the id after creation should overwrite the automatic ID
+        """
         r = Entry()
         j = r.jsonld()
         assert '@id' in j
@@ -94,8 +96,8 @@ class ModelsTest(TestCase):
         r.validate()
 
     def test_plugins(self):
-        self.assertRaises(Error, SenpyPlugin)
-        p = SenpyPlugin({"name": "dummy", "version": 0})
+        self.assertRaises(Error, plugins.Plugin)
+        p = plugins.Plugin({"name": "dummy", "version": 0})
         c = p.jsonld()
         assert "info" not in c
         assert "repo" not in c
@@ -107,7 +109,7 @@ class ModelsTest(TestCase):
     def test_str(self):
         """The string representation shouldn't include private variables"""
         r = Results()
-        p = SenpyPlugin({"name": "STR test", "version": 0})
+        p = plugins.Plugin({"name": "STR test", "version": 0})
         p._testing = 0
         s = str(p)
         assert "_testing" not in s
@@ -143,3 +145,15 @@ class ModelsTest(TestCase):
         print(t)
         g = rdflib.Graph().parse(data=t, format='turtle')
         assert len(g) == len(triples)
+
+    def test_single_plugin(self):
+        """A response with a single plugin should still return a list"""
+        plugs = Plugins()
+        for i in range(10):
+            p = Plugin({'id': str(i),
+                        'version': 0,
+                        'description': 'dummy'})
+            plugs.plugins.append(p)
+        assert isinstance(plugs.plugins, list)
+        js = plugs.jsonld()
+        assert isinstance(js['plugins'], list)

@@ -6,6 +6,7 @@
       "properties": {
         "plugins": {
           "type": "array",
+          "default": [],
           "items": {
             "$ref": "plugin.json"
           }

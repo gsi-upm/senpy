@@ -13,7 +13,7 @@ from .. import models
 logger = logging.getLogger(__name__)
 
 
-class SenpyPlugin(models.Plugin):
+class Plugin(models.Plugin):
     def __init__(self, info=None):
         """
         Provides a canonical name for plugins and serves as base for other
@@ -24,7 +24,7 @@ class SenpyPlugin(models.Plugin):
                                         "information for the plugin."))
         logger.debug("Initialising {}".format(info))
         id = 'plugins/{}_{}'.format(info['name'], info['version'])
-        super(SenpyPlugin, self).__init__(id=id, **info)
+        super(Plugin, self).__init__(id=id, **info)
         self.is_activated = False
 
     def get_folder(self):
@@ -37,7 +37,10 @@ class SenpyPlugin(models.Plugin):
         pass
 
 
-class AnalysisPlugin(SenpyPlugin):
+SenpyPlugin = Plugin
+
+
+class AnalysisPlugin(Plugin):
 
     def analyse(self, *args, **kwargs):
         raise NotImplemented(
@@ -58,7 +61,7 @@ class AnalysisPlugin(SenpyPlugin):
             yield i
 
 
-class ConversionPlugin(SenpyPlugin):
+class ConversionPlugin(Plugin):
     pass
 
 
