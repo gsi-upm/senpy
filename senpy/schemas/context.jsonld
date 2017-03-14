@@ -40,6 +40,9 @@
     "plugins": {
       "@container": "@list"
     },
+    "options": {
+      "@container": "@set"
+    },
     "prov:wasGeneratedBy": {
       "@type": "@id"
     },

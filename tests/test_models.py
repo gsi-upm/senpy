@@ -97,7 +97,15 @@ class ModelsTest(TestCase):
 
     def test_plugins(self):
         self.assertRaises(Error, plugins.Plugin)
-        p = plugins.Plugin({"name": "dummy", "version": 0})
+        p = plugins.Plugin({"name": "dummy",
+                            "version": 0,
+                            "extra_params": {
+                                "none": {
+                                    "options": ["es", ],
+                                    "required": False,
+                                    "default": "0"
+                                }
+                            }})
         c = p.jsonld()
         assert "info" not in c
         assert "repo" not in c
@@ -105,6 +113,8 @@ class ModelsTest(TestCase):
         logging.debug("Framed:")
         logging.debug(c)
         p.validate()
+        assert "es" in c['extra_params']['none']['options']
+        assert isinstance(c['extra_params']['none']['options'], list)
 
     def test_str(self):
         """The string representation shouldn't include private variables"""
