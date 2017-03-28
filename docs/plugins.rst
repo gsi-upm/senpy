@@ -2,6 +2,8 @@ Developing new plugins
 ----------------------
 This document describes how to develop a new analysis plugin. For an example of conversion plugins, see :doc:`conversion`.
 
+There is also a tutorial for developing new plugins with slides `here <https://lab.cluster.gsi.dit.upm.es/senpy/senpy-tutorial>`__ 
+
 Each plugin represents a different analysis process.There are two types of files that are needed by senpy for loading a plugin:
 
 - Definition file, has the ".senpy" extension.

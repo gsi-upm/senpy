@@ -22,38 +22,32 @@ NIF API
       Content-Type: text/javascript
 
       {
-        "@context": [
-          "http://127.0.0.1/static/context.jsonld",
-      ],
-      "analysis": [
-        {
-          "@id": "SentimentAnalysisExample",
-          "@type": "marl:SentimentAnalysis",
-          "dc:language": "en", 
-          "marl:maxPolarityValue": 10.0,
-          "marl:minPolarityValue": 0.0
-        }
-      ],
-      "domain": "wndomains:electronics", 
-      "entries": [
-        {
-          "opinions": [
-            {
-              "prov:generatedBy": "SentimentAnalysisExample",
-              "marl:polarityValue": 7.8, 
-              "marl:hasPolarity": "marl:Positive",
-              "marl:describesObject": "http://www.gsi.dit.upm.es",
-            }
-          ],
-          "nif:isString": "I love GSI",
-          "strings": [
-            {
-              "nif:anchorOf": "GSI",
-              "nif:taIdentRef": "http://www.gsi.dit.upm.es"
-            }
-          ]
-        }
-       ]
+        "@context":"http://127.0.0.1/api/contexts/Results.jsonld",
+        "@id":"_:Results_11241245.22",
+        "@type":"results"
+        "analysis": [
+          "plugins/sentiment-140_0.1" 
+        ],
+        "entries": [
+          {  
+            "@id": "_:Entry_11241245.22"
+            "@type":"entry",
+            "emotions": [],
+            "entities": [],
+            "sentiments": [
+              {  
+                "@id": "Sentiment0",  
+                "@type": "sentiment", 
+                "marl:hasPolarity": "marl:Negative",
+                "marl:polarityValue": 0,
+                "prefix": ""
+              }
+            ],
+            "suggestions": [],
+            "text": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!",
+            "topics": []
+          }
+        ]
       }
 
    :query i input: No default. Depends on informat and intype
@@ -92,58 +86,59 @@ NIF API
 
    .. sourcecode:: http
 
-        {
-            "@context": {
-                   ...
-            },
-            "@type": "plugins",
-            "plugins": [
-                  {
-                    "name": "sentiment140", 
-                    "is_activated": true, 
-                    "version": "0.1", 
-                    "extra_params": {
-                        "@id": "extra_params_sentiment140_0.1", 
-                        "language": {
-                            "required": false, 
-                            "@id": "lang_sentiment140", 
-                            "options": [
-                                "es", 
-                                "en", 
-                                "auto"
-                            ], 
-                            "aliases": [
-                                "language", 
-                                "l"
-                            ]
-                        }
-                    }, 
-                    "@id": "sentiment140_0.1"
-                }, {
-                    "name": "rand", 
-                    "is_activated": true, 
-                    "version": "0.1", 
-                    "extra_params": {
-                        "@id": "extra_params_rand_0.1", 
-                        "language": {
-                            "required": false, 
-                            "@id": "lang_rand", 
-                            "options": [
-                                "es", 
-                                "en", 
-                                "auto"
-                            ], 
-                            "aliases": [
-                                "language", 
-                                "l"
-                            ]
-                        }
-                    }, 
-                    "@id": "rand_0.1"
-                }
-            ]
-        }
-
+      {
+        "@id": "plugins/sentiment-140_0.1", 
+        "@type": "sentimentPlugin", 
+        "author": "@balkian", 
+        "description": "Sentiment classifier using rule-based classification for English and Spanish. This plugin uses sentiment140 data to perform classification. For more information: http://help.sentiment140.com/for-students/", 
+        "extra_params": {
+          "language": {
+            "@id": "lang_sentiment140", 
+            "aliases": [
+              "language", 
+              "l"
+            ], 
+            "options": [
+              "es", 
+              "en", 
+              "auto"
+            ], 
+            "required": false
+          }
+        }, 
+        "is_activated": true, 
+        "maxPolarityValue": 1.0, 
+        "minPolarityValue": 0.0, 
+        "module": "sentiment-140", 
+        "name": "sentiment-140", 
+        "requirements": {}, 
+        "version": "0.1"
+      }, 
+      {
+        "@id": "plugins/ExamplePlugin_0.1", 
+        "@type": "sentimentPlugin", 
+        "author": "@balkian", 
+        "custom_attribute": "42", 
+        "description": "I am just an example", 
+        "extra_params": {
+          "parameter": {
+            "@id": "parameter", 
+            "aliases": [
+              "parameter", 
+              "param"
+            ], 
+            "default": 42, 
+            "required": true
+          }
+        }, 
+        "is_activated": true, 
+        "maxPolarityValue": 1.0, 
+        "minPolarityValue": 0.0, 
+        "module": "example", 
+        "name": "ExamplePlugin", 
+        "requirements": "noop", 
+        "version": "0.1"
+      }
 
 .. http:get:: /api/plugins/<pluginname>
 
@@ -162,28 +157,58 @@ NIF API
    .. sourcecode:: http
 
       {
-          "@id": "rand_0.1",
-          "@type": "sentimentPlugin",
-          "extra_params": {
-              "@id": "extra_params_rand_0.1",
-              "language": {
-                  "@id": "lang_rand",
-                  "aliases": [
-                      "language",
-                      "l"
-                  ],
-                  "options": [
-                      "es",
-                      "en",
-                      "auto"
-                  ],
-                  "required": false
-              }
-          },
-          "is_activated": true,
-          "name": "rand",
-          "version": "0.1"
+        "@context": "http://127.0.0.1/api/contexts/ExamplePlugin.jsonld", 
+        "@id": "plugins/ExamplePlugin_0.1", 
+        "@type": "sentimentPlugin", 
+        "author": "@balkian", 
+        "custom_attribute": "42", 
+        "description": "I am just an example", 
+        "extra_params": {
+          "parameter": {
+            "@id": "parameter", 
+            "aliases": [
+              "parameter", 
+              "param"
+            ], 
+            "default": 42, 
+            "required": true
+          }
+        }, 
+        "is_activated": true, 
+        "maxPolarityValue": 1.0, 
+        "minPolarityValue": 0.0, 
+        "module": "example", 
+        "name": "ExamplePlugin", 
+        "requirements": "noop", 
+        "version": "0.1"
       }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 .. http:get:: /api/plugins/default
