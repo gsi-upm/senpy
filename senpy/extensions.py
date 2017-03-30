@@ -22,9 +22,16 @@ import importlib
 import logging
 import traceback
 import yaml
-import pip
+import subprocess
 
 logger = logging.getLogger(__name__)
+
+
+def log_subprocess_output(process):
+    for line in iter(process.stdout.readline, b''):
+        logger.info('%r', line)
+    for line in iter(process.stderr.readline, b''):
+        logger.error('%r', line)
 
 
 class Senpy(object):
@@ -333,13 +340,19 @@ class Senpy(object):
     def _install_deps(cls, info=None):
         requirements = info.get('requirements', [])
         if requirements:
-            pip_args = []
+            pip_args = ['pip']
             pip_args.append('install')
             pip_args.append('--use-wheel')
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
-            pip.main(pip_args)
+            process = subprocess.Popen(pip_args,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            log_subprocess_output(process)
+            exitcode = process.wait()
+            if exitcode != 0:
+                raise Error("Dependencies not properly installed")
 
     @classmethod
     def _load_module(cls, name, root):

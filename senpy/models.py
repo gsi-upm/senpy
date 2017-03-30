@@ -357,5 +357,8 @@ class Error(SenpyMixin, Exception):
     def __delattr__(self, key):
         delattr(self._error, key)
 
+    def __str__(self):
+        return str(self.to_JSON(with_context=False))
+
 
 register(Error, 'error')
