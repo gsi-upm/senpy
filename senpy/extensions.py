@@ -338,7 +338,11 @@ class Senpy(object):
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
-            pip.main(pip_args)
+
+            cmd_name, cmd_args = pip.parseopts(pip_args)
+            command = pip.commands_dict[cmd_name](isolated=pip.check_isolated(cmd_args))
+            options, args = command.parse_args(cmd_args)
+            command.run(options, args)
 
     @classmethod
     def _load_module(cls, name, root):
