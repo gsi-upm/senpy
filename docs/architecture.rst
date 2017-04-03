@@ -11,7 +11,5 @@ Senpy proposes a modular and dynamic architecture that allows:
 The framework consists of two main modules: Senpy core, which is the building block of the service, and Senpy plugins, which consist of the analysis algorithm. The next figure depicts a simplified version of the processes involved in an analysis with the Senpy framework.
 
 .. image:: senpy-architecture.png
-  :height: 400px
-  :width: 800px
-  :scale: 100 %
+  :width: 100%
   :align: center

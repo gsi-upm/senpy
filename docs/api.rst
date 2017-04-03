@@ -1,5 +1,5 @@
 NIF API
-=======
+-------
 .. http:get:: /api
 
    Basic endpoint for sentiment/emotion analysis.
