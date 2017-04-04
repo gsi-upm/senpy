@@ -1,20 +1,9 @@
 Usage
 -----
 
-The easiest and recommended way is to just use the command-line tool to load your plugins and launch the server.
-
-.. code:: bash
-
-   senpy
-
-Or, alternatively:
-
-.. code:: bash
-
-    python -m senpy
-
-
-This will create a server with any modules found in the current path.
+First of all, you need to install the package.
+See :doc:`installation` for installation instructions.
+Once installed, the `senpy` command should be available. 
 
 Useful command-line options
 ===========================
@@ -23,19 +12,19 @@ In case you want to load modules, which are located in different folders under t
 
 .. code:: bash
 
-    python -m senpy -f .
+    senpy -f .
 
-The default port used by senpy is 5000, but you can change it using the option `--port`.
+The default port used by senpy is 5000, but you can change it using the `--port` flag.
 
 .. code:: bash
 
-    python -m senpy --port 8080
+    senpy --port 8080
 
 Also, the host can be changed where senpy is deployed. The default value is `127.0.0.1`.
 
 .. code:: bash
 
-    python -m senpy --host 0.0.0.0
+    senpy --host 0.0.0.0
 
 For more options, see the `--help` page.
 
@@ -48,15 +37,19 @@ Once the server is launched, there is a basic endpoint in the server, which prov
 
 In case you want to know the different endpoints of the server, there is more information available in the NIF API section_.
 
-CLI
-===
+CLI demo
+========
 
 This video shows how to use senpy through command-line tool.
 
-https://asciinema.org/a/9uwef1ghkjk062cw2t4mhzpyk
+.. image:: https://asciinema.org/a/9uwef1ghkjk062cw2t4mhzpyk.png
+   :width: 100%
+   :target: https://asciinema.org/a/9uwef1ghkjk062cw2t4mhzpyk
+   :alt: CLI demo
 
-Request example in python
-=========================
+
+Built-in client
+===============
 
 This example shows how to make a request to the default plugin:
 

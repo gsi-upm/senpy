@@ -2,27 +2,34 @@ Developing new plugins
 ----------------------
 This document describes how to develop a new analysis plugin. For an example of conversion plugins, see :doc:`conversion`.
 
-Each plugin represents a different analysis process.There are two types of files that are needed by senpy for loading a plugin:
+A more step-by-step tutorial with slides is available `here <https://lab.cluster.gsi.dit.upm.es/senpy/senpy-tutorial>`__ 
 
-- Definition file, has the ".senpy" extension.
-- Code file, is a python file.
+What is a plugin?
+=================
 
-This separation will allow us to deploy plugins that use the same code but employ different parameters.
+A plugin is a program that, given a text, will add annotations to it.
+In practice, a plugin consists of at least two files:
+
+- Definition file: a `.senpy` file that describes the plugin (e.g. what input parameters it accepts, what emotion model it uses).
+- Python module: the actual code that will add annotations to each input.
+
+This separation allows us to deploy plugins that use the same code but employ different parameters.
 For instance, one could use the same classifier and processing in several plugins, but train with different datasets.
 This scenario is particularly useful for evaluation purposes.
 
 The only limitation is that the name of each plugin needs to be unique.
 
-Plugins Definitions
-===================
+Plugin Definition files
+=======================
 
 The definition file contains all the attributes of the plugin, and can be written in YAML or JSON.
+When the server is launched, it will recursively search for definition files in the plugin folder (the current folder, by default).
 The most important attributes are:
 
 * **name**: unique name that senpy will use internally to identify the plugin.
 * **module**: indicates the module that contains the plugin code, which will be automatically loaded by senpy.
 * **version**
-* extra_params: used to specify parameters that the plugin accepts that are not already part of the senpy API. Those parameters may be required, and have aliased names. For instance:
+* extra_params: to add parameters to the senpy API when this plugin is requested. Those parameters may be required, and have aliased names. For instance:
 
   .. code:: yaml
 
@@ -68,9 +75,27 @@ The basic methods in a plugin are:
 * __init__
 * activate: used to load memory-hungry resources
 * deactivate: used to free up resources
-* analyse_entry: called in every user requests. It takes in the parameters supplied by a user and should yield one or more ``Entry`` objects.
+* analyse_entry: called in every user requests. It takes two parameters: ``Entry``, the entry object, and ``params``, the parameters supplied by the user. It should yield one or more ``Entry`` objects.
 
 Plugins are loaded asynchronously, so don't worry if the activate method takes too long. The plugin will be marked as activated once it is finished executing the method.
+
+Entries
+=======
+
+Entries are objects that can be annotated.
+By default, entries are `NIF contexts <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core/nif-core.html>`_ represented in JSON-LD format.
+Annotations are added to the object like this:
+
+.. code:: python
+
+   entry = Entry()
+   entry.vocabulary__annotationName = 'myvalue'
+   entry['vocabulary:annotationName'] = 'myvalue'
+   entry['annotationNameURI'] = 'myvalue'
+
+Where vocabulary is one of the prefixes defined in the default senpy context, and annotationURI is a full URI.
+The value may be any valid JSON-LD dictionary.
+For simplicity, senpy includes a series of models by default in the ``senpy.models`` module.
 
 
 Example plugin
@@ -117,6 +142,13 @@ Now, in a file named ``helloworld.py``:
 
 F.A.Q.
 ======
+What annotations can I use?
+???????????????????????????
+
+You can add almost any annotation to an entry.
+The most common use cases are covered in the :doc:`schema`.
+
+
 Why does the analyse function yield instead of return?
 ??????????????????????????????????????????????????????
 
