@@ -13,4 +13,4 @@ You can use the playground (a web interface) or make HTTP requests to the servic
 Plugins Demo
 ============
 
-You can find some plugins available at the demo in this repository: https://lab.cluster.gsi.dit.upm.es/senpy/senpy-plugins-community/.
+The source code and description of the plugins used in the demo is available here: https://lab.cluster.gsi.dit.upm.es/senpy/senpy-plugins-community/.
