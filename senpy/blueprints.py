@@ -25,6 +25,7 @@ from .version import __version__
 from functools import wraps
 
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def basic_api(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         raw_params = get_params(request)
-        headers = {'X-ORIGINAL-PARAMS': raw_params}
+        headers = {'X-ORIGINAL-PARAMS': json.dumps(raw_params)}
         # Get defaults
         web_params = parse_params({}, spec=WEB_PARAMS)
         api_params = parse_params({}, spec=API_PARAMS)
