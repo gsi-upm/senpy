@@ -61,6 +61,19 @@ class ExtensionsTest(TestCase):
         assert len(self.senpy.plugins) >= 3
         assert self.senpy.plugins["Sleep"].is_activated
 
+    def test_installing_nonexistent(self):
+        """ Fail if the dependencies cannot be met """
+        info = {
+            'name': 'TestPipFail',
+            'module': 'dummy',
+            'description': None,
+            'requirements': ['IAmMakingThisPackageNameUpToFail'],
+            'version': 0
+        }
+        root = os.path.join(self.dir, 'plugins', 'dummy_plugin')
+        with self.assertRaises(Error):
+            name, module = self.senpy._load_plugin_from_info(info, root=root)
+
     def test_disabling(self):
         """ Disabling a plugin """
         self.senpy.deactivate_all(sync=True)
