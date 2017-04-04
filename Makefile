@@ -58,8 +58,10 @@ test-%: build-%
 
 test: test-$(PYMAIN)
 
-dist/$(TARNAME):
+dist/$(TARNAME): version
 	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) python setup.py sdist;
+	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) chmod -R a+rwx dist;
+
 
 sdist: dist/$(TARNAME)
 
@@ -83,7 +85,7 @@ git_tag:
 git_push:
 	git push --tags origin master
 
-pip_upload:
+pip_upload: pip_test 
 	python setup.py sdist upload ;
 
 run-%: build-%
