@@ -1,4 +1,4 @@
-Schema
+Examples
 ------
 All the examples in this page use the :download:`the main schema <_static/schemas/definitions.json>`.
 
@@ -17,6 +17,8 @@ Sentiment Analysis
 .....................
 Description
 ,,,,,,,,,,,
+This annotation corresponds to the sentiment analysis of an input. The example shows the sentiment represented according to Marl format.
+The sentiments detected are contained in the Sentiments array with their related part of the text.
 
 Representation
 ,,,,,,,,,,,,,,
@@ -29,6 +31,7 @@ Suggestion Mining
 .................
 Description
 ,,,,,,,,,,,
+The suggestions schema represented below shows the suggestions detected in the text. Within it, we can find the NIF fields highlighted that corresponds to the text of the detected suggestion. 
 
 Representation
 ,,,,,,,,,,,,,,
@@ -41,6 +44,7 @@ Emotion Analysis
 ................
 Description
 ,,,,,,,,,,,
+This annotation represents the emotion analysis of an input to Senpy. The emotions are contained in the emotions section with the text that refers to following Onyx format and the emotion model defined beforehand.
 
 Representation
 ,,,,,,,,,,,,,,
@@ -53,7 +57,7 @@ Named Entity Recognition
 ........................
 Description
 ,,,,,,,,,,,
-
+The Named Entity Recognition is represented as follows. In this particular case, it can be seen within the entities array the entities recognised. For the example input, Microsoft and Windows Phone are the ones detected. 
 Representation
 ,,,,,,,,,,,,,,
 

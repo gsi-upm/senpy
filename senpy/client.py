@@ -22,7 +22,6 @@ class Client(object):
         response = requests.request(method=method, url=url, params=params)
         try:
             resp = models.from_dict(response.json())
-            resp.validate(resp)
         except Exception as ex:
             logger.error(('There seems to be a problem with the response:\n'
                           '\tURL: {url}\n'

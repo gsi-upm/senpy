@@ -1,7 +1,7 @@
-API and Schema
-##############
+API and Examples
+################
 .. toctree::
 
    vocabularies.rst
    api.rst
-   schema.rst
+   examples.rst

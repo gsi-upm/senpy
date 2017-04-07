@@ -1,4 +1,4 @@
-Research
+About
 --------
 
 If you use Senpy in your research, please cite `Senpy: A Pragmatic Linked Sentiment Analysis Framework <http://gsi.dit.upm.es/index.php/es/investigacion/publicaciones?view=publication&task=show&id=417>`__ (`BibTex <http://gsi.dit.upm.es/index.php/es/investigacion/publicaciones?controller=publications&task=export&format=bibtex&id=417>`__):

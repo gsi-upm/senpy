@@ -20,9 +20,9 @@ Senpy provides:
 
    senpy
    installation
+   demo
    usage
    apischema
    plugins
    conversion
-   demo
-   research.rst
+   about
