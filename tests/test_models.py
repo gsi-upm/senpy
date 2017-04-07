@@ -170,7 +170,7 @@ class ModelsTest(TestCase):
     def test_single_plugin(self):
         """A response with a single plugin should still return a list"""
         plugs = Plugins()
-        p = Plugin({'id': str(0),
+        p = Plugin({'id': str(1),
                     'version': 0,
                     'description': 'dummy'})
         plugs.plugins.append(p)

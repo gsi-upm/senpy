@@ -183,7 +183,7 @@ class Senpy(object):
         return resp
 
     def _conversion_candidates(self, fromModel, toModel):
-        candidates = self.filter_plugins(**{'@type': 'emotionConversionPlugin'})
+        candidates = self.filter_plugins(plugin_type='emotionConversionPlugin')
         for name, candidate in candidates.items():
             for pair in candidate.onyx__doesConversion:
                 logging.debug(pair)
@@ -417,33 +417,7 @@ class Senpy(object):
         return self._plugin_list
 
     def filter_plugins(self, **kwargs):
-        """ Filter plugins by different criteria """
-        ptype = kwargs.pop('plugin_type', None)
-        logger.debug('#' * 100)
-        logger.debug('ptype {}'.format(ptype))
-        if ptype:
-            try:
-                ptype = ptype[0].upper() + ptype[1:]
-                pclass = getattr(plugins, ptype)
-                logger.debug('Class: {}'.format(pclass))
-                candidates = filter(lambda x: isinstance(x, pclass),
-                                    self.plugins.values())
-            except AttributeError:
-                raise Error('{} is not a valid type'.format(ptype))
-        else:
-            candidates = self.plugins.values()
-
-        logger.debug(candidates)
-
-        def matches(plug):
-            res = all(getattr(plug, k, None) == v for (k, v) in kwargs.items())
-            logger.debug(
-                "matching {} with {}: {}".format(plug.name, kwargs, res))
-            return res
-
-        if kwargs:
-            candidates = filter(matches, candidates)
-        return {p.name: p for p in candidates}
+        return plugins.pfilter(self.plugins, **kwargs)
 
     @property
     def analysis_plugins(self):
