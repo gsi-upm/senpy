@@ -170,11 +170,10 @@ class ModelsTest(TestCase):
     def test_single_plugin(self):
         """A response with a single plugin should still return a list"""
         plugs = Plugins()
-        for i in range(10):
-            p = Plugin({'id': str(i),
-                        'version': 0,
-                        'description': 'dummy'})
-            plugs.plugins.append(p)
+        p = Plugin({'id': str(0),
+                    'version': 0,
+                    'description': 'dummy'})
+        plugs.plugins.append(p)
         assert isinstance(plugs.plugins, list)
         js = plugs.jsonld()
         assert isinstance(js['plugins'], list)
