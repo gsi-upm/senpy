@@ -303,6 +303,7 @@ class Senpy(object):
         else:
             th = Thread(target=act)
             th.start()
+            return th
 
     def deactivate_plugin(self, plugin_name, sync=False):
         try:
@@ -327,6 +328,7 @@ class Senpy(object):
         else:
             th = Thread(target=deact)
             th.start()
+            return th
 
     @classmethod
     def validate_info(cls, info):

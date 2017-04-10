@@ -22,14 +22,15 @@ the server.
 
 from flask import Flask
 from senpy.extensions import Senpy
-from gevent.wsgi import WSGIServer
-from gevent.monkey import patch_all
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+
+
 import logging
 import os
 import argparse
 import senpy
-
-patch_all(thread=False)
 
 SERVER_PORT = os.environ.get("PORT", 5000)
 
@@ -92,9 +93,10 @@ def main():
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                             args.port))
     if not app.debug:
-        http_server = WSGIServer((args.host, args.port), app)
+        http_server = HTTPServer(WSGIContainer(app))
+        http_server.listen(args.port, address=args.host)
         try:
-            http_server.serve_forever()
+            IOLoop.instance().start()
         except KeyboardInterrupt:
             print('Bye!')
         http_server.stop()
