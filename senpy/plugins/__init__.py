@@ -9,6 +9,7 @@ import logging
 import tempfile
 import copy
 from .. import models
+from ..api import API_PARAMS
 
 logger = logging.getLogger(__name__)
 
@@ -117,3 +118,40 @@ class ShelfMixin(object):
         if hasattr(self, '_sh') and self._sh is not None:
             with open(self.shelf_file, 'wb') as f:
                 pickle.dump(self._sh, f)
+
+
+default_plugin_type = API_PARAMS['plugin_type']['default']
+
+
+def pfilter(plugins, **kwargs):
+    """ Filter plugins by different criteria """
+    if isinstance(plugins, models.Plugins):
+        plugins = plugins.plugins
+    elif isinstance(plugins, dict):
+        plugins = plugins.values()
+    ptype = kwargs.pop('plugin_type', default_plugin_type)
+    logger.debug('#' * 100)
+    logger.debug('ptype {}'.format(ptype))
+    if ptype:
+        try:
+            ptype = ptype[0].upper() + ptype[1:]
+            pclass = globals()[ptype]
+            logger.debug('Class: {}'.format(pclass))
+            candidates = filter(lambda x: isinstance(x, pclass),
+                                plugins)
+        except KeyError:
+            raise models.Error('{} is not a valid type'.format(ptype))
+    else:
+        candidates = plugins
+
+    logger.debug(candidates)
+
+    def matches(plug):
+        res = all(getattr(plug, k, None) == v for (k, v) in kwargs.items())
+        logger.debug(
+            "matching {} with {}: {}".format(plug.name, kwargs, res))
+        return res
+
+    if kwargs:
+        candidates = filter(matches, candidates)
+    return {p.name: p for p in candidates}

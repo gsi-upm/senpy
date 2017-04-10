@@ -1,6 +1,6 @@
 Flask>=0.10.1
 requests>=2.4.1
-gevent>=1.1rc4
+tornado>=4.4.3
 PyLD>=0.6.5
 six
 future

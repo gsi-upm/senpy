@@ -167,7 +167,7 @@ class ExtensionsTest(TestCase):
         assert len(senpy.plugins) > 1
 
     def test_convert_emotions(self):
-        self.senpy.activate_all()
+        self.senpy.activate_all(sync=True)
         plugin = Plugin({
             'id': 'imaginary',
             'onyx:usesEmotionModel': 'emoml:fsre-dimensions'
@@ -205,3 +205,14 @@ class ExtensionsTest(TestCase):
                                     [plugin, ],
                                     params)
         assert len(r3.entries[0].emotions) == 1
+
+    # def test_async_plugin(self):
+    #     """ We should accept multiprocessing plugins with async=False"""
+    #     thread1 = self.senpy.activate_plugin("Async", sync=False)
+    #     thread1.join(timeout=1)
+    #     assert len(self.senpy.plugins['Async'].value) == 4
+
+    #     resp = self.senpy.analyse(input='nothing', algorithm='Async')
+
+    #     assert len(resp.entries[0].async_values) == 2
+    #     self.senpy.activate_plugin("Async", sync=True)

@@ -1,0 +1,8 @@
+---
+name: Async
+module: asyncplugin
+description: I am async
+author: "@balkian"
+version: '0.1'
+async: true
+extra_params: {}
