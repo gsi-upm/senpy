@@ -3,13 +3,15 @@ from senpy.plugins import AnalysisPlugin
 import multiprocessing
 
 
-class AsyncPlugin(AnalysisPlugin):
-    def _train(self, process_number):
-        return process_number
+def _train(process_number):
+    return process_number
 
+
+class AsyncPlugin(AnalysisPlugin):
     def _do_async(self, num_processes):
-        with multiprocessing.Pool(processes=num_processes) as pool:
-            values = pool.map(self._train, range(num_processes))
+        pool = multiprocessing.Pool(processes=num_processes)
+        values = pool.map(_train, range(num_processes))
+
         return values
 
     def activate(self):
