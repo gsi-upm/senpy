@@ -38,7 +38,6 @@ extensions = [
     'sphinxcontrib.httpdomain',
     'sphinx.ext.coverage',
     'sphinx.ext.autosectionlabel',
-    'nbsphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

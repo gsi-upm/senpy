@@ -9,7 +9,6 @@ Once installed, the `senpy` command should be available.
 
    SenpyClientUse
    server
-   clidemo
    commandline
 
 

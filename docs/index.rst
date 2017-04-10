@@ -1,11 +1,17 @@
 Welcome to Senpy's documentation!
 =================================
-.. image:: https://travis-ci.org/gsi-upm/senpy.svg?branch=master
-   :target: https://travis-ci.org/gsi-upm/senpy
 .. image:: https://readthedocs.org/projects/senpy/badge/?version=latest
    :target: http://senpy.readthedocs.io/en/latest/
 .. image:: https://badge.fury.io/py/senpy.svg
    :target: https://badge.fury.io/py/senpy
+.. image:: https://lab.cluster.gsi.dit.upm.es/senpy/senpy/badges/master/build.svg
+   :target: https://lab.cluster.gsi.dit.upm.es/senpy/senpy/commits/master
+.. image:: https://lab.cluster.gsi.dit.upm.es/senpy/senpy/badges/master/coverage.svg
+   :target: https://lab.cluster.gsi.dit.upm.es/senpy/senpy/commits/master
+.. image:: https://img.shields.io/pypi/l/requests.svg
+   :target: https://lab.cluster.gsi.dit.upm.es/senpy/senpy/
+
+
 
 With Senpy, you can easily turn your sentiment or emotion analysis algorithm into a full blown semantic service.
 Sharing your sentiment analysis with the world has never been easier.
