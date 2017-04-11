@@ -42,18 +42,19 @@ class CentroidConversion(EmotionConversionPlugin):
         for e in original.onyx__hasEmotion:
             category = e.onyx__hasEmotionCategory
             intensity = e.get("onyx__hasEmotionIntensity",1)
+            if intensity == 0:
+                continue
             if category in self.centroids:
-                totalIntensities[category] += intensity
                 for dim, value in self.centroids[category].items():
+                    totalIntensities[dim] += intensity
                     try:
                         res[dim] += value * intensity
                     except Exception:
                         res[dim] = value * intensity
+
         for dim,intensity in totalIntensities.items():
             if intensity != 0:
                 res[dim] /= intensity
-            else:
-                res[dim] = self.centroids.get('neutral', {dim:0})[dim]
         return res
 
     def _backwards_conversion(self, original):
