@@ -49,7 +49,7 @@ class CentroidConversion(EmotionConversionPlugin):
                     totalIntensities[dim] += intensity
                     try:
                         res[dim] += value * intensity
-                    except Exception:
+                    except KeyError:
                         res[dim] = value * intensity
 
         for dim,intensity in totalIntensities.items():
