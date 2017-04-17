@@ -9,7 +9,6 @@ import string
 import xml.etree.ElementTree as ET
 from nltk.corpus import stopwords
 from nltk.corpus import WordNetCorpusReader
-
 from emotion import Emotion as Emo
 from pattern.en import parse
 from senpy.plugins import EmotionPlugin, SenpyPlugin, ShelfMixin
@@ -51,6 +50,8 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
                 Emo.emotions[name] = Emo(name, elem.get("isa"))
 
     def activate(self, *args, **kwargs):
+        
+        nltk.download('stopwords')
         self._stopwords = stopwords.words('english')
         #local_path=os.path.dirname(os.path.abspath(__file__))
         self._categories = {'anger': ['general-dislike',],
@@ -80,8 +81,6 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
             self.sh['wn16'] = wn16
         
         self._wn16 = self.sh['wn16']
-
-
 
     def deactivate(self, *args, **kwargs):
         self.save()

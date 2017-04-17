@@ -30,6 +30,7 @@ class SentiTextPlugin(SentimentPlugin):
         return tagger
 
     def activate(self, *args, **kwargs):
+        nltk.download(['punkt','wordnet'])
         self._swn = self._load_swn()
         self._pos_tagger = self._load_pos_tagger()
 
@@ -69,7 +70,6 @@ class SentiTextPlugin(SentimentPlugin):
 
 
     def analyse_entry(self, entry, params):
-
         language = params.get("language")
         text = entry.get("text", None)
         tokens = self._tokenize(text)
@@ -82,7 +82,6 @@ class SentiTextPlugin(SentimentPlugin):
                 if len(lemmas) == 0:
                     continue
                 tokens[i]['lemmas'][w[0]] = lemmas
-
         if language == "en":
             trans = TextBlob(unicode(text))
         else:
@@ -96,11 +95,10 @@ class SentiTextPlugin(SentimentPlugin):
                     continue
                 eq_synset = self._compare_synsets(synsets, tokens, s_i)
                 useful_synsets[s_i][t_w] = eq_synset
-
         scores = {}
         for i in tokens:
             scores[i] = {}
-            if useful_synsets is None:   
+            if useful_synsets != None:   
                 for word in useful_synsets[i]:
                     if useful_synsets[i][word] is None:
                         continue
@@ -116,9 +114,7 @@ class SentiTextPlugin(SentimentPlugin):
                             score['score'] = f_score
                             scores[i][word] = score
                             break
-
         p = params.get("prefix", None)
-
         for i in scores:
             n_pos = 0.0
             n_neg = 0.0
@@ -127,7 +123,6 @@ class SentiTextPlugin(SentimentPlugin):
                     n_pos += 1.0
                 elif scores[i][w]['score'] == 'neg':
                     n_neg += 1.0
-
             inter = interp1d([-1.0, 1.0], [0.0, 1.0])
             try:
                 g_score = (n_pos - n_neg) / (n_pos + n_neg)
@@ -135,7 +130,6 @@ class SentiTextPlugin(SentimentPlugin):
             except:
                 if n_pos == 0 and n_neg == 0:
                     g_score = 0.5
-
             polarity = 'marl:Neutral'
             if g_score > 0.5:
                 polarity = 'marl:Positive'
