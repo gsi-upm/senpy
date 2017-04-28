@@ -1,17 +1,26 @@
-{
-    "name": "emotion-wnaffect",
-    "module": "emotion-wnaffect",
-    "description": "Emotion classifier using WordNet-Affect to calculate the percentage of each emotion. This plugin classifies among 6 emotions: anger,fear,disgust,joy,sadness or neutral. The only available language is English (en)",
-    "author": "@icorcuera @balkian",
-    "version": "0.2",
-    "synsets_path": "/data/emotion-wnaffect/a-synsets.xml",
-    "hierarchy_path": "/data/emotion-wnaffect/a-hierarchy.xml",
-    "wn16_path": "/data/emotion-wnaffect/wordnet1.6/dict",
-    "onyx:usesEmotionModel": "emoml:big6",
-    "requirements": [
-        "nltk>=3.0.5",
-        "lxml>=3.4.2",
-        "pattern",
-    ],
-    "async":False
-}
+---
+name: emotion-wnaffect
+module: emotion-wnaffect
+description: 'Emotion classifier using WordNet-Affect to calculate the percentage
+  of each emotion. This plugin classifies among 6 emotions: anger,fear,disgust,joy,sadness
+  or neutral. The only available language is English (en)'
+author: "@icorcuera @balkian"
+version: '0.2'
+extra_params:
+  language:
+    "@id": lang_wnaffect
+    aliases:
+    - language
+    - l
+    required: false
+    options:
+    - en
+synsets_path: "/data/emotion-wnaffect/a-synsets.xml"
+hierarchy_path: "/data/emotion-wnaffect/a-hierarchy.xml"
+wn16_path: "/data/emotion-wnaffect/wordnet1.6/dict"
+onyx:usesEmotionModel: emoml:big6
+requirements:
+- nltk>=3.0.5
+- lxml>=3.4.2
+- pattern
+async: false
