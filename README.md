@@ -20,4 +20,4 @@ Run with:
 
 # LICENSE
 
-This compilation of plugins for Senpy use Apache 2.0 License. Some of the resources used for train these plugins can not be distributed, specifically, for the plugins `emotion-anew` and `emotion-wnaffect`. For more information visit senpy.readthedocs.io
+This compilation of plugins for Senpy use Apache 2.0 License. Some of the resources used for train these plugins can not be distributed, specifically, resources for the plugins `emotion-anew` and `emotion-wnaffect`. For more information visit [Senpy documentation](senpy.readthedocs.io)
