@@ -1,0 +1,25 @@
+{
+    "name": "sentiment-vader",
+    "module": "sentiment-vader",
+    "description": "Sentiment classifier using vaderSentiment module. Params accepted: Language: {en, es}. The output uses Marl ontology developed at GSI UPM for semantic web.",
+    "author": "@icorcuera",
+    "version": "0.1",
+    "extra_params": {
+            "language": {
+            "@id": "lang_rand",
+            "aliases": ["language", "l"],
+            "required": false,
+            "options": ["es", "en", "auto"]
+        },
+
+            "aggregate": {
+             "aliases": ["aggregate","agg"],
+             "options": ["true", "false"],
+             "required": false,
+	     "default": false	
+
+        }
+   
+    },
+    "requirements": {}
+}

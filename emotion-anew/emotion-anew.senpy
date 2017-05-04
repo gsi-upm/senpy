@@ -1,0 +1,64 @@
+{
+    "name": "emotion-anew",
+    "module": "emotion-anew",
+    "description": "This plugin consists on an emotion classifier using ANEW lexicon dictionary to calculate VAD (valence-arousal-dominance) of the sentence and determinate which emotion is closer to this value. Each emotion has a centroid, calculated according to this article: http://www.aclweb.org/anthology/W10-0208. The plugin is going to look for the words in the sentence that appear in the ANEW dictionary and calculate the average VAD score for the sentence. Once this score is calculated, it is going to seek the emotion that is closest to this value.",
+    "author": "@icorcuera",
+    "version": "0.5",
+    "extra_params": {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": true,
+            "options": ["es","en"],
+            "default": "en"
+        }
+    },
+    "requirements": {},
+    "anew_path_es": "/data/emotion-anew/Dictionary/Redondo(2007).csv",
+    "anew_path_en": "/data/emotion-anew/Dictionary/ANEW2010All.txt",
+    "centroids": {
+        "anger": {
+            "A": 6.95, 
+            "D": 5.1, 
+            "V": 2.7
+        }, 
+        "disgust": {
+            "A": 5.3, 
+            "D": 8.05, 
+            "V": 2.7
+        }, 
+        "fear": {
+            "A": 6.5, 
+            "D": 3.6, 
+            "V": 3.2
+        }, 
+        "joy": {
+            "A": 7.22, 
+            "D": 6.28, 
+            "V": 8.6
+        }, 
+        "sadness": {
+            "A": 5.21, 
+            "D": 2.82, 
+            "V": 2.21
+        }
+    },
+    "emotions_ontology": {
+        "anger": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#anger", 
+        "disgust": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#disgust", 
+        "fear": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#negative-fear", 
+        "joy": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#joy", 
+        "neutral": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#neutral-emotion", 
+        "sadness": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#sadness"
+    },
+    "requirements": [
+        "numpy",
+        "pandas",
+        "nltk",
+        "scipy",
+        "scikit-learn",
+        "textblob",
+        "pattern",
+        "lxml"
+            ],
+    "onyx:usesEmotionModel": "emoml:big6",
+}
