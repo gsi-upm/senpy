@@ -195,7 +195,7 @@ class Senpy(object):
 
     def convert_emotions(self, resp, plugins, params):
         """
-        Conversion of all emotions in a response.
+        Conversion of all emotions in a response **in place**.
         In addition to converting from one model to another, it has
         to include the conversion plugin to the analysis list.
         Needless to say, this is far from an elegant solution, but it works.
@@ -220,7 +220,6 @@ class Senpy(object):
                 e.parameters = params
                 raise e
         newentries = []
-        resp.analysis = set(resp.analysis)
         for i in resp.entries:
             if output == "full":
                 newemotions = copy.deepcopy(i.emotions)
@@ -229,7 +228,7 @@ class Senpy(object):
             for j in i.emotions:
                 plugname = j['prov:wasGeneratedBy']
                 candidate = candidates[plugname]
-                resp.analysis.add(candidate.id)
+                resp.analysis.append(candidate.id)
                 for k in candidate.convert(j, fromModel, toModel, params):
                     k.prov__wasGeneratedBy = candidate.id
                     if output == 'nested':
@@ -238,6 +237,7 @@ class Senpy(object):
             i.emotions = newemotions
             newentries.append(i)
         resp.entries = newentries
+        resp.analysis = list(set(resp.analysis))
 
     @property
     def default_plugin(self):

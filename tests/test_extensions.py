@@ -205,6 +205,7 @@ class ExtensionsTest(TestCase):
                                     [plugin, ],
                                     params)
         assert len(r3.entries[0].emotions) == 1
+        r3.jsonld()
 
     # def test_async_plugin(self):
     #     """ We should accept multiprocessing plugins with async=False"""
