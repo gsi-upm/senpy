@@ -34,8 +34,8 @@ The emotion-wnaffect.senpy file can be copied and modified to use different vers
 
 -  This plugin uses the pattern library, which means it will only run on python 2.7
 -  Wnaffect and corpora files are not included in the repository, but can be easily added either to the docker image (using a volume) or in a new docker image. 
-You can download Wordnet 1.6 here: [](http://wordnetcode.princeton.edu/1.6/wn16.unix.tar.gz) and extract the dict folder. 
-The hierarchy and synsets files can be found here: [](https://github.com/larsmans/wordnet-domains-sentiwords/tree/master/wn-domains/wn-affect-1.1)
-![alt GSI Logo][logoGSI]
+-  You can download Wordnet 1.6 here: <http://wordnetcode.princeton.edu/1.6/wn16.unix.tar.gz> and extract the dict folder. 
+-  The hierarchy and synsets files can be found here: <https://github.com/larsmans/wordnet-domains-sentiwords/tree/master/wn-domains/wn-affect-1.1>
 
+![alt GSI Logo][logoGSI]
 [logoGSI]: http://www.gsi.dit.upm.es/images/stories/logos/gsi.png "GSI Logo"
