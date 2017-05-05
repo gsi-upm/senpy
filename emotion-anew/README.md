@@ -1,5 +1,4 @@
-
-#Plugin emotion-anew 
+# Plugin emotion-anew 
 
 This plugin consists on an **emotion classifier** that detects six possible emotions:
 - Anger : general-dislike.
@@ -28,7 +27,9 @@ http://senpy.cluster.gsi.dit.upm.es/api/?algo=emotion-anew&language=en&input=I%2
 ```
 
 Example respond: This plugin follows the standard for the senpy plugin response. For more information, please visit [senpy documentation](http://senpy.readthedocs.io). Specifically, NIF API section.
+# Known issues
 
+To obtain Anew dictionary you can download from here: [](https://github.com/hcorona/SMC2015/blob/master/resources/ANEW2010All.txt). 
 ![alt GSI Logo][logoGSI]
 
 [logoES]: https://www.gsi.dit.upm.es/ontologies/onyx/img/eurosentiment_logo.png "EuroSentiment logo"
