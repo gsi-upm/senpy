@@ -10,8 +10,6 @@
           "items": {
             "$ref": "plugin.json"
           }
-        },
-        "@type": {
         }
       }
     }

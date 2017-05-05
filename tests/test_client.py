@@ -4,18 +4,21 @@ try:
 except ImportError:
     from mock import patch
 
+import json
+
 from senpy.client import Client
-from senpy.models import Results, Error
+from senpy.models import Results, Plugins, Error
+from senpy.plugins import AnalysisPlugin, default_plugin_type
 
 
 class Call(dict):
     def __init__(self, obj):
-        self.obj = obj.jsonld()
+        self.obj = obj.serialize()
         self.status_code = 200
         self.content = self.json()
 
     def json(self):
-        return self.obj
+        return json.loads(self.obj)
 
 
 class ModelsTest(TestCase):
@@ -44,3 +47,19 @@ class ModelsTest(TestCase):
             method='GET',
             params={'input': 'hello',
                     'algorithm': 'NONEXISTENT'})
+
+    def test_plugins(self):
+        endpoint = 'http://dummy/'
+        client = Client(endpoint)
+        plugins = Plugins()
+        p1 = AnalysisPlugin({'name': 'AnalysisP1', 'version': 0, 'description': 'No'})
+        plugins.plugins = [p1, ]
+        success = Call(plugins)
+        with patch('requests.request', return_value=success) as patched:
+            response = client.plugins()
+            assert isinstance(response, dict)
+            assert len(response) == 1
+            assert "AnalysisP1" in response
+        patched.assert_called_with(
+            url=endpoint + '/plugins', method='GET',
+            params={'plugin_type': default_plugin_type})

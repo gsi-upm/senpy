@@ -109,13 +109,15 @@ class ModelsTest(TestCase):
                                 }
                             }})
         c = p.jsonld()
-        assert "info" not in c
-        assert "repo" not in c
-        assert "extra_params" in c
-        logging.debug("Framed:")
+        assert '@type' in c
+        assert c['@type'] == 'plugin'
+        assert 'info' not in c
+        assert 'repo' not in c
+        assert 'extra_params' in c
+        logging.debug('Framed:')
         logging.debug(c)
         p.validate()
-        assert "es" in c['extra_params']['none']['options']
+        assert 'es' in c['extra_params']['none']['options']
         assert isinstance(c['extra_params']['none']['options'], list)
 
     def test_str(self):
@@ -158,14 +160,20 @@ class ModelsTest(TestCase):
         g = rdflib.Graph().parse(data=t, format='turtle')
         assert len(g) == len(triples)
 
+    def test_plugin_list(self):
+        """The plugin list should be of type \"plugins\""""
+        plugs = Plugins()
+        c = plugs.jsonld()
+        assert '@type' in c
+        assert c['@type'] == 'plugins'
+
     def test_single_plugin(self):
         """A response with a single plugin should still return a list"""
         plugs = Plugins()
-        for i in range(10):
-            p = Plugin({'id': str(i),
-                        'version': 0,
-                        'description': 'dummy'})
-            plugs.plugins.append(p)
+        p = Plugin({'id': str(1),
+                    'version': 0,
+                    'description': 'dummy'})
+        plugs.plugins.append(p)
         assert isinstance(plugs.plugins, list)
         js = plugs.jsonld()
         assert isinstance(js['plugins'], list)

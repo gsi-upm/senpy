@@ -73,8 +73,8 @@ pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 clean:
 	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1;}}' | xargs docker rm -v 2>/dev/null|| true
 	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
-	@docker rmi $(NAME)-dev 2>/dev/null || true
-
+	@docker stop $(addprefix $(NAME)-dev,$(PYVERSIONS)) 2>/dev/null || true
+	@docker rm $(addprefix $(NAME)-dev,$(PYVERSIONS)) 2>/dev/null || true
 
 git_commit:
 	git commit -a

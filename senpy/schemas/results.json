@@ -18,10 +18,16 @@
           "type": "string"
         },
         "analysis": {
-          "type": "array",
           "default": [],
+          "type": "array",
           "items": {
-            "$ref": "analysis.json"
+            "anyOf": [
+              {
+                "$ref": "analysis.json"
+              },{
+                "type": "string"
+              }
+            ]
           }
         },
         "entries": {
