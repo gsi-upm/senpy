@@ -36,25 +36,29 @@ class CentroidConversion(EmotionConversionPlugin):
         super(CentroidConversion, self).__init__(info)
 
     def _forward_conversion(self, original):
-        """Sum the VAD value of all categories found."""
+        """Sum the VAD value of all categories found weighted by intensity. """
         res = Emotion()
-        totalIntensities = defaultdict(float)
+        maxIntensity = float(original.get("onyx__maxIntensityValue",1))
+        sumIntensities = 0
+        neutralPoint = self.get("origin",None)
         for e in original.onyx__hasEmotion:
             category = e.onyx__hasEmotionCategory
-            intensity = e.get("onyx__hasEmotionIntensity",1)
+            intensity = e.get("onyx__hasEmotionIntensity",maxIntensity)/maxIntensity
             if intensity == 0:
                 continue
-            if category in self.centroids:
-                for dim, value in self.centroids[category].items():
-                    totalIntensities[dim] += intensity
+            sumIntensities += intensity
+            centoid = self.centroids.get(category,None)
+            if centroid:
+                for dim, value in centroid.items():
+                    if neutralPoint:
+                        value -= neutralPoint[dim]
                     try:
                         res[dim] += value * intensity
                     except KeyError:
                         res[dim] = value * intensity
-
-        for dim,intensity in totalIntensities.items():
-            if intensity != 0:
-                res[dim] /= intensity
+        if neutralPoint:
+            for dim in res:
+                res[dim] += neutralPoint[dim]
         return res
 
     def _backwards_conversion(self, original):
