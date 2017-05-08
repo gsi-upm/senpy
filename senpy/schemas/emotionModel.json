@@ -5,7 +5,7 @@
     "nif:beginIndex": {"type": "integer"},
     "nif:endIndex": {"type": "integer"},
     "nif:anchorOf": {
-      "description": "Piece of context that contains the Sentiment",
+      "description": "Piece of context that contains the Emotion",
       "type": "string"
     },
     "onyx:hasDimension": {
