@@ -1,6 +1,5 @@
 from senpy.plugins import EmotionConversionPlugin
 from senpy.models import EmotionSet, Emotion, Error
-from collections import defaultdict
 
 import logging
 logger = logging.getLogger(__name__)
