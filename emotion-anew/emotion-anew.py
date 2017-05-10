@@ -121,7 +121,7 @@ class EmotionTextPlugin(SentimentPlugin):
         dictionary={}
         lang = params.get("language", "auto")
         if lang == 'es':
-            with open(self._local_path+self.anew_path_es,'rb') as tabfile:
+            with open(self.anew_path_es,'rb') as tabfile:
                 reader = csv.reader(tabfile, delimiter='\t')
                 for row in reader:
                     dictionary[row[2]]={}
@@ -129,7 +129,7 @@ class EmotionTextPlugin(SentimentPlugin):
                     dictionary[row[2]]['A']=row[5]
                     dictionary[row[2]]['D']=row[7]
         else:
-            with open(self._local_path+self.anew_path_en,'rb') as tabfile:
+            with open(self.anew_path_en,'rb') as tabfile:
                 reader = csv.reader(tabfile, delimiter='\t')
                 for row in reader:
                     dictionary[row[0]]={}
