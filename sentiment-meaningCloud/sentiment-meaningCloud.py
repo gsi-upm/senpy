@@ -16,9 +16,10 @@ class DaedalusPlugin(SentimentPlugin):
 
     def _polarity(self, value):
 
-        polarityValue = 0
-        polarity = 'marl:Neutral'
-        if 'N' in value:
+        if 'NONE' in value:
+            polarity = 'marl:Neutral'
+            polarityValue = 0
+        elif 'N' in value:        
             polarity = 'marl:Negative'
             polarityValue = -1
         elif 'P' in value:
@@ -47,7 +48,7 @@ class DaedalusPlugin(SentimentPlugin):
         api_response = r.json()
         if not api_response.get('score_tag'):
             raise Error(r.json())
-
+        logger.info(api_response)
         response = Results()
         agg_polarity, agg_polarityValue = self._polarity(api_response.get('score_tag', None))
         agg_opinion = Sentiment(id="Opinion0",
