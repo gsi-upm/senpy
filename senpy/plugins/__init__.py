@@ -96,7 +96,10 @@ class ShelfMixin(object):
         if not hasattr(self, '_sh') or self._sh is None:
             self.__dict__['_sh'] = {}
             if os.path.isfile(self.shelf_file):
-                self.__dict__['_sh'] = pickle.load(open(self.shelf_file, 'rb'))
+                try:
+                    self.__dict__['_sh'] = pickle.load(open(self.shelf_file, 'rb'))
+                except EOFError:
+                    logger.warning('corrupted shelf file!')
         return self._sh
 
     @sh.deleter
