@@ -178,7 +178,7 @@ class Senpy(object):
         except (Error, Exception) as ex:
             if not isinstance(ex, Error):
                 ex = Error(message=str(ex), status=500)
-            logger.error('Error returning analysis result')
+            logger.exception('Error returning analysis result')
             raise ex
         return resp
 
