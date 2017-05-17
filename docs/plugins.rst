@@ -183,7 +183,11 @@ Training a classifier can be time time consuming. To avoid running the training 
               def deactivate(self):
                   self.close()
 
-You can speficy a 'shelf_file' in your .senpy file. By default the ShelfMixin creates a file based on the plugin name and stores it in that plugin's folder.
+You can specify a 'shelf_file' in your .senpy file. By default the ShelfMixin creates a file based on the plugin name and stores it in that plugin's folder.
+
+Shelves may get corrupted if the plugin exists unexpectedly.
+A corrupt shelf prevents the plugin from loading.
+If you do not care about the pickle, you can force your plugin to remove the corrupted file and load anyway, set the  'force_shelf' to True in your .senpy file.
 
 I want to implement my service as a plugin, How i can do it?
 ????????????????????????????????????????????????????????????

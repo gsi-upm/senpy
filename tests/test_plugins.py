@@ -83,7 +83,40 @@ class PluginsTest(TestCase):
         res2 = a.analyse(input=1)
         assert res2.entries[0].nif__isString == 2
 
-    def test_two(self):
+    def test_corrupt_shelf(self):
+        ''' Reusing the values of a previous shelf '''
+
+        emptyfile = os.path.join(self.shelf_dir, "emptyfile")
+        invalidfile = os.path.join(self.shelf_dir, "invalid_file")
+        with open(emptyfile, 'w+b'), open(invalidfile, 'w+b') as inf:
+            inf.write(b'ohno')
+
+        files = {emptyfile: ['empty file', EOFError],
+                 invalidfile: ['invalid file', pickle.UnpicklingError]}
+
+        for fn in files:
+            with open(fn, 'rb') as f:
+                msg, error = files[fn]
+                a = ShelfDummyPlugin(info={
+                    'name': 'shelve',
+                    'version': 'test',
+                    'shelf_file': f.name
+                })
+                assert os.path.isfile(a.shelf_file)
+                print('Shelf file: %s' % a.shelf_file)
+                with self.assertRaises(error):
+                    # By default, raise an error
+                    a.sh['a'] = 'fromA'
+                    a.save()
+                del a._sh
+                assert os.path.isfile(a.shelf_file)
+                a.force_shelf = True
+                a.sh['a'] = 'fromA'
+                a.save()
+                b = pickle.load(f)
+                assert b['a'] == 'fromA'
+
+    def test_reuse_shelf(self):
         ''' Reusing the values of a previous shelf '''
         a = ShelfDummyPlugin(info={
             'name': 'shelve',

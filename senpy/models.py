@@ -237,7 +237,10 @@ class BaseModel(SenpyMixin, dict):
         self.__setitem__(self._get_key(key), value)
 
     def __delattr__(self, key):
-        self.__delitem__(self._get_key(key))
+        try:
+            object.__delattr__(self, key)
+        except AttributeError:
+            self.__delitem__(self._get_key(key))
 
     def _plain_dict(self):
         d = {k: v for (k, v) in self.items() if k[0] != "_"}

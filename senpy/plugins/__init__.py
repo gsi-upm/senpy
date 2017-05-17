@@ -98,8 +98,10 @@ class ShelfMixin(object):
             if os.path.isfile(self.shelf_file):
                 try:
                     self.__dict__['_sh'] = pickle.load(open(self.shelf_file, 'rb'))
-                except EOFError:
-                    logger.warning('corrupted shelf file!')
+                except (EOFError, pickle.UnpicklingError):
+                    logger.warning('{} has a corrupted shelf file!'.format(self.id))
+                    if not self.get('force_shelf', False):
+                        raise
         return self._sh
 
     @sh.deleter
