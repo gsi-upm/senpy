@@ -91,8 +91,8 @@ class PluginsTest(TestCase):
         with open(emptyfile, 'w+b'), open(invalidfile, 'w+b') as inf:
             inf.write(b'ohno')
 
-        files = {emptyfile: ['empty file', EOFError],
-                 invalidfile: ['invalid file', pickle.UnpicklingError]}
+        files = {emptyfile: ['empty file', (EOFError, IndexError)],
+                 invalidfile: ['invalid file', (pickle.UnpicklingError, IndexError)]}
 
         for fn in files:
             with open(fn, 'rb') as f:
@@ -105,7 +105,6 @@ class PluginsTest(TestCase):
                 assert os.path.isfile(a.shelf_file)
                 print('Shelf file: %s' % a.shelf_file)
                 with self.assertRaises(error):
-                    # By default, raise an error
                     a.sh['a'] = 'fromA'
                     a.save()
                 del a._sh
