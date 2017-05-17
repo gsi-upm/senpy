@@ -78,7 +78,16 @@ def main():
         action='store_true',
         default=False,
         help='Do not run a server, only install plugin dependencies')
+    parser.add_argument(
+        '--version',
+        '-v',
+        action='store_true',
+        default=False,
+        help='Output the senpy version and exit')
     args = parser.parse_args()
+    if args.version:
+        print('Senpy version {}'.format(senpy.__version__))
+        exit(1)
     logging.basicConfig()
     rl = logging.getLogger()
     rl.setLevel(getattr(logging, args.level))
