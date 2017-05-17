@@ -17,6 +17,6 @@ WORKDIR /usr/src/app
 COPY test-requirements.txt requirements.txt /usr/src/app/
 RUN pip install --use-wheel -r test-requirements.txt -r requirements.txt
 COPY . /usr/src/app/
-RUN pip install --no-deps --no-index .
+RUN pip install --no-index --no-deps --editable .
 
 ENTRYPOINT ["python", "-m", "senpy", "-f", "/senpy-plugins/", "--host", "0.0.0.0"]
