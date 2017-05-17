@@ -344,7 +344,8 @@ class Senpy(object):
         if requirements:
             pip_args = ['pip']
             pip_args.append('install')
-            pip_args.append('--use-wheel')
+            pip_args.append('--only-binary')
+            pip_args.append(':all:')
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
