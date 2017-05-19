@@ -8,14 +8,18 @@ IMAGENAME=$(REPO)/$(NAME)
 IMAGEWTAG=$(IMAGENAME):$(VERSION)
 DEVPORT=5000
 action="test-${PYMAIN}"
+GITHUB_REPO=git@github.com:gsi-upm/senpy.git
 
 KUBE_CA_PEM_FILE=""
 KUBE_URL=""
 KUBE_TOKEN=""
+KUBE_NS=$(NAME)
 KUBECTL=docker run --rm -v $(KUBE_CA_PEM_FILE):/tmp/ca.pem -v $$PWD:/tmp/cwd/ -i lachlanevenson/k8s-kubectl --server="$(KUBE_URL)" --token="$(KUBE_TOKEN)" --certificate-authority="/tmp/ca.pem" -n $(KUBE_NAMESPACE)
 CI_REGISTRY=docker.io
 CI_REGISTRY_USER=gitlab
 CI_BUILD_TOKEN=""
+CI_COMMIT_REF_NAME=master
+
 
 
 all: build run
@@ -27,7 +31,7 @@ version: .FORCE
 	@echo $(VERSION)
 
 yapf:
-	yapf -i -r senpy
+	yapf -i -r $(NAME)
 	yapf -i -r tests
 
 init:
@@ -120,11 +124,19 @@ push: $(addprefix push-,$(PYVERSIONS))
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
 	docker push  $(IMAGENAME):$(VERSION)
 
+push-github:
+	$(eval KEY_FILE := $(shell mktemp))
+	@echo "$$GITHUB_DEPLOY_KEY" > $(KEY_FILE)
+	@git remote rm github-deploy || true
+	git remote add github-deploy $(GITHUB_REPO)
+	@GIT_SSH_COMMAND="ssh -i $(KEY_FILE)" git push github-deploy $(CI_COMMIT_REF_NAME)
+	rm $(KEY_FILE)
+
 ci:
 	gitlab-runner exec docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --env CI_PROJECT_NAME=$(NAME) ${action}
 
 deploy:
-	$(KUBECTL) delete -n senpy secret $(CI_REGISTRY) || true
+	$(KUBECTL) delete -n $(KUBE_NS) secret $(CI_REGISTRY) || true
 	@$(KUBECTL) create -n $(NAME) secret docker-registry $(CI_REGISTRY) --docker-server=$(CI_REGISTRY) --docker-username=$(CI_REGISTRY_USER) --docker-email=$(CI_REGISTRY_USER) --docker-password=$(CI_BUILD_TOKEN)
 	$(KUBECTL) apply -f /tmp/cwd/k8s/
 
