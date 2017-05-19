@@ -136,9 +136,9 @@ ci:
 	gitlab-runner exec docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --env CI_PROJECT_NAME=$(NAME) ${action}
 
 deploy:
-	$(KUBECTL) delete -n $(KUBE_NS) secret $(CI_REGISTRY) || true
+	@$(KUBECTL) delete -n $(KUBE_NS) secret $(CI_REGISTRY) || true
 	@$(KUBECTL) create -n $(NAME) secret docker-registry $(CI_REGISTRY) --docker-server=$(CI_REGISTRY) --docker-username=$(CI_REGISTRY_USER) --docker-email=$(CI_REGISTRY_USER) --docker-password=$(CI_BUILD_TOKEN)
-	$(KUBECTL) apply -f /tmp/cwd/k8s/
+	@$(KUBECTL) apply -f /tmp/cwd/k8s/
 
 
 
