@@ -9,6 +9,15 @@ IMAGEWTAG=$(IMAGENAME):$(VERSION)
 DEVPORT=5000
 action="test-${PYMAIN}"
 
+KUBE_CA_PEM_FILE=""
+KUBE_URL=""
+KUBE_TOKEN=""
+KUBECTL=docker run --rm -v $(KUBE_CA_PEM_FILE):/tmp/ca.pem -v $$PWD:/tmp/cwd/ -i lachlanevenson/k8s-kubectl --server="$(KUBE_URL)" --token="$(KUBE_TOKEN)" --certificate-authority="/tmp/ca.pem" -n $(KUBE_NAMESPACE)
+CI_REGISTRY=docker.io
+CI_REGISTRY_USER=gitlab
+CI_BUILD_TOKEN=""
+
+
 all: build run
 
 .FORCE:
@@ -37,7 +46,7 @@ quick_build: $(addprefix build-, $(PYMAIN))
 build: $(addprefix build-, $(PYVERSIONS))
 
 build-%: version Dockerfile-%
-	docker build -t '$(IMAGEWTAG)-python$*' -f Dockerfile-$* .;
+	docker build -t '$(IMAGEWTAG)-python$*' --cache-from $(IMAGENAME):python$* -f Dockerfile-$* .;
 
 quick_test: $(addprefix test-,$(PYMAIN))
 
@@ -53,8 +62,8 @@ dev: dev-$(PYMAIN)
 
 test-all: $(addprefix test-,$(PYVERSIONS))
 
-test-%: build-%
-	docker run --rm --entrypoint /usr/local/bin/python -w /usr/src/app $(IMAGEWTAG)-python$*  setup.py test
+test-%:
+	docker run --rm --entrypoint /usr/local/bin/python -w /usr/src/app $(IMAGENAME):python$*  setup.py test
 
 test: test-$(PYMAIN)
 
@@ -71,8 +80,8 @@ pip_test-%: sdist
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
 clean:
-	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1;}}' | xargs docker rm -v 2>/dev/null|| true
-	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
+	@docker ps -a | grep $(IMAGENAME) | awk '{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1;}}' | xargs docker rm -v 2>/dev/null|| true
+	@docker images | grep $(IMAGENAME) | awk '{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
 	@docker stop $(addprefix $(NAME)-dev,$(PYVERSIONS)) 2>/dev/null || true
 	@docker rm $(addprefix $(NAME)-dev,$(PYVERSIONS)) 2>/dev/null || true
 
@@ -93,11 +102,16 @@ run-%: build-%
 
 run: run-$(PYMAIN)
 
-push-latest: build-$(PYMAIN)
+push-latest: $(addprefix push-latest-,$(PYVERSIONS))
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGENAME)'
 	docker push '$(IMAGENAME):latest'
 	docker push '$(IMAGEWTAG)'
+
+push-latest-%: build-%
+	docker tag $(IMAGENAME):$(VERSION)-python$* $(IMAGENAME):python$*
+	docker push $(IMAGENAME):$(VERSION)-python$*
+	docker push $(IMAGENAME):python$*
 
 push-%: build-%
 	docker push $(IMAGENAME):$(VERSION)-python$*
@@ -109,4 +123,11 @@ push: $(addprefix push-,$(PYVERSIONS))
 ci:
 	gitlab-runner exec docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --env CI_PROJECT_NAME=$(NAME) ${action}
 
-.PHONY: test test-% test-all build-% build test pip_test run yapf push-main push-% dev ci version .FORCE
+deploy:
+	$(KUBECTL) delete -n senpy secret $(CI_REGISTRY) || true
+	@$(KUBECTL) create -n $(NAME) secret docker-registry $(CI_REGISTRY) --docker-server=$(CI_REGISTRY) --docker-username=$(CI_REGISTRY_USER) --docker-email=$(CI_REGISTRY_USER) --docker-password=$(CI_BUILD_TOKEN)
+	$(KUBECTL) apply -f /tmp/cwd/k8s/
+
+
+
+.PHONY: test test-% test-all build-% build test pip_test run yapf push-main push-% dev ci version .FORCE deploy

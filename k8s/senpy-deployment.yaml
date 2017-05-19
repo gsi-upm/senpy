@@ -1,0 +1,24 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: senpy-latest
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: senpy-latest
+    spec:
+      containers:
+      - name: senpy-latest
+        image: gsiupm/senpy:latest
+        args:
+          - "--default-plugins"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        ports:
+          - name: web
+            containerPort: 5000

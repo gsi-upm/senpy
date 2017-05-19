@@ -1,17 +1,21 @@
-image: gsiupm/dockermake:latest
-
-
+# Uncomment if you want to use docker-in-docker
+# image: gsiupm/dockermake:latest
+# services:
+# - docker:dind
 # When using dind, it's wise to use the overlayfs driver for
 # improved performance.
+
 variables:
-  DOCKER_DRIVER: overlay
-  DOCKERFILE: Dockerfile
   IMAGENAME: $CI_REGISTRY_IMAGE
 
 stages:
   - test
   - push
+  - deploy
   - clean
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
 
 .test: &test_definition
   stage: test
@@ -28,11 +32,8 @@ test-2.7:
   variables:
     PYTHON_VERSION: "2.7"
 
-
 .image: &image_definition
   stage: push
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
   script:
     - make -e push-$PYTHON_VERSION
   only:
@@ -57,9 +58,16 @@ push-latest:
     - master
     - triggers
 
+deploy:
+  stage: deploy
+  environment: test
+  script:
+    - make -e deploy
+  only:
+    - master
+
 clean :
   stage: clean
   script:
     - make -e clean
-  only:
-    - master
+  when: manual
