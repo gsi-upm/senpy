@@ -66,6 +66,14 @@ deploy:
   only:
     - master
 
+push-github:
+  stage: deploy
+  script:
+    - make -e push-github
+  only:
+    - master
+    - triggers
+
 clean :
   stage: clean
   script:
