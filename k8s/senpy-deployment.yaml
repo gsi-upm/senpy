@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
       - name: senpy-latest
-        image: gsiupm/senpy:latest
+        image: registry.cluster.gsi.dit.upm.es/senpy/senpy:latest
         args:
           - "--default-plugins"
         resources:

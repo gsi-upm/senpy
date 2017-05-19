@@ -13,7 +13,7 @@ GITHUB_REPO=git@github.com:gsi-upm/senpy.git
 KUBE_CA_PEM_FILE=""
 KUBE_URL=""
 KUBE_TOKEN=""
-KUBE_NS=$(NAME)
+KUBE_NAMESPACE=$(NAME)
 KUBECTL=docker run --rm -v $(KUBE_CA_PEM_FILE):/tmp/ca.pem -v $$PWD:/tmp/cwd/ -i lachlanevenson/k8s-kubectl --server="$(KUBE_URL)" --token="$(KUBE_TOKEN)" --certificate-authority="/tmp/ca.pem" -n $(KUBE_NAMESPACE)
 CI_REGISTRY=docker.io
 CI_REGISTRY_USER=gitlab
@@ -136,8 +136,8 @@ ci:
 	gitlab-runner exec docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --env CI_PROJECT_NAME=$(NAME) ${action}
 
 deploy:
-	@$(KUBECTL) delete -n $(KUBE_NS) secret $(CI_REGISTRY) || true
-	@$(KUBECTL) create -n $(NAME) secret docker-registry $(CI_REGISTRY) --docker-server=$(CI_REGISTRY) --docker-username=$(CI_REGISTRY_USER) --docker-email=$(CI_REGISTRY_USER) --docker-password=$(CI_BUILD_TOKEN)
+	@$(KUBECTL) delete secret $(CI_REGISTRY) || true
+	@$(KUBECTL) create secret docker-registry $(CI_REGISTRY) --docker-server=$(CI_REGISTRY) --docker-username=$(CI_REGISTRY_USER) --docker-email=$(CI_REGISTRY_USER) --docker-password=$(CI_BUILD_TOKEN)
 	@$(KUBECTL) apply -f /tmp/cwd/k8s/
 
 
