@@ -52,7 +52,7 @@ class CentroidConversion(EmotionConversionPlugin):
         dimensions = list(self.centroids.values())[0]
 
         def distance(e1, e2):
-            return sum((e1[k] - e2.get(k, 0)) for k in dimensions)
+            return sum((e1[k] - e2.get(k, 0)**2) for k in dimensions)
 
         emotion = ''
         mindistance = 10000000000000000000000.0
