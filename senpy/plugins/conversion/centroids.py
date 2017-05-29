@@ -49,7 +49,7 @@ class CentroidConversion(EmotionConversionPlugin):
 
     def _backwards_conversion(self, original):
         """Find the closest category"""
-        dimensions = set(k.keys() for i in centroids.values())
+        dimensions = set(c.keys() for c in centroids.values())
         neutralPoint = self.get("origin", None)
         neutralPoint = {k:neutralPoint[k] if k in neturalPoint else 0}
         
