@@ -49,18 +49,15 @@ class CentroidConversion(EmotionConversionPlugin):
 
     def _backwards_conversion(self, original):
         """Find the closest category"""
-        dimensions = list(self.centroids.values())[0]
+        dimensions = set(k.keys() for i in centroids.values())
+        neutralPoint = self.get("origin", None)
+        neutralPoint = {k:neutralPoint[k] if k in neturalPoint else 0}
+        
+        def distance(centroid):
+            return sum((centroid.get(k, neutralPoint[k]) - original.get(k, neutralPoint[k]))**2 for k in dimensions)
 
-        def distance(e1, e2):
-            return sum((e1[k] - e2.get(k, 0)**2) for k in dimensions)
-
-        emotion = ''
-        mindistance = 10000000000000000000000.0
-        for state in self.centroids:
-            d = distance(self.centroids[state], original)
-            if d < mindistance:
-                mindistance = d
-                emotion = state
+        emotion = min(centroids, key=lambda x: distance(centroids[x])
+                
         result = Emotion(onyx__hasEmotionCategory=emotion)
         return result
 
