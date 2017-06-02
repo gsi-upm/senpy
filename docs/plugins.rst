@@ -98,7 +98,7 @@ The value may be any valid JSON-LD dictionary.
 For simplicity, senpy includes a series of models by default in the ``senpy.models`` module.
 
 
-Example pluginhttps://lab.cluster.gsi.dit.upm.es/senpy/plugin-prueba
+Example plugin
 ==============
 
 In this section, we will implement a basic sentiment analysis plugin.
@@ -166,7 +166,7 @@ Training a classifier can be time time consuming. To avoid running the training 
 
 .. code:: python
 
-          from senpy.plugins import ShelfMixin, SenpyPlugin
+          from senpy.plugins import ShelfMixin, AnalysisPlugin
 
           class MyPlugin(ShelfMixin, AnalysisPlugin):
               def train(self):
