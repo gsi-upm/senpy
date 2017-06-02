@@ -15,7 +15,7 @@ stages:
   - clean
 
 before_script:
-  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+  - docker login -u $HUB_USER -p $HUB_PASSWORD
 
 .test: &test_definition
   stage: test
@@ -58,14 +58,6 @@ push-latest:
     - master
     - triggers
 
-deploy:
-  stage: deploy
-  environment: test
-  script:
-    - make -e deploy
-  only:
-    - master
-
 push-github:
   stage: deploy
   script:
@@ -74,8 +66,36 @@ push-github:
     - master
     - triggers
 
-clean :
+deploy_pypi:
+  stage: deploy
+  script:   # Configure the PyPI credentials, then push the package, and cleanup the creds.
+    - echo "[server-login]" >> ~/.pypirc
+    - echo "username=" ${PYPI_USER} >> ~/.pypirc
+    - echo "password=" ${PYPI_PASSWORD} >> ~/.pypirc
+    - make pip_upload
+    - echo "" > ~/.pypirc && rm ~/.pypirc  # If the above fails, this won't run.
+  only:
+    - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant version (tags)
+  except:
+    - branches
+
+deploy:
+  stage: deploy
+  environment: test
+  script:
+    - make -e deploy
+  only:
+    - master
+
+clean_docker :
   stage: clean
   script:
     - make -e clean
   when: manual
+
+cleanup_pypirc:
+   stage: clean
+   when: always   # this is important; run even if preceding stages failed.
+   script:
+    - rm -vf ~/.pypirc  # we don't want to leave these around, but GitLab may clean up anyway.
+    - docker logout

@@ -1,14 +1,17 @@
+NAME=senpy
+VERSION=$(shell git describe --tags --dirty 2>/dev/null)
+GITHUB_REPO=git@github.com:gsi-upm/senpy.git
+
+IMAGENAME=gsiupm/senpy
+IMAGEWTAG=$(IMAGENAME):$(VERSION)
+
 PYVERSIONS=3.5 2.7
 PYMAIN=$(firstword $(PYVERSIONS))
-NAME=senpy
-REPO=gsiupm
-VERSION=$(shell git describe --tags --dirty 2>/dev/null)
-TARNAME=$(NAME)-$(VERSION).tar.gz 
-IMAGENAME=$(REPO)/$(NAME)
-IMAGEWTAG=$(IMAGENAME):$(VERSION)
+
 DEVPORT=5000
+
+TARNAME=$(NAME)-$(VERSION).tar.gz 
 action="test-${PYMAIN}"
-GITHUB_REPO=git@github.com:gsi-upm/senpy.git
 
 KUBE_CA_PEM_FILE=""
 KUBE_URL=""
@@ -83,6 +86,9 @@ pip_test-%: sdist
 
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
+pip_upload: pip_test 
+	python setup.py sdist upload ;
+
 clean:
 	@docker ps -a | grep $(IMAGENAME) | awk '{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1;}}' | xargs docker rm -v 2>/dev/null|| true
 	@docker images | grep $(IMAGENAME) | awk '{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
@@ -97,9 +103,6 @@ git_tag:
 
 git_push:
 	git push --tags origin master
-
-pip_upload: pip_test 
-	python setup.py sdist upload ;
 
 run-%: build-%
 	docker run --rm -p $(DEVPORT):5000 -ti '$(IMAGEWTAG)-python$(PYMAIN)' --default-plugins
@@ -139,7 +142,6 @@ deploy:
 	@$(KUBECTL) delete secret $(CI_REGISTRY) || true
 	@$(KUBECTL) create secret docker-registry $(CI_REGISTRY) --docker-server=$(CI_REGISTRY) --docker-username=$(CI_REGISTRY_USER) --docker-email=$(CI_REGISTRY_USER) --docker-password=$(CI_BUILD_TOKEN)
 	@$(KUBECTL) apply -f /tmp/cwd/k8s/
-
 
 
 .PHONY: test test-% test-all build-% build test pip_test run yapf push-main push-% dev ci version .FORCE deploy
