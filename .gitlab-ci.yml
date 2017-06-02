@@ -5,9 +5,6 @@
 # When using dind, it's wise to use the overlayfs driver for
 # improved performance.
 
-variables:
-  IMAGENAME: $CI_REGISTRY_IMAGE
-
 stages:
   - test
   - push
