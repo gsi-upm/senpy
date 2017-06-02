@@ -98,7 +98,7 @@ The value may be any valid JSON-LD dictionary.
 For simplicity, senpy includes a series of models by default in the ``senpy.models`` module.
 
 
-Example plugin
+Example pluginhttps://lab.cluster.gsi.dit.upm.es/senpy/plugin-prueba
 ==============
 
 In this section, we will implement a basic sentiment analysis plugin.
@@ -113,7 +113,7 @@ The definition file would look like this:
           module: helloworld
           version: 0.0
           threshold: 10
-
+          description: Hello World
 
 Now, in a file named ``helloworld.py``:
 
@@ -122,11 +122,11 @@ Now, in a file named ``helloworld.py``:
           #!/bin/env python
           #helloworld.py
 
-          from senpy.plugins import SenpyPlugin
+          from senpy.plugins import AnalysisPlugin
           from senpy.models import Sentiment
 
 
-          class HelloWorld(SenpyPlugin):
+          class HelloWorld(AnalysisPlugin):
 
               def analyse_entry(entry, params):
                   '''Basically do nothing with each entry'''
@@ -138,6 +138,8 @@ Now, in a file named ``helloworld.py``:
                       sentiment['marl:hasPolarity'] = 'marl:Negative'
                   entry.sentiments.append(sentiment)
                   yield entry
+
+A repository with the code of an example plugin adding extra data is available `here <https://lab.cluster.gsi.dit.upm.es/senpy/plugin-prueba>`__
 
 
 F.A.Q.
@@ -166,7 +168,7 @@ Training a classifier can be time time consuming. To avoid running the training 
 
           from senpy.plugins import ShelfMixin, SenpyPlugin
 
-          class MyPlugin(ShelfMixin, SenpyPlugin):
+          class MyPlugin(ShelfMixin, AnalysisPlugin):
               def train(self):
                   ''' Code to train the classifier
                   '''
@@ -276,7 +278,6 @@ Additionally, with the ``--pdb`` option you will be dropped into a pdb post mort
 .. code:: bash
 
    senpy --pdb
-
 
 Where can I find more code examples?
 ????????????????????????????????????
