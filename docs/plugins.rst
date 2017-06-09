@@ -139,6 +139,28 @@ Now, in a file named ``helloworld.py``:
                   entry.sentiments.append(sentiment)
                   yield entry
 
+Docker image
+============
+
+Add the following dockerfile to your project to generate a docker image with your plugin:
+
+.. code:: dockerfile
+
+   FROM gsiupm/senpy:0.8.8
+
+This will copy your source folder to the image, and install all dependencies.
+Now, to build an image:
+
+.. code:: shell
+
+   docker build . -t gsiupm/exampleplugin
+
+And you can run it with:
+
+.. code:: shell
+
+   docker run -p 5000:5000 gsiupm/exampleplugin
+
 
 F.A.Q.
 ======
