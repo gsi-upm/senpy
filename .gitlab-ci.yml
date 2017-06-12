@@ -98,7 +98,7 @@ clean :
     - make -e clean
   when: manual
 
-cleanup_pypirc:
+cleanup_py:
    stage: clean
    when: always   # this is important; run even if preceding stages failed.
    script:
