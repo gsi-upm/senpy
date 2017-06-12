@@ -76,8 +76,8 @@ test-%:
 test: test-$(PYMAIN)
 
 dist/$(TARNAME): version
-	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) python setup.py sdist;
-	docker run --rm -ti -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) chmod -R a+rwx dist;
+	docker run --rm -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) python setup.py sdist;
+	docker run --rm -v $$PWD:/usr/src/app/ -w /usr/src/app/ python:$(PYMAIN) chmod -R a+rwx dist;
 
 
 sdist: dist/$(TARNAME)
