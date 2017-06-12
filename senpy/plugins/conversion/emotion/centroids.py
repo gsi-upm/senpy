@@ -32,36 +32,58 @@ class CentroidConversion(EmotionConversionPlugin):
                     nv1[aliases.get(k2, k2)] = v2
                 ncentroids[aliases.get(k1, k1)] = nv1
             info['centroids'] = ncentroids
+
         super(CentroidConversion, self).__init__(info)
 
+        self.dimensions = set()
+        for c in self.centroids.values():
+            self.dimensions.update(c.keys())
+        self.neutralPoints = self.get("neutralPoints", dict())
+        if not self.neutralPoints:
+            for i in self.dimensions:
+                self.neutralPoints[i] = self.get("neutralValue", 0)
+
     def _forward_conversion(self, original):
-        """Sum the VAD value of all categories found."""
+        """Sum the VAD value of all categories found weighted by intensity.
+        Intensities are scaled by onyx:maxIntensityValue if it is present, else maxIntensityValue
+        is assumed to be one. Emotion entries that do not have onxy:hasEmotionIntensity specified
+        are assumed to have maxIntensityValue. Emotion entries that do not have
+        onyx:hasEmotionCategory specified are ignored."""
         res = Emotion()
+        maxIntensity = float(original.get("onyx:maxIntensityValue", 1))
         for e in original.onyx__hasEmotion:
-            category = e.onyx__hasEmotionCategory
-            if category in self.centroids:
-                for dim, value in self.centroids[category].items():
-                    try:
-                        res[dim] += value
-                    except Exception:
-                        res[dim] = value
+            category = e.get("onyx:hasEmotionCategory", None)
+            if not category:
+                continue
+            intensity = e.get("onyx:hasEmotionIntensity", maxIntensity) / maxIntensity
+            if not intensity:
+                continue
+            centroid = self.centroids.get(category, None)
+            if centroid:
+                for dim, value in centroid.items():
+                    neutral = self.neutralPoints[dim]
+                    if dim not in res:
+                        res[dim] = 0
+                    res[dim] += (value - neutral) * intensity + neutral
         return res
 
     def _backwards_conversion(self, original):
         """Find the closest category"""
-        dimensions = list(self.centroids.values())[0]
+        centroids = self.centroids
+        neutralPoints = self.neutralPoints
+        dimensions = self.dimensions
 
-        def distance(e1, e2):
-            return sum((e1[k] - e2.get(k, 0)) for k in dimensions)
+        def distance_k(centroid, original, k):
+            # k component of the distance between the value and a given centroid
+            return (centroid.get(k, neutralPoints[k]) - original.get(k, neutralPoints[k]))**2
 
-        emotion = ''
-        mindistance = 10000000000000000000000.0
-        for state in self.centroids:
-            d = distance(self.centroids[state], original)
-            if d < mindistance:
-                mindistance = d
-                emotion = state
+        def distance(centroid):
+            return sum(distance_k(centroid, original, k) for k in dimensions)
+
+        emotion = min(centroids, key=lambda x: distance(centroids[x]))
+
         result = Emotion(onyx__hasEmotionCategory=emotion)
+        result.onyx__algorithmConfidence = distance(centroids[emotion])
         return result
 
     def convert(self, emotionSet, fromModel, toModel, params):

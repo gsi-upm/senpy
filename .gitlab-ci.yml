@@ -84,7 +84,15 @@ deploy:
   only:
     - master
 
-clean_docker :
+push-github:
+  stage: deploy
+  script:
+    - make -e push-github
+  only:
+    - master
+    - triggers
+
+clean :
   stage: clean
   script:
     - make -e clean

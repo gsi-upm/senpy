@@ -6,8 +6,9 @@ import shutil
 import tempfile
 
 from unittest import TestCase
-from senpy.models import Results, Entry
+from senpy.models import Results, Entry, EmotionSet, Emotion
 from senpy.plugins import SentimentPlugin, ShelfMixin
+from senpy.plugins.conversion.emotion.centroids import CentroidConversion
 
 
 class ShelfDummyPlugin(SentimentPlugin, ShelfMixin):
@@ -152,3 +153,52 @@ class PluginsTest(TestCase):
             }
         })
         assert 'example' in a.extra_params
+
+    def test_conversion_centroids(self):
+        info = {
+            "name": "CentroidTest",
+            "description": "Centroid test",
+            "version": 0,
+            "centroids": {
+                "c1": {"V1": 0.5,
+                       "V2": 0.5},
+                "c2": {"V1": -0.5,
+                       "V2": 0.5},
+                "c3": {"V1": -0.5,
+                       "V2": -0.5},
+                "c4": {"V1": 0.5,
+                       "V2": -0.5}},
+            "aliases": {
+                "V1": "X-dimension",
+                "V2": "Y-dimension"
+            },
+            "centroids_direction": ["emoml:big6", "emoml:fsre-dimensions"]
+        }
+        c = CentroidConversion(info)
+
+        es1 = EmotionSet()
+        e1 = Emotion()
+        e1.onyx__hasEmotionCategory = "c1"
+        es1.onyx__hasEmotion.append(e1)
+        res = c._forward_conversion(es1)
+        assert res["X-dimension"] == 0.5
+        assert res["Y-dimension"] == 0.5
+
+        e2 = Emotion()
+        e2.onyx__hasEmotionCategory = "c2"
+        es1.onyx__hasEmotion.append(e2)
+        res = c._forward_conversion(es1)
+        assert res["X-dimension"] == 0
+        assert res["Y-dimension"] == 1
+
+        e = Emotion()
+        e["X-dimension"] = -0.2
+        e["Y-dimension"] = -0.3
+        res = c._backwards_conversion(e)
+        assert res["onyx:hasEmotionCategory"] == "c3"
+
+        e = Emotion()
+        e["X-dimension"] = -0.2
+        e["Y-dimension"] = 0.3
+        res = c._backwards_conversion(e)
+        assert res["onyx:hasEmotionCategory"] == "c2"

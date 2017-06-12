@@ -12,6 +12,7 @@ DEVPORT=5000
 
 TARNAME=$(NAME)-$(VERSION).tar.gz 
 action="test-${PYMAIN}"
+GITHUB_REPO=git@github.com:gsi-upm/senpy.git
 
 KUBE_CA_PEM_FILE=""
 KUBE_URL=""
