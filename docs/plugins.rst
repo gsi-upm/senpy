@@ -4,6 +4,8 @@ This document describes how to develop a new analysis plugin. For an example of 
 
 A more step-by-step tutorial with slides is available `here <https://lab.cluster.gsi.dit.upm.es/senpy/senpy-tutorial>`__ 
 
+.. contents:: :local:
+
 What is a plugin?
 =================
 
@@ -113,7 +115,7 @@ The definition file would look like this:
           module: helloworld
           version: 0.0
           threshold: 10
-
+          description: Hello World
 
 Now, in a file named ``helloworld.py``:
 
@@ -122,11 +124,11 @@ Now, in a file named ``helloworld.py``:
           #!/bin/env python
           #helloworld.py
 
-          from senpy.plugins import SenpyPlugin
+          from senpy.plugins import AnalysisPlugin
           from senpy.models import Sentiment
 
 
-          class HelloWorld(SenpyPlugin):
+          class HelloWorld(AnalysisPlugin):
 
               def analyse_entry(entry, params):
                   '''Basically do nothing with each entry'''
@@ -138,6 +140,57 @@ Now, in a file named ``helloworld.py``:
                       sentiment['marl:hasPolarity'] = 'marl:Negative'
                   entry.sentiments.append(sentiment)
                   yield entry
+
+The complete code of the example plugin is available `here <https://lab.cluster.gsi.dit.upm.es/senpy/plugin-prueba>`__.
+
+Loading data and files
+======================
+
+Most plugins will need access to files (dictionaries, lexicons, etc.).
+It is good practice to specify the paths of these files in the plugin configuration, so the same code can be reused with different resources.
+
+
+.. code:: yaml
+
+          name: dictworld
+          module: dictworld
+          dictionary_path: <PATH OF THE FILE>
+         
+The path can be either absolute, or relative.
+
+From absolute paths
+???????????????????
+
+Absolute paths (such as ``/data/dictionary.csv`` are straightfoward:
+
+.. code:: python
+
+   with open(os.path.join(self.dictionary_path) as f:
+      ...
+
+From relative paths
+???????????????????
+Since plugins are loading dynamically, relative paths will refer to the current working directory.
+Instead, what you usually want is to load files *relative to the plugin source folder*, like so:
+
+
+:: 
+
+   .
+   ..
+   plugin.senpy
+   plugin.py
+   dictionary.csv
+
+For this, we need to first get the path of your source folder first, like so:
+
+.. code:: python
+
+   import os
+   root = os.path.realpath(__file__)
+   with open(os.path.join(root, self.dictionary_path) as f:
+       ...
+
 
 Docker image
 ============
@@ -162,13 +215,30 @@ And you can run it with:
    docker run -p 5000:5000 gsiupm/exampleplugin
 
 
+If the plugin non-source files (:ref:`loading data and files`), the recommended way is to use absolute paths.
+Data can then be mounted in the container or added to the image.
+The former is recommended for open source plugins with licensed resources, whereas the latter is the most convenient and can be used for private images.
+
+Mounting data:
+
+.. code:: bash
+
+   docker run -v $PWD/data:/data gsiupm/exampleplugin
+
+Adding data to the image:
+
+.. code:: dockerfile
+
+   FROM gsiupm/senpy:0.8.8
+   COPY data /
+
 F.A.Q.
 ======
 What annotations can I use?
 ???????????????????????????
 
 You can add almost any annotation to an entry.
-The most common use cases are covered in the :doc:`schema`.
+The most common use cases are covered in the :doc:`apischema`.
 
 
 Why does the analyse function yield instead of return?
@@ -176,7 +246,7 @@ Why does the analyse function yield instead of return?
 
 This is so that plugins may add new entries to the response or filter some of them.
 For instance, a `context detection` plugin may add a new entry for each context in the original entry.
-On the other hand, a conveersion plugin may leave out those entries that do not contain relevant information.
+On the other hand, a conversion plugin may leave out those entries that do not contain relevant information.
 
 
 If I'm using a classifier, where should I train it?
@@ -186,9 +256,9 @@ Training a classifier can be time time consuming. To avoid running the training 
 
 .. code:: python
 
-          from senpy.plugins import ShelfMixin, SenpyPlugin
+          from senpy.plugins import ShelfMixin, AnalysisPlugin
 
-          class MyPlugin(ShelfMixin, SenpyPlugin):
+          class MyPlugin(ShelfMixin, AnalysisPlugin):
               def train(self):
                   ''' Code to train the classifier
                   '''
@@ -211,10 +281,10 @@ Shelves may get corrupted if the plugin exists unexpectedly.
 A corrupt shelf prevents the plugin from loading.
 If you do not care about the pickle, you can force your plugin to remove the corrupted file and load anyway, set the  'force_shelf' to True in your .senpy file.
 
-I want to implement my service as a plugin, How i can do it?
-????????????????????????????????????????????????????????????
+How can I turn an external service into a plugin?
+?????????????????????????????????????????????????
 
-This example ilustrate how to implement the Sentiment140 service as a plugin in senpy
+This example ilustrate how to implement a plugin that accesses the Sentiment140 service.
 
 .. code:: python
 
@@ -248,26 +318,30 @@ This example ilustrate how to implement the Sentiment140 service as a plugin in 
                   yield entry
 
 
-Where can I define extra parameters to be introduced in the request to my plugin?
-?????????????????????????????????????????????????????????????????????????????????
+Can my plugin require additional parameters from the user?
+??????????????????????????????????????????????????????????
 
-You can add these parameters in the definition file under the attribute "extra_params" : "{param_name}". The name of the parameter has new attributes-value pairs. The basic attributes are:
+You can add extra parameters in the definition file under the attribute ``extra_params``.
+It takes a dictionary, where the keys are the name of the argument/parameter, and the value has the following fields:
 
 * aliases: the different names which can be used in the request to use the parameter.
-* required: this option is a boolean and indicates if the parameters is binding in operation plugin.
-* options: the different values of the paremeter.
-* default: the default value of the parameter, this is useful in case the paremeter is required and you want to have a default value.
+* required: if set to true, users need to provide this parameter unless a default is set.
+* options: the different acceptable values of the parameter (i.e. an enum). If set, the value provided must match one of the options.
+* default: the default value of the parameter, if none is provided in the request.
 
 .. code:: python
 
-          "extra_params": {
-             "language": {
-                "aliases": ["language", "l"],
-                "required": true,
-                "options": ["es","en"],
-                "default": "es"
-             }
-          }
+          extra_params
+             language:
+                aliases:
+                    - language
+                    - lang
+                    - l
+                required: true,
+                options:
+                    - es
+                    - en
+                default: es
 
 This example shows how to introduce a parameter associated with language.
 The extraction of this paremeter is used in the analyse method of the Plugin interface.
@@ -298,7 +372,6 @@ Additionally, with the ``--pdb`` option you will be dropped into a pdb post mort
 .. code:: bash
 
    senpy --pdb
-
 
 Where can I find more code examples?
 ????????????????????????????????????
