@@ -133,6 +133,7 @@ push-github:
 	@echo "$$GITHUB_DEPLOY_KEY" > $(KEY_FILE)
 	@git remote rm github-deploy || true
 	git remote add github-deploy $(GITHUB_REPO)
+	git fetch github-deploy $(CI_COMMIT_REF_NAME) || true
 	@GIT_SSH_COMMAND="ssh -i $(KEY_FILE)" git push github-deploy $(CI_COMMIT_REF_NAME)
 	rm $(KEY_FILE)
 
