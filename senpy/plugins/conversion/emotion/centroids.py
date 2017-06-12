@@ -44,32 +44,27 @@ class CentroidConversion(EmotionConversionPlugin):
                 self.neutralPoints[i] = self.get("neutralValue", 0)
 
     def _forward_conversion(self, original):
-        """Sum the VAD value of all categories found weighted by intensity. 
-        Intensities are scaled by onyx:maxIntensityValue if it is present, else maxIntensityValue is assumed to be one.
-        Emotion entries that do not have onxy:hasEmotionIntensity specified are assumed to have maxIntensityValue.
-        Emotion entries that do not have onyx:hasEmotionCategory specified are ignored."""
+        """Sum the VAD value of all categories found weighted by intensity.
+        Intensities are scaled by onyx:maxIntensityValue if it is present, else maxIntensityValue
+        is assumed to be one. Emotion entries that do not have onxy:hasEmotionIntensity specified
+        are assumed to have maxIntensityValue. Emotion entries that do not have
+        onyx:hasEmotionCategory specified are ignored."""
         res = Emotion()
-        maxIntensity = float(original.get("onyx__maxIntensityValue",1))
-        neutralPoint = self.get("origin",None)
+        maxIntensity = float(original.get("onyx:maxIntensityValue", 1))
         for e in original.onyx__hasEmotion:
-            category = e.get("onyx__hasEmotionCategory", None)
-            if category is None: 
+            category = e.get("onyx:hasEmotionCategory", None)
+            if not category:
                 continue
-            intensity = e.get("onyx__hasEmotionIntensity",maxIntensity)/maxIntensity
-            if intensity == 0:
+            intensity = e.get("onyx:hasEmotionIntensity", maxIntensity) / maxIntensity
+            if not intensity:
                 continue
-            centoid = self.centroids.get(category,None)
+            centroid = self.centroids.get(category, None)
             if centroid:
                 for dim, value in centroid.items():
-                    if neutralPoint:
-                        value -= neutralPoint[dim]
-                    try:
-                        res[dim] += value * intensity
-                    except KeyError:
-                        res[dim] = value * intensity
-        if neutralPoint:
-            for dim in res:
-                res[dim] += neutralPoint[dim]
+                    neutral = self.neutralPoints[dim]
+                    if dim not in res:
+                        res[dim] = 0
+                    res[dim] += (value - neutral) * intensity + neutral
         return res
 
     def _backwards_conversion(self, original):
@@ -88,6 +83,7 @@ class CentroidConversion(EmotionConversionPlugin):
         emotion = min(centroids, key=lambda x: distance(centroids[x]))
 
         result = Emotion(onyx__hasEmotionCategory=emotion)
+        result.onyx__algorithmConfidence = distance(centroids[emotion])
         return result
 
     def convert(self, emotionSet, fromModel, toModel, params):
