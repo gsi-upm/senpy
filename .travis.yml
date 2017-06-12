@@ -7,7 +7,6 @@ language: python
 
 env:
   - PYV=2.7
-  - PYV=3.4
   - PYV=3.5
 # run nosetests - Tests
 script: make test-$PYV
