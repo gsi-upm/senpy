@@ -22,10 +22,6 @@ the server.
 
 from flask import Flask
 from senpy.extensions import Senpy
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-
 
 import logging
 import os
@@ -79,6 +75,11 @@ def main():
         default=False,
         help='Do not run a server, only install plugin dependencies')
     parser.add_argument(
+        '--threaded',
+        action='store_false',
+        default=True,
+        help='Run a threaded server')
+    parser.add_argument(
         '--version',
         '-v',
         action='store_true',
@@ -101,18 +102,10 @@ def main():
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                             args.port))
-    if not app.debug:
-        http_server = HTTPServer(WSGIContainer(app))
-        http_server.listen(args.port, address=args.host)
-        try:
-            IOLoop.instance().start()
-        except KeyboardInterrupt:
-            print('Bye!')
-        http_server.stop()
-    else:
-        app.run(args.host,
-                args.port,
-                debug=True)
+    app.run(args.host,
+            args.port,
+            threaded=args.threaded,
+            debug=app.debug)
     sp.deactivate_all()
 
 
