@@ -83,7 +83,7 @@ dist/$(TARNAME): version
 sdist: dist/$(TARNAME)
 
 pip_test-%: sdist
-	docker run --rm -v $$PWD/dist:/dist/ -ti python:$* pip install /dist/$(TARNAME);
+	docker run --rm -v $$PWD/dist:/dist/ python:$* pip install /dist/$(TARNAME);
 
 pip_test: $(addprefix pip_test-,$(PYVERSIONS))
 
