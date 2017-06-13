@@ -2,38 +2,50 @@
 name: Ekman2FSRE
 module: senpy.plugins.conversion.emotion.centroids
 description: Plugin to convert emotion sets from Ekman to VAD
-version: 0.1
+version: 0.2
 # No need to specify onyx:doesConversion because centroids.py adds it automatically from centroids_direction
 centroids:
   anger:
     A: 6.95
     D: 5.1
     V: 2.7
+    S: 5.0
   disgust:
     A: 5.3
     D: 8.05
     V: 2.7
+    S: 5.0
   fear:
     A: 6.5
     D: 3.6
     V: 3.2
+    S: 5.0
   happiness:
     A: 7.22
     D: 6.28
     V: 8.6
+    S: 5.0
   sadness:
     A: 5.21
     D: 2.82
     V: 2.21
+    S: 5.0
+  surprise:
+    A: 5.0
+    D: 5.0
+    V: 5.0
+    S: 10.0
 centroids_direction:
   - emoml:big6
   - emoml:fsre-dimensions
 aliases: # These are aliases for any key in the centroid, to avoid repeating a long name several times
-  A: emoml:arousal
-  V: emoml:valence
-  D: emoml:dominance
+  A: emoml:fsre-dimensions:arousal
+  V: emoml:fsre-dimensions:valence
+  D: emoml:fsre-dimensions:potency
+  S: emoml:fsre-dimensions:unpredictability
   anger: emoml:big6anger
   disgust: emoml:big6disgust
   fear: emoml:big6fear
   happiness: emoml:big6happiness
   sadness: emoml:big6sadness
+  surprise: emoml:big6surprise
