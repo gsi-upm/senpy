@@ -2,7 +2,7 @@
 name: Ekman2PAD
 module: senpy.plugins.conversion.emotion.centroids
 description: Plugin to convert emotion sets from Ekman to VAD
-version: 0.1
+version: 0.2
 # No need to specify onyx:doesConversion because centroids.py adds it automatically from centroids_direction
 origin:
   # Point in VAD space with no emotion (aka Neutral)
