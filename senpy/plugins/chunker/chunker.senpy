@@ -1,0 +1,18 @@
+---
+name: chunker
+module: chunker
+description: A sample plugin that chunks input text
+author: "@militarpancho"
+version: '0.1'
+url: "https://github.com/gsi-upm/senpy"
+requirements: {nltk}
+extra_params:
+  type:
+    aliases:
+    - type
+    - t
+    required: false
+    default: sentence
+    options:
+    - sentence
+    - paragraph
