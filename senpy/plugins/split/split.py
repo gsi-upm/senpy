@@ -3,12 +3,12 @@ from senpy.models import Entry
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 from nltk.tokenize.simple import LineTokenizer
 import nltk
-class ChunkerPlugin(AnalysisPlugin):
+class SplitPlugin(AnalysisPlugin):
     def activate(self):
         nltk.download('punkt')
     
     def analyse_entry(self, entry, params):
-        chunker_type = params.get("type", "sentence")
+        chunker_type = params.get("delimiter", "sentence")
         original_id = entry.id
         original_text = entry.get("text", None)
         if chunker_type == "sentence":

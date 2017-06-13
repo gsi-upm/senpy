@@ -1,13 +1,13 @@
 ---
-name: chunker
-module: chunker
+name: split
+module: split
 description: A sample plugin that chunks input text
 author: "@militarpancho"
 version: '0.1'
 url: "https://github.com/gsi-upm/senpy"
 requirements: {nltk}
 extra_params:
-  type:
+  delimiter:
     aliases:
     - type
     - t
