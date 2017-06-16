@@ -6,3 +6,6 @@ class DummyPlugin(SentimentPlugin):
         entry.text = entry.text[::-1]
         entry.reversed = entry.get('reversed', 0) + 1
         yield entry
+
+    def test(self):
+        pass

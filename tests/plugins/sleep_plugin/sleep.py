@@ -9,3 +9,6 @@ class SleepPlugin(AnalysisPlugin):
     def analyse_entry(self, entry, params):
         sleep(float(params.get("timeout", self.timeout)))
         yield entry
+
+    def test(self):
+        pass

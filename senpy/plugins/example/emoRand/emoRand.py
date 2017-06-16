@@ -1,7 +1,7 @@
 import random
 
 from senpy.plugins import EmotionPlugin
-from senpy.models import EmotionSet, Emotion
+from senpy.models import EmotionSet, Emotion, Entry
 
 
 class RmoRandPlugin(EmotionPlugin):
@@ -16,3 +16,11 @@ class RmoRandPlugin(EmotionPlugin):
         emotionSet.prov__wasGeneratedBy = self.id
         entry.emotions.append(emotionSet)
         yield entry
+
+    def test(self):
+        params = dict()
+        results = list()
+        for i in range(100):
+            res = next(self.analyse_entry(Entry(text="Hello"), params))
+            res.validate()
+            results.append(res.emotions[0]['onyx:hasEmotion'][0]['onyx:hasEmotionCategory'])

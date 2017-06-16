@@ -34,3 +34,20 @@ class Sentiment140Plugin(SentimentPlugin):
         entry.sentiments.append(sentiment)
         entry.language = lang
         yield entry
+
+    test_cases = [
+        {
+            'entry': {
+                'text': 'I love Titanic'
+            },
+            'params': {},
+            'expected': {
+                "text": "I love Titanic",
+                'sentiments': [
+                    {
+                        'marl:hasPolarity': 'marl:Positive',
+                    }
+                ]
+            }
+        }
+    ]
