@@ -12,8 +12,14 @@ from functools import partial
 from senpy.extensions import Senpy
 from senpy import plugins
 from senpy.models import Error, Results, Entry, EmotionSet, Emotion, Plugin
+from senpy import api
 from flask import Flask
 from unittest import TestCase
+
+
+def analyse(instance, **kwargs):
+    request = api.parse_call(kwargs)
+    return instance.analyse(request)
 
 
 class ExtensionsTest(TestCase):
@@ -91,10 +97,11 @@ class ExtensionsTest(TestCase):
     def test_noplugin(self):
         """ Don't analyse if there isn't any plugin installed """
         self.senpy.deactivate_all(sync=True)
-        self.assertRaises(Error, partial(self.senpy.analyse, input="tupni"))
+        self.assertRaises(Error, partial(analyse, self.senpy, input="tupni"))
         self.assertRaises(Error,
                           partial(
-                              self.senpy.analyse,
+                              analyse,
+                              self.senpy,
                               input="tupni",
                               algorithm='Dummy'))
 
@@ -102,12 +109,11 @@ class ExtensionsTest(TestCase):
         """ Using a plugin """
         # I was using mock until plugin started inheriting
         # Leaf (defaultdict with  __setattr__ and __getattr__.
-        r1 = self.senpy.analyse(
-            algorithm="Dummy", input="tupni", output="tuptuo")
-        r2 = self.senpy.analyse(input="tupni", output="tuptuo")
+        r1 = analyse(self.senpy, algorithm="Dummy", input="tupni", output="tuptuo")
+        r2 = analyse(self.senpy, input="tupni", output="tuptuo")
         assert r1.analysis[0] == "plugins/Dummy_0.1"
         assert r2.analysis[0] == "plugins/Dummy_0.1"
-        assert r1.entries[0].text == 'input'
+        assert r1.entries[0]['nif:iString'] == 'input'
 
     def test_analyse_jsonld(self):
         """ Using a plugin with JSON-LD input"""
@@ -116,30 +122,33 @@ class ExtensionsTest(TestCase):
         "@type": "results",
         "entries": [
           {"@id": "entry1",
-           "text": "tupni",
+           "nif:isString": "tupni",
            "@type": "entry"
           }
         ]
         }'''
-        r1 = self.senpy.analyse(algorithm="Dummy",
-                                input=js_input,
-                                informat="json-ld",
-                                output="tuptuo")
-        r2 = self.senpy.analyse(input="tupni", output="tuptuo")
+        r1 = analyse(self.senpy,
+                     algorithm="Dummy",
+                     input=js_input,
+                     informat="json-ld",
+                     output="tuptuo")
+        r2 = analyse(self.senpy,
+                     input="tupni",
+                     output="tuptuo")
         assert r1.analysis[0] == "plugins/Dummy_0.1"
         assert r2.analysis[0] == "plugins/Dummy_0.1"
-        assert r1.entries[0].text == 'input'
+        assert r1.entries[0]['nif:iString'] == 'input'
 
     def test_analyse_error(self):
         mm = mock.MagicMock()
         mm.id = 'magic_mock'
-        mm.analyse_entries.side_effect = Error('error on analysis', status=500)
+        mm.analyse_entries.side_effect = Error('error in analysis', status=500)
         self.senpy.plugins['MOCK'] = mm
         try:
-            self.senpy.analyse(input='nothing', algorithm='MOCK')
+            analyse(self.senpy, input='nothing', algorithm='MOCK')
             assert False
         except Error as ex:
-            assert ex['message'] == 'error on analysis'
+            assert 'error in analysis' in ex['message']
             assert ex['status'] == 500
 
         mm.analyse.side_effect = Exception('generic exception on analysis')
@@ -147,10 +156,10 @@ class ExtensionsTest(TestCase):
             'generic exception on analysis')
 
         try:
-            self.senpy.analyse(input='nothing', algorithm='MOCK')
+            analyse(self.senpy, input='nothing', algorithm='MOCK')
             assert False
         except Error as ex:
-            assert ex['message'] == 'generic exception on analysis'
+            assert 'generic exception on analysis' in ex['message']
             assert ex['status'] == 500
 
     def test_filtering(self):
@@ -180,40 +189,27 @@ class ExtensionsTest(TestCase):
             'emoml:valence': 0
         }))
         response = Results({
+            'analysis': [{'plugin': plugin}],
             'entries': [Entry({
-                'text': 'much ado about nothing',
+                'nif:iString': 'much ado about nothing',
                 'emotions': [eSet1]
             })]
         })
         params = {'emotionModel': 'emoml:big6',
                   'conversion': 'full'}
         r1 = deepcopy(response)
-        self.senpy.convert_emotions(r1,
-                                    [plugin, ],
-                                    params)
+        r1.parameters = params
+        self.senpy.convert_emotions(r1)
         assert len(r1.entries[0].emotions) == 2
         params['conversion'] = 'nested'
         r2 = deepcopy(response)
-        self.senpy.convert_emotions(r2,
-                                    [plugin, ],
-                                    params)
+        r2.parameters = params
+        self.senpy.convert_emotions(r2)
         assert len(r2.entries[0].emotions) == 1
         assert r2.entries[0].emotions[0]['prov:wasDerivedFrom'] == eSet1
         params['conversion'] = 'filtered'
         r3 = deepcopy(response)
-        self.senpy.convert_emotions(r3,
-                                    [plugin, ],
-                                    params)
+        r3.parameters = params
+        self.senpy.convert_emotions(r3)
         assert len(r3.entries[0].emotions) == 1
         r3.jsonld()
-
-    # def test_async_plugin(self):
-    #     """ We should accept multiprocessing plugins with async=False"""
-    #     thread1 = self.senpy.activate_plugin("Async", sync=False)
-    #     thread1.join(timeout=1)
-    #     assert len(self.senpy.plugins['Async'].value) == 4
-
-    #     resp = self.senpy.analyse(input='nothing', algorithm='Async')
-
-    #     assert len(resp.entries[0].async_values) == 2
-    #     self.senpy.activate_plugin("Async", sync=True)

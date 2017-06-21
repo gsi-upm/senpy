@@ -38,6 +38,7 @@ class BlueprintsTest(TestCase):
         """
         Calling with no arguments should ask the user for more arguments
         """
+        self.app.debug = False
         resp = self.client.get("/api/")
         self.assertCode(resp, 400)
         js = parse_resp(resp)
@@ -54,7 +55,7 @@ class BlueprintsTest(TestCase):
         The dummy plugin returns an empty response,\
         it should contain the context
         """
-        resp = self.client.get("/api/?i=My aloha mohame")
+        resp = self.client.get("/api/?i=My aloha mohame&with_parameters=True")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         logging.debug("Got response: %s", js)
@@ -77,6 +78,7 @@ class BlueprintsTest(TestCase):
         Extra params that have a required argument that does not
         have a default should raise an error.
         """
+        self.app.debug = False
         resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired")
         self.assertCode(resp, 400)
         js = parse_resp(resp)
@@ -88,6 +90,7 @@ class BlueprintsTest(TestCase):
         The dummy plugin returns an empty response,\
         it should contain the context
         """
+        self.app.debug = False
         resp = self.client.get("/api/?i=My aloha mohame&algo=DOESNOTEXIST")
         self.assertCode(resp, 404)
         js = parse_resp(resp)
@@ -154,3 +157,10 @@ class BlueprintsTest(TestCase):
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         assert "$schema" in js
+
+    def test_help(self):
+        resp = self.client.get("/api/?help=true")
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        assert "parameters" in js
+        assert "help" in js["parameters"]

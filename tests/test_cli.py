@@ -1,11 +1,6 @@
 import logging
 from functools import partial
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-
 logger = logging.getLogger(__name__)
 
 from unittest import TestCase
@@ -17,11 +12,7 @@ class CLITest(TestCase):
     def test_basic(self):
         self.assertRaises(Error, partial(main_function, []))
 
-        with patch('senpy.extensions.Senpy.analyse') as patched:
-            main_function(['--input', 'test'])
-
-        patched.assert_called_with(input='test')
-        with patch('senpy.extensions.Senpy.analyse') as patched:
-            main_function(['--input', 'test', '--algo', 'rand'])
-
-        patched.assert_called_with(input='test', algo='rand')
+        res = main_function(['--input', 'test', '--algo', 'rand', '--with-parameters'])
+        assert res.parameters['input'] == 'test'
+        assert 'rand' in res.parameters['algorithm']
+        assert res.parameters['input'] == 'test'

@@ -5,11 +5,10 @@ It orchestrates plugin (de)activation and analysis.
 from future import standard_library
 standard_library.install_aliases()
 
-from . import plugins
+from . import plugins, api
 from .plugins import SenpyPlugin
-from .models import Error, Entry, Results, from_string
+from .models import Error
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
-from .api import API_PARAMS, NIF_PARAMS, parse_params
 
 from threading import Thread
 
@@ -72,22 +71,20 @@ class Senpy(object):
         else:
             logger.debug("Not a folder: %s", folder)
 
-    def _find_plugins(self, params):
+    def _get_plugins(self, request):
         if not self.analysis_plugins:
             raise Error(
                 status=404,
                 message=("No plugins found."
                          " Please install one."))
-        api_params = parse_params(params, spec=API_PARAMS)
-        algos = None
-        if "algorithm" in api_params and api_params["algorithm"]:
-            algos = api_params["algorithm"].split(',')
-        elif self.default_plugin:
-            algos = [self.default_plugin.name, ]
-        else:
-            raise Error(
-                status=404,
-                message="No default plugin found, and None provided")
+        algos = request.parameters.get('algorithm', None)
+        if not algos:
+            if self.default_plugin:
+                algos = [self.default_plugin.name, ]
+            else:
+                raise Error(
+                    status=404,
+                    message="No default plugin found, and None provided")
 
         plugins = list()
         for algo in algos:
@@ -108,66 +105,46 @@ class Senpy(object):
             plugins.append(self.plugins[algo])
         return plugins
 
-    def _get_params(self, params, plugin=None):
-        nif_params = parse_params(params, spec=NIF_PARAMS)
-        if plugin:
-            extra_params = plugin.get('extra_params', {})
-            specific_params = parse_params(params, spec=extra_params)
-            nif_params.update(specific_params)
-        return nif_params
-
-    def _get_entries(self, params):
-        if params['informat'] == 'text':
-            results = Results()
-            entry = Entry(text=params['input'])
-            results.entries.append(entry)
-        elif params['informat'] == 'json-ld':
-            results = from_string(params['input'], cls=Results)
-        else:
-            raise NotImplemented('Informat {} is not implemented'.format(params['informat']))
-        return results
-
-    def _process_entries(self, entries, plugins, nif_params):
+    def _process_entries(self, entries, req, plugins):
         if not plugins:
             for i in entries:
                 yield i
             return
         plugin = plugins[0]
-        specific_params = self._get_params(nif_params, plugin)
+        specific_params = api.get_extra_params(req, plugin)
+        req.analysis.append({'plugin': plugin,
+                             'parameters': specific_params})
         results = plugin.analyse_entries(entries, specific_params)
-        for i in self._process_entries(results, plugins[1:], nif_params):
+        for i in self._process_entries(results, req, plugins[1:]):
             yield i
 
-    def _process_response(self, resp, plugins, nif_params):
-        entries = resp.entries
-        resp.entries = []
-        for plug in plugins:
-            resp.analysis.append(plug.id)
-        for i in self._process_entries(entries, plugins, nif_params):
-            resp.entries.append(i)
-        return resp
-
-    def analyse(self, **api_params):
+    def analyse(self, request):
         """
         Main method that analyses a request, either from CLI or HTTP.
-        It uses a dictionary of parameters, provided by the user.
+        It takes a processed request, provided by the user, as returned
+        by api.parse_call().
         """
-        logger.debug("analysing with params: {}".format(api_params))
-        plugins = self._find_plugins(api_params)
-        nif_params = self._get_params(api_params)
-        resp = self._get_entries(nif_params)
-        if 'with_parameters' in api_params:
-            resp.parameters = nif_params
+        logger.debug("analysing request: {}".format(request))
         try:
-            resp = self._process_response(resp, plugins, nif_params)
-            self.convert_emotions(resp, plugins, nif_params)
-            logger.debug("Returning analysis result: {}".format(resp))
+            entries = request.entries
+            request.entries = []
+            plugins = self._get_plugins(request)
+            results = request
+            for i in self._process_entries(entries, results, plugins):
+                results.entries.append(i)
+            self.convert_emotions(results)
+            if 'with_parameters' not in results.parameters:
+                del results.parameters
+            logger.debug("Returning analysis result: {}".format(results))
         except (Error, Exception) as ex:
             if not isinstance(ex, Error):
-                ex = Error(message=str(ex), status=500)
+                msg = "Error during analysis: {} \n\t{}".format(ex,
+                                                                traceback.format_exc())
+                ex = Error(message=msg, status=500)
             logger.exception('Error returning analysis result')
             raise ex
-        return resp
+        results.analysis = [i['plugin'].id for i in results.analysis]
+        return results
 
     def _conversion_candidates(self, fromModel, toModel):
         candidates = self.filter_plugins(plugin_type='emotionConversionPlugin')
@@ -180,7 +157,7 @@ class Senpy(object):
                     # logging.debug('Found candidate: {}'.format(candidate))
                     yield candidate
 
-    def convert_emotions(self, resp, plugins, params):
+    def convert_emotions(self, resp):
         """
         Conversion of all emotions in a response **in place**.
         In addition to converting from one model to another, it has
@@ -188,6 +165,8 @@ class Senpy(object):
         Needless to say, this is far from an elegant solution, but it works.
         @todo refactor and clean up
         """
+        plugins = [i['plugin'] for i in resp.analysis]
+        params = resp.parameters
         toModel = params.get('emotionModel', None)
         if not toModel:
             return
@@ -215,7 +194,8 @@ class Senpy(object):
             for j in i.emotions:
                 plugname = j['prov:wasGeneratedBy']
                 candidate = candidates[plugname]
-                resp.analysis.append(candidate.id)
+                resp.analysis.append({'plugin': candidate,
+                                      'parameters': params})
                 for k in candidate.convert(j, fromModel, toModel, params):
                     k.prov__wasGeneratedBy = candidate.id
                     if output == 'nested':
@@ -224,7 +204,6 @@ class Senpy(object):
             i.emotions = newemotions
             newentries.append(i)
         resp.entries = newentries
-        resp.analysis = list(set(resp.analysis))
 
     @property
     def default_plugin(self):

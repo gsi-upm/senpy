@@ -12,7 +12,7 @@ class Sentiment140Plugin(SentimentPlugin):
                             json.dumps({
                                 "language": lang,
                                 "data": [{
-                                    "text": entry.nif__isString
+                                    "text": entry['nif:isString']
                                 }]
                             }))
         p = params.get("prefix", None)

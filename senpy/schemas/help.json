@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "allOf": [
+    {"$ref": "response.json"},
+    {
+      "title": "Help",
+      "description": "Help containing accepted parameters",
+      "type": "object",
+      "properties": {
+        "parameters": {
+          "type": "object"
+          }
+        },
+        "required": "parameters"
+      }
+    ]
+}

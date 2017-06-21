@@ -27,6 +27,9 @@
       "@id": "onyx:hasEmotionSet",
       "@container": "@set"
     },
+    "onyx:hasEmotion": {
+      "@container": "@set"
+    },
     "sentiments": {
       "@id": "marl:hasOpinion",
       "@container": "@set"

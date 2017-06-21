@@ -181,7 +181,7 @@ class SenpyMixin(object):
             obj = self
         if hasattr(obj, "jsonld"):
             obj = obj.jsonld()
-        jsonschema.validate(obj, self.schema)
+        self._validator.validate(obj)
 
     def __str__(self):
         return str(self.serialize())
@@ -246,11 +246,11 @@ class BaseModel(SenpyMixin, dict):
         return d
 
 
-_subtypes = {}
-
-
 def register(rsubclass, rtype=None):
     _subtypes[rtype or rsubclass.__name__] = rsubclass
+
+
+_subtypes = {}
 
 
 def from_dict(indict, cls=None):
@@ -286,15 +286,31 @@ def from_json(injson):
     return from_dict(indict)
 
 
-def from_schema(name, schema_file=None, base_classes=None):
+def from_schema(name, schema=None, schema_file=None, base_classes=None):
     base_classes = base_classes or []
     base_classes.append(BaseModel)
     schema_file = schema_file or '{}.json'.format(name)
     class_name = '{}{}'.format(name[0].upper(), name[1:])
-    newclass = type(class_name, tuple(base_classes), {})
-    setattr(newclass, '@type', name)
-    setattr(newclass, 'schema', read_schema(schema_file))
-    setattr(newclass, 'class_name', class_name)
+    if '/' not in 'schema_file':
+        schema_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                   'schemas',
+                                   schema_file)
+
+    schema_path = 'file://' + schema_file
+
+    with open(schema_file) as f:
+        schema = json.load(f)
+
+    dct = {}
+
+    resolver = jsonschema.RefResolver(schema_path, schema)
+    dct['@type'] = name
+    dct['_schema_file'] = schema_file
+    dct['schema'] = schema
+    dct['_validator'] = jsonschema.Draft4Validator(schema, resolver=resolver)
+
+    newclass = type(class_name, tuple(base_classes), dct)
+
     register(newclass, name)
     return newclass
 
@@ -315,6 +331,7 @@ for i in [
         'emotionPlugin',
         'emotionSet',
         'entry',
+        'help',
         'plugin',
         'plugins',
         'response',
@@ -333,6 +350,9 @@ class Error(SenpyMixin, Exception):
         super(Error, self).__init__(self, message, message)
         self._error = _ErrorModel(message=message, *args, **kwargs)
         self.message = message
+
+    def validate(self, obj=None):
+        self._error.validate()
 
     def __getitem__(self, key):
         return self._error[key]

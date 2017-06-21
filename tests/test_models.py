@@ -185,7 +185,7 @@ class ModelsTest(TestCase):
             'entries': [{
                 '@id': 'entry1',
                 '@type': 'entry',
-                'text': 'TEST'
+                'nif:isString': 'TEST'
             }]
         }
         recovered = from_dict(results)

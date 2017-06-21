@@ -76,7 +76,7 @@ class AnalysisPlugin(Plugin):
         Note that this method may yield an annotated entry or a list of
         entries (e.g. in a tokenizer)
         """
-        text = entry['text']
+        text = entry['nif:isString']
         params = copy.copy(parameters)
         params['input'] = text
         results = self.analyse(**params)

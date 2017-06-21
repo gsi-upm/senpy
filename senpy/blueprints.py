@@ -19,8 +19,8 @@ Blueprints for Senpy
 """
 from flask import (Blueprint, request, current_app, render_template, url_for,
                    jsonify)
-from .models import Error, Response, Plugins, read_schema
-from .api import WEB_PARAMS, API_PARAMS, CLI_PARAMS, NIF_PARAMS, parse_params
+from .models import Error, Response, Help, Plugins, read_schema
+from . import api
 from .version import __version__
 from functools import wraps
 
@@ -42,6 +42,7 @@ def get_params(req):
     else:
         raise Error(message="Invalid data")
     return indict
+
 
 @demo_blueprint.route('/')
 def index():
@@ -75,20 +76,16 @@ def basic_api(f):
     def decorated_function(*args, **kwargs):
         raw_params = get_params(request)
         headers = {'X-ORIGINAL-PARAMS': json.dumps(raw_params)}
-        # Get defaults
-        web_params = parse_params({}, spec=WEB_PARAMS)
-        api_params = parse_params({}, spec=API_PARAMS)
 
         outformat = 'json-ld'
         try:
             print('Getting request:')
             print(request)
-            web_params = parse_params(raw_params, spec=WEB_PARAMS)
-            api_params = parse_params(raw_params, spec=API_PARAMS)
-            if hasattr(request, 'params'):
-                request.params.update(api_params)
+            params = api.parse_params(raw_params, api.WEB_PARAMS, api.API_PARAMS)
+            if hasattr(request, 'parameters'):
+                request.parameters.update(params)
             else:
-                request.params = api_params
+                request.parameters = params
             response = f(*args, **kwargs)
         except Error as ex:
             response = ex
@@ -96,14 +93,14 @@ def basic_api(f):
             if current_app.debug:
                 raise
 
-        in_headers = web_params['inHeaders'] != "0"
-        expanded = api_params['expanded-jsonld']
-        outformat = api_params['outformat']
+        in_headers = params['inHeaders']
+        expanded = params['expanded-jsonld']
+        outformat = params['outformat']
 
         return response.flask(
             in_headers=in_headers,
             headers=headers,
-            prefix=url_for('.api', _external=True),
+            prefix=url_for('.api_root', _external=True),
             context_uri=url_for('api.context',
                                 entity=type(response).__name__,
                                 _external=True),
@@ -115,14 +112,14 @@ def basic_api(f):
 
 @api_blueprint.route('/', methods=['POST', 'GET'])
 @basic_api
-def api():
-    phelp = request.params.get('help')
-    if phelp == "True":
-        dic = dict(API_PARAMS, **NIF_PARAMS)
-        response = Response(dic)
+def api_root():
+    if request.parameters['help']:
+        dic = dict(api.API_PARAMS, **api.NIF_PARAMS)
+        response = Help(parameters=dic)
         return response
     else:
-        response = current_app.senpy.analyse(**request.params)
+        req = api.parse_call(request.parameters)
+        response = current_app.senpy.analyse(req)
         return response
 
 
@@ -130,7 +127,7 @@ def api():
 @basic_api
 def plugins():
     sp = current_app.senpy
-    ptype = request.params.get('plugin_type')
+    ptype = request.parameters.get('plugin_type')
     plugins = sp.filter_plugins(plugin_type=ptype)
     dic = Plugins(plugins=list(plugins.values()))
     return dic

@@ -6,7 +6,7 @@
       "type": "string"
     },
     "nif:isString": {
-      "description": "String contained in this Context",
+      "description": "String contained in this Context. Alternative: nif:isString",
       "type": "string"
     },
     "sentiments": {

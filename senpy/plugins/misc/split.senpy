@@ -1,0 +1,19 @@
+---
+name: split
+module: senpy.plugins.misc.split
+description: A sample plugin that chunks input text
+author: "@militarpancho"
+version: '0.2'
+url: "https://github.com/gsi-upm/senpy"
+requirements:
+    - nltk
+extra_params:
+  delimiter:
+    aliases:
+    - type
+    - t
+    required: false
+    default: sentence
+    options:
+    - sentence
+    - paragraph

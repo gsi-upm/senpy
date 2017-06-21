@@ -1,7 +1,7 @@
 import sys
 from .models import Error
-from .api import parse_params, CLI_PARAMS
 from .extensions import Senpy
+from . import api
 
 
 def argv_to_dict(argv):
@@ -13,27 +13,25 @@ def argv_to_dict(argv):
         if argv[i][0] == '-':
             key = argv[i].strip('-')
             value = argv[i + 1] if len(argv) > i + 1 else None
-            if value and value[0] == '-':
-                cli_dict[key] = ""
+            if not value or value[0] == '-':
+                cli_dict[key] = True
             else:
                 cli_dict[key] = value
     return cli_dict
 
 
-def parse_cli(argv):
-    cli_dict = argv_to_dict(argv)
-    cli_params = parse_params(cli_dict, spec=CLI_PARAMS)
-    return cli_params, cli_dict
-
-
 def main_function(argv):
     '''This is the method for unit testing
     '''
-    cli_params, cli_dict = parse_cli(argv)
-    plugin_folder = cli_params['plugin_folder']
+    params = api.parse_params(argv_to_dict(argv),
+                              api.CLI_PARAMS,
+                              api.API_PARAMS,
+                              api.NIF_PARAMS)
+    plugin_folder = params['plugin_folder']
     sp = Senpy(default_plugins=False, plugin_folder=plugin_folder)
     sp.activate_all(sync=True)
-    res = sp.analyse(**cli_dict)
+    request = api.parse_call(params)
+    res = sp.analyse(request)
     return res
 
 
