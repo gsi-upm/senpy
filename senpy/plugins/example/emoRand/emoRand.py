@@ -21,6 +21,6 @@ class RmoRandPlugin(EmotionPlugin):
         params = dict()
         results = list()
         for i in range(100):
-            res = next(self.analyse_entry(Entry(text="Hello"), params))
+            res = next(self.analyse_entry(Entry(nif__isString="Hello"), params))
             res.validate()
             results.append(res.emotions[0]['onyx:hasEmotion'][0]['onyx:hasEmotionCategory'])

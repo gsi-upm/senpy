@@ -27,7 +27,7 @@ class RandPlugin(SentimentPlugin):
         params = dict()
         results = list()
         for i in range(100):
-            res = next(self.analyse_entry(Entry(text="Hello"), params))
+            res = next(self.analyse_entry(Entry(nif__isString="Hello"), params))
             res.validate()
             results.append(res.sentiments[0]['marl:hasPolarity'])
         assert 'marl:Positive' in results

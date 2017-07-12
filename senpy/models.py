@@ -223,12 +223,6 @@ class BaseModel(SenpyMixin, dict):
         key = key.replace("__", ":", 1)
         return key
 
-    def __getitem__(self, key):
-        return dict.__getitem__(self, self._get_key(key))
-
-    def __setitem__(self, key, value):
-        dict.__setitem__(self, self._get_key(key), value)
-
     def __delitem__(self, key):
         dict.__delitem__(self, key)
 

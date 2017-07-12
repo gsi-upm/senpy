@@ -7,11 +7,11 @@ import tempfile
 
 from unittest import TestCase
 from senpy.models import Results, Entry, EmotionSet, Emotion
-from senpy.plugins import SentimentPlugin, ShelfMixin
+from senpy import plugins
 from senpy.plugins.conversion.emotion.centroids import CentroidConversion
 
 
-class ShelfDummyPlugin(SentimentPlugin, ShelfMixin):
+class ShelfDummyPlugin(plugins.SentimentPlugin, plugins.ShelfMixin):
     def activate(self, *args, **kwargs):
         if 'counter' not in self.sh:
             self.sh['counter'] = 0
@@ -202,3 +202,22 @@ class PluginsTest(TestCase):
         e["Y-dimension"] = 0.3
         res = c._backwards_conversion(e)
         assert res["onyx:hasEmotionCategory"] == "c2"
+
+
+def make_mini_test(plugin):
+    def mini_test(self):
+        plugin.test()
+    return mini_test
+
+
+def add_tests():
+    root = os.path.dirname(__file__)
+    plugs = plugins.load_plugins(os.path.join(root, ".."))
+    for k, v in plugs.items():
+        t_method = make_mini_test(v)
+        t_method.__name__ = 'test_plugin_{}'.format(k)
+        setattr(PluginsTest, t_method.__name__, t_method)
+        del t_method
+
+
+add_tests()

@@ -1,13 +1,20 @@
 from future import standard_library
 standard_library.install_aliases()
 
-import inspect
 import os.path
 import os
 import pickle
 import logging
 import tempfile
 import copy
+
+import fnmatch
+import inspect
+import sys
+import subprocess
+import importlib
+import yaml
+
 from .. import models
 from ..api import API_PARAMS
 
@@ -69,6 +76,8 @@ class Plugin(models.Plugin):
             if not isinstance(exp, list):
                 exp = [exp]
             check_template(res, exp)
+            for r in res:
+                r.validate()
 
 
 SenpyPlugin = Plugin
@@ -193,3 +202,84 @@ def pfilter(plugins, **kwargs):
     if kwargs:
         candidates = filter(matches, candidates)
     return {p.name: p for p in candidates}
+
+
+def validate_info(info):
+    return all(x in info for x in ('name', 'module', 'description', 'version'))
+
+
+def load_module(name, root):
+    sys.path.append(root)
+    tmp = importlib.import_module(name)
+    sys.path.remove(root)
+    return tmp
+
+
+def log_subprocess_output(process):
+    for line in iter(process.stdout.readline, b''):
+        logger.info('%r', line)
+    for line in iter(process.stderr.readline, b''):
+        logger.error('%r', line)
+
+
+def install_deps(*plugins):
+    for info in plugins:
+        requirements = info.get('requirements', [])
+        if requirements:
+            pip_args = ['pip']
+            pip_args.append('install')
+            pip_args.append('--use-wheel')
+            for req in requirements:
+                pip_args.append(req)
+            logger.info('Installing requirements: ' + str(requirements))
+            process = subprocess.Popen(pip_args,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            log_subprocess_output(process)
+            exitcode = process.wait()
+            if exitcode != 0:
+                raise models.Error("Dependencies not properly installed")
+
+
+def load_plugin_from_info(info, root, validator=validate_info):
+    if not validator(info):
+        logger.warn('The module info is not valid.\n\t{}'.format(info))
+        return None, None
+    module = info["module"]
+    name = info["name"]
+
+    install_deps(info)
+    tmp = load_module(module, root)
+
+    candidate = None
+    for _, obj in inspect.getmembers(tmp):
+        if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
+            logger.debug(("Found plugin class:"
+                          " {}@{}").format(obj, inspect.getmodule(obj)))
+            candidate = obj
+            break
+    if not candidate:
+        logger.debug("No valid plugin for: {}".format(module))
+        return
+    module = candidate(info=info)
+    return name, module
+
+
+def load_plugin(root, filename):
+    fpath = os.path.join(root, filename)
+    logger.debug("Loading plugin: {}".format(fpath))
+    with open(fpath, 'r') as f:
+        info = yaml.load(f)
+    logger.debug("Info: {}".format(info))
+    return load_plugin_from_info(info, root)
+
+
+def load_plugins(folders, loader=load_plugin):
+    plugins = {}
+    for search_folder in folders:
+        for root, dirnames, filenames in os.walk(search_folder):
+            for filename in fnmatch.filter(filenames, '*.senpy'):
+                name, plugin = loader(root, filename)
+                if plugin and name:
+                    plugins[name] = plugin
+    return plugins
