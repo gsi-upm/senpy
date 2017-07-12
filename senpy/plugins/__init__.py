@@ -69,6 +69,10 @@ class Plugin(models.Plugin):
         pass
 
     def test(self):
+        if not hasattr(self, 'test_cases'):
+            import inspect
+            raise AttributeError(('Plugin {} [{}] does not have any defined '
+                                  'test cases').format(self.id, inspect.getfile(self.__class__)))
         for case in self.test_cases:
             res = list(self.analyse_entry(models.Entry(case['entry']),
                                           case['params']))
