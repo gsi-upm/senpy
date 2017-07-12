@@ -71,7 +71,7 @@ dev: dev-$(PYMAIN)
 test-all: $(addprefix test-,$(PYVERSIONS))
 
 test-%:
-	docker run --rm --entrypoint /usr/local/bin/python -w /usr/src/app $(IMAGENAME):python$*  setup.py test
+	docker run --rm --entrypoint /usr/local/bin/python -v $(PWD):/usr/src/app -w /usr/src/app $(IMAGENAME):python$*  setup.py test
 
 test: test-$(PYMAIN)
 
