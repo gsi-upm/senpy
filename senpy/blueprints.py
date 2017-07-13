@@ -20,7 +20,7 @@ Blueprints for Senpy
 from flask import (Blueprint, request, current_app, render_template, url_for,
                    jsonify)
 from .models import Error, Response, Plugins, read_schema
-from .api import WEB_PARAMS, API_PARAMS, parse_params
+from .api import WEB_PARAMS, API_PARAMS, CLI_PARAMS, NIF_PARAMS, parse_params
 from .version import __version__
 from functools import wraps
 
@@ -144,3 +144,21 @@ def plugin(plugin=None):
     else:
         return Error(message="Plugin not found", status=404)
     return response
+
+@api_blueprint.route('/params/', methods=['POST', 'GET'])
+@basic_api
+def params():
+    phelp = request.params.get('help')
+    if eval(phelp):
+        dic = {'WEB_PARAMS': WEB_PARAMS, 
+               'CLI_PARAMS': CLI_PARAMS, 
+               'NIF_PARAMS': NIF_PARAMS, 
+               'API_PARAMS': API_PARAMS
+            }
+        response = Response(dic)
+        return response
+    else:
+        response = Response(request.params)
+        return response
+
+

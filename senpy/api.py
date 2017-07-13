@@ -39,6 +39,14 @@ API_PARAMS = {
         "required": True,
         "options": ["filtered", "nested", "full"],
         "default": "full"
+    },
+    "help": {
+        "@id": "help",
+        "description": "Show additional help to know more about the possible parameters",
+        "aliases": ["help", "h"],
+        "required": True,
+        "options": ["True", "False"],
+        "default": "False"
     }
 }
 
