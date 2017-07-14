@@ -1,7 +1,7 @@
 var ONYX = "http://www.gsi.dit.upm.es/ontologies/onyx/ns#";
 var RDF_TYPE =  "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 var plugins_params={};
-
+var default_params = JSON.parse($.ajax({type: "GET", url: "/api?help=True" , async: false}).responseText);
 function replaceURLWithHTMLLinks(text) {
     console.log('Text: ' + text);
     var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
@@ -28,7 +28,7 @@ function hashchanged(){
 $(document).ready(function() {
     var response = JSON.parse($.ajax({type: "GET", url: "/api/plugins/" , async: false}).responseText);
     var defaultPlugin= JSON.parse($.ajax({type: "GET", url: "/api/plugins/default" , async: false}).responseText);
-    html="";
+	html="";
     var availablePlugins = document.getElementById('availablePlugins');
     plugins = response.plugins;
     for (r in plugins){
@@ -88,8 +88,23 @@ $(document).ready(function() {
 
 function change_params(){
       var plugin = document.getElementById("plugins").options[document.getElementById("plugins").selectedIndex].value;
-
         html=""
+		for (param in default_params){
+		  if ((default_params[param]['options']) && (['help','conversion'].indexOf(param) < 0)){  
+			html+= "<label> "+param+"</label>"
+            html+= "<select id=\""+param+"\" name=\""+param+"\">"
+			for (option in default_params[param]['options']){
+				if (default_params[param]['options'][option] == default_params[param]['default']){  
+					html+="<option value \""+default_params[param]['options'][option]+"\" selected >"+default_params[param]['options'][option]+"</option>"
+				}
+				else{
+					html+="<option value \""+default_params[param]['options'][option]+"\">"+default_params[param]['options'][option]+"</option>"
+							
+				}
+			}
+			html+="</select><br>"
+		  }
+		}
         for (param in plugins_params[plugin]){
           if (param || plugins_params[plugin][param].length > 1){
             html+= "<label> Parameter "+param+"</label>"
@@ -120,6 +135,16 @@ function load_JSON(){
             }
         }
       }
+
+      for (param in default_params){
+        if ((param != null) && (default_params[param]['options']) && (['help','conversion'].indexOf(param) < 0)){
+            var param_value = encodeURIComponent(document.getElementById(param).options[document.getElementById(param).selectedIndex].text);
+            if (param_value){
+              url+="&"+param+"="+param_value
+            }
+        }
+      }
+
       var response = JSON.parse($.ajax({type: "GET", url: url , async: false}).responseText);
       var options = {
         mode: 'view'
