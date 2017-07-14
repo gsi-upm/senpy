@@ -118,11 +118,7 @@ def basic_api(f):
 def api():
     phelp = request.params.get('help')
     if phelp == "True":
-        dic = {'WEB_PARAMS': WEB_PARAMS,
-               'CLI_PARAMS': CLI_PARAMS,
-               'NIF_PARAMS': NIF_PARAMS,
-               'API_PARAMS': API_PARAMS
-            }
+        dic = dict(API_PARAMS, **NIF_PARAMS)
         response = Response(dic)
         return response
     else:
