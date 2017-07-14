@@ -14,5 +14,5 @@
      },
      "requirements": {},
      "maxPolarityValue": "1",
-     "minPolarityValue": "0"
+     "minPolarityValue": "-1"
 }

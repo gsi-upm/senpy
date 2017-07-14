@@ -18,5 +18,7 @@
         },
     },
     "sentiword_path": "SentiWordNet_3.0.txt",
-    "pos_path": "unigram_spanish.pickle"
+    "pos_path": "unigram_spanish.pickle",
+    "maxPolarityValue": "1",
+    "minPolarityValue": "-1"
 }

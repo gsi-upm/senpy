@@ -131,14 +131,16 @@ class SentiTextPlugin(SentimentPlugin):
                 if n_pos == 0 and n_neg == 0:
                     g_score = 0.5
             polarity = 'marl:Neutral'
+            polarity_value = 0
             if g_score > 0.5:
                 polarity = 'marl:Positive'
+                polarity_value = 1
             elif g_score < 0.5:
                 polarity = 'marl:Negative'
-
+                polarity_value = -1
             opinion = Sentiment(id="Opinion0"+'_'+str(i),
                           marl__hasPolarity=polarity,
-                          marL__polarityValue=float("{0:.2f}".format(g_score)))
+                          marl__polarityValue=polarity_value)
 
 
             entry.sentiments.append(opinion)
