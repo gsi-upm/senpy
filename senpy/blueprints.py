@@ -43,7 +43,6 @@ def get_params(req):
         raise Error(message="Invalid data")
     return indict
 
-
 @demo_blueprint.route('/')
 def index():
     return render_template("index.html", version=__version__)
@@ -117,8 +116,18 @@ def basic_api(f):
 @api_blueprint.route('/', methods=['POST', 'GET'])
 @basic_api
 def api():
-    response = current_app.senpy.analyse(**request.params)
-    return response
+    phelp = request.params.get('help')
+    if phelp == "True":
+        dic = {'WEB_PARAMS': WEB_PARAMS,
+               'CLI_PARAMS': CLI_PARAMS,
+               'NIF_PARAMS': NIF_PARAMS,
+               'API_PARAMS': API_PARAMS
+            }
+        response = Response(dic)
+        return response
+    else:
+        response = current_app.senpy.analyse(**request.params)
+        return response
 
 
 @api_blueprint.route('/plugins/', methods=['POST', 'GET'])
@@ -144,21 +153,3 @@ def plugin(plugin=None):
     else:
         return Error(message="Plugin not found", status=404)
     return response
-
-@api_blueprint.route('/params/', methods=['POST', 'GET'])
-@basic_api
-def params():
-    phelp = request.params.get('help')
-    if eval(phelp):
-        dic = {'WEB_PARAMS': WEB_PARAMS, 
-               'CLI_PARAMS': CLI_PARAMS, 
-               'NIF_PARAMS': NIF_PARAMS, 
-               'API_PARAMS': API_PARAMS
-            }
-        response = Response(dic)
-        return response
-    else:
-        response = Response(request.params)
-        return response
-
-
