@@ -31,51 +31,65 @@ $(document).ready(function() {
 	html="";
     var availablePlugins = document.getElementById('availablePlugins');
     plugins = response.plugins;
-    for (r in plugins){
-      plugin = plugins[r]
-      if (plugin["name"]){
-        if (plugin["name"] == defaultPlugin["name"]){
-          if (plugin["is_activated"]){
-            html+= "<option value=\""+plugin["name"]+"\" selected=\"selected\">"+plugin["name"]+"</option>"
-          }else{
-            html+= "<option value=\""+plugin["name"]+"\" selected=\"selected\" disabled=\"disabled\">"+plugin["name"]+"</option>"
-          }
-        }
-        else{
-          if (plugin["is_activated"]){
-            html+= "<option value=\""+plugin["name"]+"\">"+plugin["name"]+"</option>"
-          }
-          else{
-            html+= "<option value=\""+plugin["name"]+"\" disabled=\"disabled\">"+plugin["name"]+"</option>"
-          }
-        }
-      }
-      if (plugin["extra_params"]){
-        plugins_params[plugin["name"]]={};
-        for (param in plugin["extra_params"]){
-          if (typeof plugin["extra_params"][param] !="string"){
-            var params = new Array();
-            var alias = plugin["extra_params"][param]["aliases"][0];
-            params[alias]=new Array();
-            for (option in plugin["extra_params"][param]["options"]){
-              params[alias].push(plugin["extra_params"][param]["options"][option])
-            }
-            plugins_params[plugin["name"]][alias] = (params[alias])
-          }
-        }
-      }
-      var pluginList = document.createElement('li');
-      
-      newHtml = ""
-      if(plugin.url) {
-        newHtml= "<a href="+plugin.url+">" + plugin.name + "</a>";
-      }else {
-        newHtml= plugin["name"];
-      }
-      newHtml += ": " + replaceURLWithHTMLLinks(plugin.description);
-      pluginList.innerHTML = newHtml;
-      availablePlugins.appendChild(pluginList)
-    }
+	gplugins = {};
+	for (r in plugins){
+	  ptype = plugins[r]['@type'];
+	  if(gplugins[ptype] == undefined){
+		  gplugins[ptype] = [r]
+	  }else{
+		  gplugins[ptype].push(r)
+	  }
+	}
+	for (g in gplugins){	
+		html += "<optgroup label=\""+g+"\">"
+		for (r in gplugins[g]){
+		  plugin = plugins[r]
+		  if (plugin["name"]){
+			if (plugin["name"] == defaultPlugin["name"]){
+			  if (plugin["is_activated"]){
+				html+= "<option value=\""+plugin["name"]+"\" selected=\"selected\">"+plugin["name"]+"</option>"
+			  }else{
+				html+= "<option value=\""+plugin["name"]+"\" selected=\"selected\" disabled=\"disabled\">"+plugin["name"]+"</option>"
+			  }
+			}
+			else{
+			  if (plugin["is_activated"]){
+				html+= "<option value=\""+plugin["name"]+"\">"+plugin["name"]+"</option>"
+			  }
+			  else{
+				html+= "<option value=\""+plugin["name"]+"\" disabled=\"disabled\">"+plugin["name"]+"</option>"
+			  }
+			}
+		  }
+
+		 if (plugin["extra_params"]){
+			plugins_params[plugin["name"]]={};
+			for (param in plugin["extra_params"]){
+			  if (typeof plugin["extra_params"][param] !="string"){
+				var params = new Array();
+				var alias = plugin["extra_params"][param]["aliases"][0];
+				params[alias]=new Array();
+				for (option in plugin["extra_params"][param]["options"]){
+				  params[alias].push(plugin["extra_params"][param]["options"][option])
+				}
+				plugins_params[plugin["name"]][alias] = (params[alias])
+			  }
+			}
+		  }
+		  var pluginList = document.createElement('li');
+		  
+		  newHtml = ""
+		  if(plugin.url) {
+			newHtml= "<a href="+plugin.url+">" + plugin.name + "</a>";
+		  }else {
+			newHtml= plugin["name"];
+		  }
+		  newHtml += ": " + replaceURLWithHTMLLinks(plugin.description);
+		  pluginList.innerHTML = newHtml;
+		  availablePlugins.appendChild(pluginList)
+		}
+	 html += "</optgroup>"
+	}
     document.getElementById('plugins').innerHTML = html;
     change_params();
   
