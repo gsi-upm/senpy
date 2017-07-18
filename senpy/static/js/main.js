@@ -159,15 +159,22 @@ function load_JSON(){
         }
       }
 
-      var response = JSON.parse($.ajax({type: "GET", url: url , async: false}).responseText);
+  var response =  $.ajax({type: "GET", url: url , async: false}).responseText;
+  rawcontainer.innerHTML = replaceURLWithHTMLLinks(response)
+
+  document.getElementById("input_request").innerHTML = "<a href='"+url+"'>"+url+"</a>"
+  document.getElementById("results-div").style.display = 'block';
+  try {
+    response = JSON.parse(response);
       var options = {
         mode: 'view'
       };
       var editor = new JSONEditor(container, options, response);
       editor.expandAll();
-      rawcontainer.innerHTML = replaceURLWithHTMLLinks(JSON.stringify(response, undefined, 2))
-      document.getElementById("input_request").innerHTML = "<a href='"+url+"'>"+url+"</a>"
-      document.getElementById("results-div").style.display = 'block';
+  }
+  catch(err){
+    console.log("Error decoding JSON (got turtle?)");
+  }
       
 
 }
