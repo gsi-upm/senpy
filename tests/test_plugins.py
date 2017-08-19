@@ -33,7 +33,6 @@ class PluginsTest(TestCase):
     def tearDown(self):
         if os.path.exists(self.shelf_dir):
             shutil.rmtree(self.shelf_dir)
-
         if os.path.isfile(self.shelf_file):
             os.remove(self.shelf_file)
 
@@ -51,26 +50,29 @@ class PluginsTest(TestCase):
 
     def test_shelf(self):
         ''' A shelf is created and the value is stored '''
+        newfile = self.shelf_file + "new"
         a = ShelfDummyPlugin(info={
             'name': 'shelve',
             'version': 'test',
-            'shelf_file': self.shelf_file
+            'shelf_file': newfile
         })
         assert a.sh == {}
         a.activate()
         assert a.sh == {'counter': 0}
-        assert a.shelf_file == self.shelf_file
+        assert a.shelf_file == newfile
 
         a.sh['a'] = 'fromA'
         assert a.sh['a'] == 'fromA'
 
         a.save()
 
-        sh = pickle.load(open(self.shelf_file, 'rb'))
+        sh = pickle.load(open(newfile, 'rb'))
 
         assert sh['a'] == 'fromA'
 
     def test_dummy_shelf(self):
+        with open(self.shelf_file, 'wb') as f:
+            pickle.dump({'counter': 99}, f)
         a = ShelfDummyPlugin(info={
             'name': 'DummyShelf',
             'shelf_file': self.shelf_file,
@@ -80,9 +82,13 @@ class PluginsTest(TestCase):
 
         assert a.shelf_file == self.shelf_file
         res1 = a.analyse(input=1)
-        assert res1.entries[0].nif__isString == 1
-        res2 = a.analyse(input=1)
-        assert res2.entries[0].nif__isString == 2
+        assert res1.entries[0].nif__isString == 100
+        a.deactivate()
+        del a
+
+        with open(self.shelf_file, 'rb') as f:
+            sh = pickle.load(f)
+            assert sh['counter'] == 100
 
     def test_corrupt_shelf(self):
         ''' Reusing the values of a previous shelf '''

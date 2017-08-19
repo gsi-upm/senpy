@@ -15,34 +15,10 @@ import subprocess
 import importlib
 import yaml
 
-from .. import models
+from .. import models, utils
 from ..api import API_PARAMS
 
 logger = logging.getLogger(__name__)
-
-
-def check_template(indict, template):
-    if isinstance(template, dict) and isinstance(indict, dict):
-        for k, v in template.items():
-            if k not in indict:
-                return '{} not in {}'.format(k, indict)
-            check_template(indict[k], v)
-    elif isinstance(template, list) and isinstance(indict, list):
-        if len(indict) != len(template):
-            raise models.Error('Different size for {} and {}'.format(indict, template))
-        for e in template:
-            found = False
-            for i in indict:
-                try:
-                    check_template(i, e)
-                    found = True
-                except models.Error as ex:
-                    continue
-            if not found:
-                raise models.Error('{} not found in {}'.format(e, indict))
-    else:
-        if indict != template:
-            raise models.Error('{} and {} are different'.format(indict, template))
 
 
 class Plugin(models.Plugin):
@@ -79,7 +55,7 @@ class Plugin(models.Plugin):
             exp = case['expected']
             if not isinstance(exp, list):
                 exp = [exp]
-            check_template(res, exp)
+            utils.check_template(res, exp)
             for r in res:
                 r.validate()
 
@@ -282,6 +258,8 @@ def load_plugins(folders, loader=load_plugin):
     plugins = {}
     for search_folder in folders:
         for root, dirnames, filenames in os.walk(search_folder):
+            # Do not look for plugins in hidden or special folders
+            dirnames[:] = [d for d in dirnames if d[0] not in ['.', '_']]
             for filename in fnmatch.filter(filenames, '*.senpy'):
                 name, plugin = loader(root, filename)
                 if plugin and name:

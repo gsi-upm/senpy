@@ -17,17 +17,19 @@ def parse_resp(resp):
 
 
 class BlueprintsTest(TestCase):
-    def setUp(self):
-        self.app = Flask("test_extensions")
-        self.app.debug = False
-        self.client = self.app.test_client()
-        self.senpy = Senpy()
-        self.senpy.init_app(self.app)
-        self.dir = os.path.join(os.path.dirname(__file__), "..")
-        self.senpy.add_folder(self.dir)
-        self.senpy.activate_plugin("Dummy", sync=True)
-        self.senpy.activate_plugin("DummyRequired", sync=True)
-        self.senpy.default_plugin = 'Dummy'
+    @classmethod
+    def setUpClass(cls):
+        """Set up only once, and re-use in every individual test"""
+        cls.app = Flask("test_extensions")
+        cls.app.debug = False
+        cls.client = cls.app.test_client()
+        cls.senpy = Senpy()
+        cls.senpy.init_app(cls.app)
+        cls.dir = os.path.join(os.path.dirname(__file__), "..")
+        cls.senpy.add_folder(cls.dir)
+        cls.senpy.activate_plugin("Dummy", sync=True)
+        cls.senpy.activate_plugin("DummyRequired", sync=True)
+        cls.senpy.default_plugin = 'Dummy'
 
     def assertCode(self, resp, code):
         self.assertEqual(resp.status_code, code)
