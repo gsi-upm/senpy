@@ -8,7 +8,8 @@
     "me:EmotionAnalysis1",
     "me:NER1",
     {
-      "description": "missing @id and @type"
+    "@type": "analysis",
+    "@id": "anonymous"
     }
   ],
   "entries": [

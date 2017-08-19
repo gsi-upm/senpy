@@ -3,6 +3,7 @@
   "allOf": [
     {"$ref": "response.json"},
     {
+     "required": ["plugins"],
       "properties": {
         "plugins": {
           "type": "array",
