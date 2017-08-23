@@ -40,10 +40,10 @@ centroids_direction:
   - emoml:big6
   - emoml:fsre-dimensions
 aliases: # These are aliases for any key in the centroid, to avoid repeating a long name several times
-  A: emoml:fsre-dimensions:arousal
-  V: emoml:fsre-dimensions:valence
-  D: emoml:fsre-dimensions:potency
-  S: emoml:fsre-dimensions:unpredictability
+  A: emoml:fsre-dimensions_arousal
+  V: emoml:fsre-dimensions_valence
+  D: emoml:fsre-dimensions_potency
+  S: emoml:fsre-dimensions_unpredictability
   anger: emoml:big6anger
   disgust: emoml:big6disgust
   fear: emoml:big6fear
