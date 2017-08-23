@@ -20,7 +20,7 @@ Blueprints for Senpy
 from flask import (Blueprint, request, current_app, render_template, url_for,
                    jsonify)
 from .models import Error, Response, Plugins, read_schema
-from .api import WEB_PARAMS, API_PARAMS, parse_params
+from .api import WEB_PARAMS, API_PARAMS, CLI_PARAMS, NIF_PARAMS, parse_params
 from .version import __version__
 from functools import wraps
 
@@ -42,7 +42,6 @@ def get_params(req):
     else:
         raise Error(message="Invalid data")
     return indict
-
 
 @demo_blueprint.route('/')
 def index():
@@ -117,8 +116,14 @@ def basic_api(f):
 @api_blueprint.route('/', methods=['POST', 'GET'])
 @basic_api
 def api():
-    response = current_app.senpy.analyse(**request.params)
-    return response
+    phelp = request.params.get('help')
+    if phelp == "True":
+        dic = dict(API_PARAMS, **NIF_PARAMS)
+        response = Response(dic)
+        return response
+    else:
+        response = current_app.senpy.analyse(**request.params)
+        return response
 
 
 @api_blueprint.route('/plugins/', methods=['POST', 'GET'])
