@@ -140,7 +140,7 @@ class SenpyMixin(object):
                     vp = item[kp]
                     temp[kp] = ser_or_down(vp)
                 return temp
-            elif isinstance(item, list):
+            elif isinstance(item, list) or isinstance(item, set):
                 return list(ser_or_down(i) for i in item)
             else:
                 return item
@@ -184,7 +184,7 @@ class SenpyMixin(object):
         jsonschema.validate(obj, self.schema)
 
     def __str__(self):
-        return str(self.to_JSON())
+        return str(self.serialize())
 
 
 class BaseModel(SenpyMixin, dict):

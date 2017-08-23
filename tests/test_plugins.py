@@ -181,6 +181,7 @@ class PluginsTest(TestCase):
             "centroids_direction": ["emoml:big6", "emoml:fsre-dimensions"]
         }
         c = CentroidConversion(info)
+        print(c.serialize())
 
         es1 = EmotionSet()
         e1 = Emotion()
@@ -189,6 +190,7 @@ class PluginsTest(TestCase):
         res = c._forward_conversion(es1)
         assert res["X-dimension"] == 0.5
         assert res["Y-dimension"] == 0.5
+        print(res)
 
         e2 = Emotion()
         e2.onyx__hasEmotionCategory = "c2"
@@ -196,12 +198,14 @@ class PluginsTest(TestCase):
         res = c._forward_conversion(es1)
         assert res["X-dimension"] == 0
         assert res["Y-dimension"] == 1
+        print(res)
 
         e = Emotion()
         e["X-dimension"] = -0.2
         e["Y-dimension"] = -0.3
         res = c._backwards_conversion(e)
         assert res["onyx:hasEmotionCategory"] == "c3"
+        print(res)
 
         e = Emotion()
         e["X-dimension"] = -0.2
