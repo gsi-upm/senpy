@@ -10,6 +10,7 @@ except ImportError:
 
 from functools import partial
 from senpy.extensions import Senpy
+from senpy import plugins
 from senpy.models import Error, Results, Entry, EmotionSet, Emotion, Plugin
 from flask import Flask
 from unittest import TestCase
@@ -18,7 +19,7 @@ from unittest import TestCase
 class ExtensionsTest(TestCase):
     def setUp(self):
         self.app = Flask('test_extensions')
-        self.dir = os.path.join(os.path.dirname(__file__))
+        self.dir = os.path.dirname(__file__)
         self.senpy = Senpy(plugin_folder=self.dir,
                            app=self.app,
                            default_plugins=False)
@@ -38,8 +39,8 @@ class ExtensionsTest(TestCase):
         print(self.senpy.plugins)
         assert "Dummy" in self.senpy.plugins
 
-    def test_enabling(self):
-        """ Enabling a plugin """
+    def test_installing(self):
+        """ Installing a plugin """
         info = {
             'name': 'TestPip',
             'module': 'dummy',
@@ -48,14 +49,13 @@ class ExtensionsTest(TestCase):
             'version': 0
         }
         root = os.path.join(self.dir, 'plugins', 'dummy_plugin')
-        name, module = self.senpy._load_plugin_from_info(info, root=root)
+        name, module = plugins.load_plugin_from_info(info, root=root)
         assert name == 'TestPip'
         assert module
         import noop
         dir(noop)
-        self.senpy.install_deps()
 
-    def test_installing(self):
+    def test_enabling(self):
         """ Enabling a plugin """
         self.senpy.activate_all(sync=True)
         assert len(self.senpy.plugins) >= 3
@@ -72,7 +72,7 @@ class ExtensionsTest(TestCase):
         }
         root = os.path.join(self.dir, 'plugins', 'dummy_plugin')
         with self.assertRaises(Error):
-            name, module = self.senpy._load_plugin_from_info(info, root=root)
+            name, module = plugins.load_plugin_from_info(info, root=root)
 
     def test_disabling(self):
         """ Disabling a plugin """
@@ -173,7 +173,7 @@ class ExtensionsTest(TestCase):
             'onyx:usesEmotionModel': 'emoml:fsre-dimensions'
         })
         eSet1 = EmotionSet()
-        eSet1.prov__wasGeneratedBy = plugin['id']
+        eSet1.prov__wasGeneratedBy = plugin['@id']
         eSet1['onyx:hasEmotion'].append(Emotion({
             'emoml:arousal': 1,
             'emoml:potency': 0,

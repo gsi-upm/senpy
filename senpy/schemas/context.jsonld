@@ -20,6 +20,9 @@
       "@id": "me:hasSuggestions",
       "@container": "@set"
     },
+    "onyx:hasEmotion": {
+      "@container": "@set"
+    },
     "emotions": {
       "@id": "onyx:hasEmotionSet",
       "@container": "@set"

@@ -7,11 +7,11 @@ import tempfile
 
 from unittest import TestCase
 from senpy.models import Results, Entry, EmotionSet, Emotion
-from senpy.plugins import SentimentPlugin, ShelfMixin
+from senpy import plugins
 from senpy.plugins.conversion.emotion.centroids import CentroidConversion
 
 
-class ShelfDummyPlugin(SentimentPlugin, ShelfMixin):
+class ShelfDummyPlugin(plugins.SentimentPlugin, plugins.ShelfMixin):
     def activate(self, *args, **kwargs):
         if 'counter' not in self.sh:
             self.sh['counter'] = 0
@@ -33,7 +33,6 @@ class PluginsTest(TestCase):
     def tearDown(self):
         if os.path.exists(self.shelf_dir):
             shutil.rmtree(self.shelf_dir)
-
         if os.path.isfile(self.shelf_file):
             os.remove(self.shelf_file)
 
@@ -51,26 +50,29 @@ class PluginsTest(TestCase):
 
     def test_shelf(self):
         ''' A shelf is created and the value is stored '''
+        newfile = self.shelf_file + "new"
         a = ShelfDummyPlugin(info={
             'name': 'shelve',
             'version': 'test',
-            'shelf_file': self.shelf_file
+            'shelf_file': newfile
         })
         assert a.sh == {}
         a.activate()
         assert a.sh == {'counter': 0}
-        assert a.shelf_file == self.shelf_file
+        assert a.shelf_file == newfile
 
         a.sh['a'] = 'fromA'
         assert a.sh['a'] == 'fromA'
 
         a.save()
 
-        sh = pickle.load(open(self.shelf_file, 'rb'))
+        sh = pickle.load(open(newfile, 'rb'))
 
         assert sh['a'] == 'fromA'
 
     def test_dummy_shelf(self):
+        with open(self.shelf_file, 'wb') as f:
+            pickle.dump({'counter': 99}, f)
         a = ShelfDummyPlugin(info={
             'name': 'DummyShelf',
             'shelf_file': self.shelf_file,
@@ -80,9 +82,13 @@ class PluginsTest(TestCase):
 
         assert a.shelf_file == self.shelf_file
         res1 = a.analyse(input=1)
-        assert res1.entries[0].nif__isString == 1
-        res2 = a.analyse(input=1)
-        assert res2.entries[0].nif__isString == 2
+        assert res1.entries[0].nif__isString == 100
+        a.deactivate()
+        del a
+
+        with open(self.shelf_file, 'rb') as f:
+            sh = pickle.load(f)
+            assert sh['counter'] == 100
 
     def test_corrupt_shelf(self):
         ''' Reusing the values of a previous shelf '''
@@ -202,3 +208,22 @@ class PluginsTest(TestCase):
         e["Y-dimension"] = 0.3
         res = c._backwards_conversion(e)
         assert res["onyx:hasEmotionCategory"] == "c2"
+
+
+def make_mini_test(plugin):
+    def mini_test(self):
+        plugin.test()
+    return mini_test
+
+
+def add_tests():
+    root = os.path.dirname(__file__)
+    plugs = plugins.load_plugins(os.path.join(root, ".."))
+    for k, v in plugs.items():
+        t_method = make_mini_test(v)
+        t_method.__name__ = 'test_plugin_{}'.format(k)
+        setattr(PluginsTest, t_method.__name__, t_method)
+        del t_method
+
+
+add_tests()

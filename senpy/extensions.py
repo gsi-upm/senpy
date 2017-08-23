@@ -15,23 +15,10 @@ from threading import Thread
 
 import os
 import copy
-import fnmatch
-import inspect
-import sys
-import importlib
 import logging
 import traceback
-import yaml
-import subprocess
 
 logger = logging.getLogger(__name__)
-
-
-def log_subprocess_output(process):
-    for line in iter(process.stdout.readline, b''):
-        logger.info('%r', line)
-    for line in iter(process.stderr.readline, b''):
-        logger.error('%r', line)
 
 
 class Senpy(object):
@@ -330,84 +317,6 @@ class Senpy(object):
             th.start()
             return th
 
-    @classmethod
-    def validate_info(cls, info):
-        return all(x in info for x in ('name', 'module', 'description', 'version'))
-
-    def install_deps(self):
-        for i in self.plugins.values():
-            self._install_deps(i)
-
-    @classmethod
-    def _install_deps(cls, info=None):
-        requirements = info.get('requirements', [])
-        if requirements:
-            pip_args = ['pip']
-            pip_args.append('install')
-            pip_args.append('--use-wheel')
-            for req in requirements:
-                pip_args.append(req)
-            logger.info('Installing requirements: ' + str(requirements))
-            process = subprocess.Popen(pip_args,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-            log_subprocess_output(process)
-            exitcode = process.wait()
-            if exitcode != 0:
-                raise Error("Dependencies not properly installed")
-
-    @classmethod
-    def _load_module(cls, name, root):
-        sys.path.append(root)
-        tmp = importlib.import_module(name)
-        sys.path.remove(root)
-        return tmp
-
-    @classmethod
-    def _load_plugin_from_info(cls, info, root):
-        if not cls.validate_info(info):
-            logger.warn('The module info is not valid.\n\t{}'.format(info))
-            return None, None
-        module = info["module"]
-        name = info["name"]
-
-        cls._install_deps(info)
-        tmp = cls._load_module(module, root)
-
-        candidate = None
-        for _, obj in inspect.getmembers(tmp):
-            if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
-                logger.debug(("Found plugin class:"
-                              " {}@{}").format(obj, inspect.getmodule(obj)))
-                candidate = obj
-                break
-        if not candidate:
-            logger.debug("No valid plugin for: {}".format(module))
-            return
-        module = candidate(info=info)
-        return name, module
-
-    @classmethod
-    def _load_plugin(cls, root, filename):
-        fpath = os.path.join(root, filename)
-        logger.debug("Loading plugin: {}".format(fpath))
-        with open(fpath, 'r') as f:
-            info = yaml.load(f)
-        logger.debug("Info: {}".format(info))
-        return cls._load_plugin_from_info(info, root)
-
-    def _load_plugins(self):
-        plugins = {}
-        for search_folder in self._search_folders:
-            for root, dirnames, filenames in os.walk(search_folder):
-                for filename in fnmatch.filter(filenames, '*.senpy'):
-                    name, plugin = self._load_plugin(root, filename)
-                    if plugin and name:
-                        plugins[name] = plugin
-
-        self._outdated = False
-        return plugins
-
     def teardown(self, exception):
         pass
 
@@ -415,7 +324,8 @@ class Senpy(object):
     def plugins(self):
         """ Return the plugins registered for a given application.  """
         if self._outdated:
-            self._plugin_list = self._load_plugins()
+            self._plugin_list = plugins.load_plugins(self._search_folders)
+            self._outdated = False
         return self._plugin_list
 
     def filter_plugins(self, **kwargs):

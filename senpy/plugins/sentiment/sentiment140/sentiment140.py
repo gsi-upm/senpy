@@ -12,7 +12,7 @@ class Sentiment140Plugin(SentimentPlugin):
                             json.dumps({
                                 "language": lang,
                                 "data": [{
-                                    "text": entry.text
+                                    "text": entry.nif__isString
                                 }]
                             }))
         p = params.get("prefix", None)
@@ -34,3 +34,20 @@ class Sentiment140Plugin(SentimentPlugin):
         entry.sentiments.append(sentiment)
         entry.language = lang
         yield entry
+
+    test_cases = [
+        {
+            'entry': {
+                'nif:isString': 'I love Titanic'
+            },
+            'params': {},
+            'expected': {
+                "nif:isString": "I love Titanic",
+                'sentiments': [
+                    {
+                        'marl:hasPolarity': 'marl:Positive',
+                    }
+                ]
+            }
+        }
+    ]

@@ -70,8 +70,13 @@ dev: dev-$(PYMAIN)
 
 test-all: $(addprefix test-,$(PYVERSIONS))
 
+# Run setup.py from in an isolated container, built from the base image.
+# This speeds tests up because the image has most (if not all) of the dependencies already.
 test-%:
-	docker run --rm --entrypoint /usr/local/bin/python -w /usr/src/app $(IMAGENAME):python$*  setup.py test
+	docker rm $(NAME)-test-$* || true
+	docker create -ti --name $(NAME)-test-$* --entrypoint="" -w /usr/src/app/ $(IMAGENAME):python$* python setup.py test
+	docker cp . $(NAME)-test-$*:/usr/src/app
+	docker start -a $(NAME)-test-$*
 
 test: test-$(PYMAIN)
 

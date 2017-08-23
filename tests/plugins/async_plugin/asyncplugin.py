@@ -21,3 +21,6 @@ class AsyncPlugin(AnalysisPlugin):
         values = self._do_async(2)
         entry.async_values = values
         yield entry
+
+    def test(self):
+        pass

@@ -218,11 +218,10 @@ class BaseModel(SenpyMixin, dict):
         super(BaseModel, self).__init__(temp)
 
     def _get_key(self, key):
+        if key is 'id':
+            key = '@id'
         key = key.replace("__", ":", 1)
         return key
-
-    def __setitem__(self, key, value):
-        dict.__setitem__(self, key, value)
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
@@ -244,8 +243,6 @@ class BaseModel(SenpyMixin, dict):
 
     def _plain_dict(self):
         d = {k: v for (k, v) in self.items() if k[0] != "_"}
-        if 'id' in d:
-            d["@id"] = d.pop('id')
         return d
 
 

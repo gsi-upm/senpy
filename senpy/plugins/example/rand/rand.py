@@ -1,7 +1,7 @@
 import random
 
 from senpy.plugins import SentimentPlugin
-from senpy.models import Sentiment
+from senpy.models import Sentiment, Entry
 
 
 class RandPlugin(SentimentPlugin):
@@ -22,3 +22,13 @@ class RandPlugin(SentimentPlugin):
         entry.sentiments.append(sentiment)
         entry.language = lang
         yield entry
+
+    def test(self):
+        params = dict()
+        results = list()
+        for i in range(100):
+            res = next(self.analyse_entry(Entry(nif__isString="Hello"), params))
+            res.validate()
+            results.append(res.sentiments[0]['marl:hasPolarity'])
+        assert 'marl:Positive' in results
+        assert 'marl:Negative' in results
