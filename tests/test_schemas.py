@@ -34,7 +34,8 @@ def do_create_(jsfile, success):
         except (AssertionError, ValidationError, KeyError) as ex:
             if success:
                 raise
-
+            return
+        assert success
     return do_expected
 
 

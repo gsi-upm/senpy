@@ -3,10 +3,7 @@
   "@id": "me:Result1",
   "@type": "results",
   "analysis": [
-    {
-      "@id": "me:SgAnalysis1",
-      "@type": "me:SuggestionAnalysis"
-    }
+      "me:SgAnalysis1"
   ],
   "entries": [
     {
