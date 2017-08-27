@@ -55,8 +55,9 @@ class ExtensionsTest(TestCase):
             'version': 0
         }
         root = os.path.join(self.dir, 'plugins', 'dummy_plugin')
-        name, module = plugins.load_plugin_from_info(info, root=root)
-        assert name == 'TestPip'
+        module = plugins.load_plugin_from_info(info, root=root)
+        plugins.install_deps(info)
+        assert module.name == 'TestPip'
         assert module
         import noop
         dir(noop)
@@ -76,9 +77,8 @@ class ExtensionsTest(TestCase):
             'requirements': ['IAmMakingThisPackageNameUpToFail'],
             'version': 0
         }
-        root = os.path.join(self.dir, 'plugins', 'dummy_plugin')
         with self.assertRaises(Error):
-            name, module = plugins.load_plugin_from_info(info, root=root)
+            plugins.install_deps(info)
 
     def test_disabling(self):
         """ Disabling a plugin """
@@ -98,12 +98,6 @@ class ExtensionsTest(TestCase):
         """ Don't analyse if there isn't any plugin installed """
         self.senpy.deactivate_all(sync=True)
         self.assertRaises(Error, partial(analyse, self.senpy, input="tupni"))
-        self.assertRaises(Error,
-                          partial(
-                              analyse,
-                              self.senpy,
-                              input="tupni",
-                              algorithm='Dummy'))
 
     def test_analyse(self):
         """ Using a plugin """
@@ -142,6 +136,7 @@ class ExtensionsTest(TestCase):
     def test_analyse_error(self):
         mm = mock.MagicMock()
         mm.id = 'magic_mock'
+        mm.is_activated = True
         mm.analyse_entries.side_effect = Error('error in analysis', status=500)
         self.senpy.plugins['MOCK'] = mm
         try:

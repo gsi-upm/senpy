@@ -12,7 +12,7 @@ stages:
   - clean
 
 before_script:
-  - docker login -u $HUB_USER -p $HUB_PASSWORD
+  - make -e login
 
 .test: &test_definition
   stage: test

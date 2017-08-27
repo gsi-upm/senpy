@@ -11,6 +11,7 @@ from .models import Error
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 
 from threading import Thread
+from functools import partial
 
 import os
 import copy
@@ -95,28 +96,30 @@ class Senpy(object):
                 raise Error(
                     status=404,
                     message="The algorithm '{}' is not valid".format(algo))
-
-            if not self.plugins[algo].is_activated:
-                logger.debug("Plugin not activated: {}".format(algo))
-                raise Error(
-                    status=400,
-                    message=("The algorithm '{}'"
-                             " is not activated yet").format(algo))
             plugins.append(self.plugins[algo])
         return plugins
 
     def _process_entries(self, entries, req, plugins):
+        """
+        Recursively process the entries with the first plugin in the list, and pass the results
+        to the rest of the plugins.
+        """
         if not plugins:
             for i in entries:
                 yield i
             return
         plugin = plugins[0]
+        self._activate(plugin)  # Make sure the plugin is activated
         specific_params = api.get_extra_params(req, plugin)
         req.analysis.append({'plugin': plugin,
                              'parameters': specific_params})
         results = plugin.analyse_entries(entries, specific_params)
         for i in self._process_entries(results, req, plugins[1:]):
             yield i
+
+    def install_deps(self):
+        for plugin in self.filter_plugins(is_activated=True):
+            plugins.install_deps(plugin)
 
     def analyse(self, request):
         """
@@ -223,25 +226,42 @@ class Senpy(object):
         else:
             self._default = self.plugins[value]
 
-    def activate_all(self, sync=False):
+    def activate_all(self, sync=True):
         ps = []
         for plug in self.plugins.keys():
             ps.append(self.activate_plugin(plug, sync=sync))
         return ps
 
-    def deactivate_all(self, sync=False):
+    def deactivate_all(self, sync=True):
         ps = []
         for plug in self.plugins.keys():
             ps.append(self.deactivate_plugin(plug, sync=sync))
         return ps
 
-    def _set_active_plugin(self, plugin_name, active=True, *args, **kwargs):
+    def _set_active(self, plugin, active=True, *args, **kwargs):
         ''' We're using a variable in the plugin itself to activate/deactive plugins.\
         Note that plugins may activate themselves by setting this variable.
         '''
-        self.plugins[plugin_name].is_activated = active
+        plugin.is_activated = active
 
-    def activate_plugin(self, plugin_name, sync=False):
+    def _activate(self, plugin):
+        success = False
+        with plugin._lock:
+            if plugin.is_activated:
+                return
+            try:
+                plugin.activate()
+                msg = "Plugin activated: {}".format(plugin.name)
+                logger.info(msg)
+                success = True
+                self._set_active(plugin, success)
+            except Exception as ex:
+                msg = "Error activating plugin {} - {} : \n\t{}".format(
+                    plugin.name, ex, traceback.format_exc())
+                logger.error(msg)
+                raise Error(msg)
+
+    def activate_plugin(self, plugin_name, sync=True):
         try:
             plugin = self.plugins[plugin_name]
         except KeyError:
@@ -250,37 +270,17 @@ class Senpy(object):
 
         logger.info("Activating plugin: {}".format(plugin.name))
 
-        def act():
-            success = False
-            try:
-                plugin.activate()
-                msg = "Plugin activated: {}".format(plugin.name)
-                logger.info(msg)
-                success = True
-                self._set_active_plugin(plugin_name, success)
-            except Exception as ex:
-                msg = "Error activating plugin {} - {} : \n\t{}".format(
-                    plugin.name, ex, traceback.format_exc())
-                logger.error(msg)
-                raise Error(msg)
-
         if sync or 'async' in plugin and not plugin.async:
-            act()
+            self._activate(plugin)
         else:
-            th = Thread(target=act)
+            th = Thread(target=partial(self._activate, plugin))
             th.start()
             return th
 
-    def deactivate_plugin(self, plugin_name, sync=False):
-        try:
-            plugin = self.plugins[plugin_name]
-        except KeyError:
-            raise Error(
-                message="Plugin not found: {}".format(plugin_name), status=404)
-
-        self._set_active_plugin(plugin_name, False)
-
-        def deact():
+    def _deactivate(self, plugin):
+        with plugin._lock:
+            if not plugin.is_activated:
+                return
             try:
                 plugin.deactivate()
                 logger.info("Plugin deactivated: {}".format(plugin.name))
@@ -289,10 +289,19 @@ class Senpy(object):
                     "Error deactivating plugin {}: {}".format(plugin.name, ex))
                 logger.error("Trace: {}".format(traceback.format_exc()))
 
+    def deactivate_plugin(self, plugin_name, sync=True):
+        try:
+            plugin = self.plugins[plugin_name]
+        except KeyError:
+            raise Error(
+                message="Plugin not found: {}".format(plugin_name), status=404)
+
+        self._set_active(plugin, False)
+
         if sync or 'async' in plugin and not plugin.async:
-            deact()
+            self._deactivate(plugin)
         else:
-            th = Thread(target=deact)
+            th = Thread(target=partial(self._deactivate, plugin))
             th.start()
             return th
 

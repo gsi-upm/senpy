@@ -89,6 +89,7 @@ def basic_api(f):
             response = f(*args, **kwargs)
         except Error as ex:
             response = ex
+            response.parameters = params
             logger.error(ex)
             if current_app.debug:
                 raise

@@ -214,20 +214,22 @@ class PluginsTest(TestCase):
         assert res["onyx:hasEmotionCategory"] == "c2"
 
 
-def make_mini_test(plugin):
+def make_mini_test(plugin_info):
     def mini_test(self):
+        plugin = plugins.load_plugin_from_info(plugin_info, install=True)
         plugin.test()
     return mini_test
 
 
-def add_tests():
+def _add_tests():
     root = os.path.dirname(__file__)
-    plugs = plugins.load_plugins(os.path.join(root, ".."))
+    plugs = plugins.load_plugins(os.path.join(root, ".."), loader=plugins.parse_plugin_info)
     for k, v in plugs.items():
+        pass
         t_method = make_mini_test(v)
         t_method.__name__ = 'test_plugin_{}'.format(k)
         setattr(PluginsTest, t_method.__name__, t_method)
         del t_method
 
 
-add_tests()
+_add_tests()

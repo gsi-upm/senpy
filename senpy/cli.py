@@ -29,8 +29,10 @@ def main_function(argv):
                               api.NIF_PARAMS)
     plugin_folder = params['plugin_folder']
     sp = Senpy(default_plugins=False, plugin_folder=plugin_folder)
-    sp.activate_all(sync=True)
     request = api.parse_call(params)
+    algos = request.parameters.get('algorithm', sp.plugins.keys())
+    for algo in algos:
+        sp.activate_plugin(algo)
     res = sp.analyse(request)
     return res
 

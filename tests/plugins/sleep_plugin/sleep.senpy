@@ -4,7 +4,7 @@
     "description": "I am dummy",
     "author": "@balkian",
     "version": "0.1",
-    "timeout": 0.5,
+    "timeout": 0.05,
     "extra_params": {
         "timeout": {
             "@id": "timeout_sleep",

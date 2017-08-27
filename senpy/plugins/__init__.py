@@ -14,6 +14,7 @@ import sys
 import subprocess
 import importlib
 import yaml
+import threading
 
 from .. import models, utils
 from ..api import API_PARAMS
@@ -34,6 +35,7 @@ class Plugin(models.Plugin):
         id = 'plugins/{}_{}'.format(info['name'], info['version'])
         super(Plugin, self).__init__(id=id, **info)
         self.is_activated = False
+        self._lock = threading.Lock()
 
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
@@ -188,10 +190,12 @@ def validate_info(info):
     return all(x in info for x in ('name', 'module', 'description', 'version'))
 
 
-def load_module(name, root):
-    sys.path.append(root)
+def load_module(name, root=None):
+    if root:
+        sys.path.append(root)
     tmp = importlib.import_module(name)
-    sys.path.remove(root)
+    if root:
+        sys.path.remove(root)
     return tmp
 
 
@@ -221,16 +225,20 @@ def install_deps(*plugins):
                 raise models.Error("Dependencies not properly installed")
 
 
-def load_plugin_from_info(info, root, validator=validate_info):
+def load_plugin_from_info(info, root=None, validator=validate_info, install=True):
+    if not root and '_path' in info:
+        root = os.path.dirname(info['_path'])
     if not validator(info):
-        logger.warn('The module info is not valid.\n\t{}'.format(info))
-        return None, None
+        raise ValueError('Plugin info is not valid: {}'.format(info))
     module = info["module"]
-    name = info["name"]
 
-    install_deps(info)
-    tmp = load_module(module, root)
-
+    try:
+        tmp = load_module(module, root)
+    except ImportError:
+        if not install:
+            raise
+        install_deps(info)
+        tmp = load_module(module, root)
     candidate = None
     for _, obj in inspect.getmembers(tmp):
         if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
@@ -242,16 +250,23 @@ def load_plugin_from_info(info, root, validator=validate_info):
         logger.debug("No valid plugin for: {}".format(module))
         return
     module = candidate(info=info)
-    return name, module
+    return module
 
 
-def load_plugin(root, filename):
-    fpath = os.path.join(root, filename)
+def parse_plugin_info(fpath):
     logger.debug("Loading plugin: {}".format(fpath))
     with open(fpath, 'r') as f:
         info = yaml.load(f)
+    info['_path'] = fpath
+    name = info['name']
+    return name, info
+
+
+def load_plugin(fpath):
+    name, info = parse_plugin_info(fpath)
     logger.debug("Info: {}".format(info))
-    return load_plugin_from_info(info, root)
+    plugin = load_plugin_from_info(info)
+    return name, plugin
 
 
 def load_plugins(folders, loader=load_plugin):
@@ -261,7 +276,8 @@ def load_plugins(folders, loader=load_plugin):
             # Do not look for plugins in hidden or special folders
             dirnames[:] = [d for d in dirnames if d[0] not in ['.', '_']]
             for filename in fnmatch.filter(filenames, '*.senpy'):
-                name, plugin = loader(root, filename)
+                fpath = os.path.join(root, filename)
+                name, plugin = loader(fpath)
                 if plugin and name:
                     plugins[name] = plugin
     return plugins

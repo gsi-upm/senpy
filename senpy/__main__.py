@@ -95,8 +95,8 @@ def main():
     app = Flask(__name__)
     app.debug = args.debug
     sp = Senpy(app, args.plugins_folder, default_plugins=args.default_plugins)
+    sp.install_deps()
     if args.only_install:
-        sp.install_deps()
         return
     sp.activate_all()
     print('Senpy version {}'.format(senpy.__version__))

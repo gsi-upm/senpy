@@ -66,3 +66,14 @@ class APITest(TestCase):
         p = parse_params({}, spec)
         assert 'hello' in p
         assert p['hello'] == 1
+
+    def test_call(self):
+        call = {
+            'input': "Aloha my friend",
+            'algo': "Dummy"
+        }
+        p = parse_params(call, API_PARAMS, NIF_PARAMS)
+        assert 'algorithm' in p
+        assert "Dummy" in p['algorithm']
+        assert 'input' in p
+        assert p['input'] == 'Aloha my friend'

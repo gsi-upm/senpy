@@ -66,7 +66,7 @@ class BlueprintsTest(TestCase):
         """
         Extra params that have a default should
         """
-        resp = self.client.get("/api/?i=My aloha mohame&algo=Dummy")
+        resp = self.client.get("/api/?i=My aloha mohame&algo=Dummy&with_parameters=true")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         logging.debug("Got response: %s", js)

@@ -153,7 +153,7 @@ def parse_params(indict, *specs):
             errors={param: error
                     for param, error in iteritems(wrong_params)})
         raise message
-    if 'algorithm' in outdict and isinstance(outdict['algorithm'], str):
+    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], list):
         outdict['algorithm'] = outdict['algorithm'].split(',')
     return outdict
 
