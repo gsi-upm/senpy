@@ -5,7 +5,7 @@ makefiles-commit: makefiles-remote
 	git add -f .makefiles
 	git commit -em "Updated makefiles from ${NAME}"
 
-makefiles-push: makefiles-commit
+makefiles-push:
 	git subtree push --prefix=.makefiles/ makefiles $(NAME)
 
 makefiles-pull: makefiles-remote
