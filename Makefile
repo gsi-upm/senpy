@@ -85,8 +85,8 @@ else
 endif
 ifeq ($(HUB_USER),)
 	@echo "Not logging in to global the docker registry"
-	docker login -u $(HUB_USER) -p $(HUB_PASSWORD)
 else
+	docker login -u $(HUB_USER) -p $(HUB_PASSWORD)
 endif
 
 .FORCE:
