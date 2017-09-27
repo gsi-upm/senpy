@@ -14,11 +14,27 @@ TARNAME=$(NAME)-$(VERSION).tar.gz
 action="test-${PYMAIN}"
 GITHUB_REPO=git@github.com:gsi-upm/senpy.git
 
-KUBE_CA_PEM_FILE=""
+# Deployment with Kubernetes
+
+# KUBE_CA_PEM_FILE is the path of a certificate file. It automatically set by GitLab
+# if you enable Kubernetes integration in a project.
+#
+# As of this writing, Kubernetes integration can not be set on a group level, so it has to
+# be manually set in every project.
+# Alternatively, we use a custom KUBE_CA_BUNDLE environment variable, which can be set at
+# the group level. In this case, the variable contains the whole content of the certificate,
+# which we dump to a temporary file
+#
+# Check if the KUBE_CA_PEM_FILE exists. Otherwise, create it from KUBE_CA_BUNDLE
+KUBE_CA_TEMP=false
+ifeq ($(wildcard $(KUBE_CA_PEM_FILE)),) 
+	KUBE_CA_PEM_FILE:="$$PWD/.ca.crt"
+	CREATED:=$(shell echo -e "$$KUBE_CA_BUNDLE" > $(KUBE_CA_PEM_FILE))
+endif 
 KUBE_URL=""
 KUBE_TOKEN=""
 KUBE_NAMESPACE=$(NAME)
-KUBECTL=docker run --rm -v $(KUBE_CA_PEM_FILE):/tmp/ca.pem -v $$PWD:/tmp/cwd/ -i lachlanevenson/k8s-kubectl --server="$(KUBE_URL)" --token="$(KUBE_TOKEN)" --certificate-authority="/tmp/ca.pem" -n $(KUBE_NAMESPACE)
+KUBECTL=docker run --rm -v $(KUBE_CA_PEM_FILE):/tmp/ca.pem -i lachlanevenson/k8s-kubectl --server="$(KUBE_URL)" --token="$(KUBE_TOKEN)" --certificate-authority="/tmp/ca.pem" -n $(KUBE_NAMESPACE)
 CI_COMMIT_REF_NAME=master
 
 help:           ## Show this help.
@@ -31,6 +47,21 @@ config:  ## Load config from the environment. You should run it once in every se
 	@echo "# eval \$$(make config)"
 # If you need to run a command on the key/value pairs, use this:
 # @awk '{ split($$0, a, "="); "echo " a[2] " | base64 -w 0" |& getline b64; print "export " a[1] "=" a[2]; print "export " a[1] "_BASE64=" b64}' .env
+
+info: ## Print variables. Useful for debugging.
+	@echo "#KUBERNETES"
+	@echo KUBE_URL=$(KUBE_URL)
+	@echo KUBE_CA_PEM_FILE=$(KUBE_CA_PEM_FILE)
+	@echo KUBE_CA_BUNDLE=$$KUBE_CA_BUNDLE
+	@echo KUBE_TOKEN=$(KUBE_TOKEN)
+	@echo KUBE_NAMESPACE=$(KUBE_NAMESPACE)
+	@echo KUBECTL=$(KUBECTL)
+
+	@echo "#CI"
+	@echo CI_PROJECT_NAME=$(CI_PROJECT_NAME)
+	@echo CI_REGISTRY=$(CI_REGISTRY)
+	@echo CI_REGISTRY_USER=$(CI_REGISTRY_USER)
+	@echo CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME)
 
 quick_build: $(addprefix build-, $(PYMAIN))
 
@@ -81,12 +112,12 @@ login: ## Log in to the registry. It will only be used in the server, or when ru
 ifeq ($(CI_BUILD_TOKEN),)
 	@echo "Not logging in to the docker registry" "$(CI_REGISTRY)"
 else
-	docker login -u gitlab-ci-token -p $(CI_BUILD_TOKEN) $(CI_REGISTRY)
+	@docker login -u gitlab-ci-token -p $(CI_BUILD_TOKEN) $(CI_REGISTRY)
 endif
 ifeq ($(HUB_USER),)
 	@echo "Not logging in to global the docker registry"
 else
-	docker login -u $(HUB_USER) -p $(HUB_PASSWORD)
+	@docker login -u $(HUB_USER) -p $(HUB_PASSWORD)
 endif
 
 .FORCE:
