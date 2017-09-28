@@ -42,7 +42,8 @@ info: ## Print variables. Useful for debugging.
 
 
 deploy: ## Deploy to kubernetes using the credentials in KUBE_CA_PEM_FILE (or KUBE_CA_BUNDLE ) and TOKEN
-	@cat k8s/*.{yaml,yml,tmpl} | envsubst | $(KUBECTL) apply -f -
+	@ls k8s/
+	@cat k8s/*.{yaml,yml,tmpl} 2>/dev/null | envsubst | $(KUBECTL) apply -f -
 
 deploy-check: ## Get the deployed configuration.
 	@$(KUBECTL) get deploy,pods,svc,ingress
