@@ -12,14 +12,14 @@ else
 	@docker login -u $(HUB_USER) -p $(HUB_PASSWORD)
 endif
 
-login:: docker-login
-
-clean:: docker-clean
-
 docker-clean: ## Remove docker credentials
 ifeq ($(HUB_USER),)
 else
 	@docker logout
 endif
+
+login:: docker-login
+
+clean:: docker-clean
 
 .PHONY:: docker-login docker-clean login clean
