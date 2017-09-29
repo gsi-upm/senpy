@@ -25,5 +25,6 @@ ci:  ## Run a task using gitlab-runner. Only use to debug problems in the CI pip
 
 include $(MK_DIR)/makefiles.mk
 include $(MK_DIR)/docker.mk
+include $(MK_DIR)/git.mk
 
 .PHONY:: config help ci version .FORCE
