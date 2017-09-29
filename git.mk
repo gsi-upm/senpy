@@ -5,7 +5,7 @@ tag:
 	git tag ${VERSION}
 
 push::
-	git push -u --tags origin HEAD
+	git push --tags -u origin HEAD
 
 pull::
 	git pull --all
