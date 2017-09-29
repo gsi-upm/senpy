@@ -12,5 +12,6 @@ makefiles-pull: makefiles-remote
 	git subtree pull --prefix=.makefiles/ makefiles master --squash
 
 pull:: makefiles-pull
+push:: makefiles-push
 
-.PHONY:: makefiles-remote makefiles-commit makefiles-push makefiles-pull
+.PHONY:: makefiles-remote makefiles-commit makefiles-push makefiles-pull pull push
