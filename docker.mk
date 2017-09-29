@@ -14,9 +14,9 @@ endif
 
 login:: docker-login
 
-clean:: docker-clean ## Remove docker credentials
+clean:: docker-clean
 
-docker-clean:
+docker-clean: ## Remove docker credentials
 ifeq ($(HUB_USER),)
 else
 	@docker logout
