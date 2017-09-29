@@ -24,5 +24,6 @@ ci:  ## Run a task using gitlab-runner. Only use to debug problems in the CI pip
 	gitlab-runner exec shell --builds-dir '.builds' --env CI_PROJECT_NAME=$(NAME) ${action}
 
 include $(MK_DIR)/makefiles.mk
+include $(MK_DIR)/docker.mk
 
 .PHONY:: config help ci version .FORCE
