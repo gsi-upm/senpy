@@ -1,5 +1,8 @@
+NAME ?= $(shell basename $(CURDIR))
 VERSION ?= $(shell git describe --tags --dirty 2>/dev/null)
 
+# Get the location of this makefile.
+MK_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 .FORCE:
 
 version: .FORCE
@@ -20,5 +23,8 @@ config:  ## Load config from the environment. You should run it once in every se
 ci:  ## Run a task using gitlab-runner. Only use to debug problems in the CI pipeline
 	gitlab-runner exec shell --builds-dir '.builds' --env CI_PROJECT_NAME=$(NAME) ${action}
 
+include $(MK_DIR)/makefiles.mk
+include $(MK_DIR)/docker.mk
+include $(MK_DIR)/git.mk
 
 .PHONY:: config help ci version .FORCE

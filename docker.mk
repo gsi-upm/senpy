@@ -1,6 +1,6 @@
 IMAGEWTAG ?= $(IMAGENAME):$(VERSION)
 
-login: ## Log in to the registry. It will only be used in the server, or when running a CI task locally (if CI_BUILD_TOKEN is set).
+docker-login: ## Log in to the registry. It will only be used in the server, or when running a CI task locally (if CI_BUILD_TOKEN is set).
 ifeq ($(CI_BUILD_TOKEN),)
 	@echo "Not logging in to the docker registry" "$(CI_REGISTRY)"
 else
@@ -12,10 +12,14 @@ else
 	@docker login -u $(HUB_USER) -p $(HUB_PASSWORD)
 endif
 
-clean:: ## Remove docker credentials
+docker-clean: ## Remove docker credentials
 ifeq ($(HUB_USER),)
 else
 	@docker logout
 endif
 
-.PHONY:: login clean
+login:: docker-login
+
+clean:: docker-clean
+
+.PHONY:: docker-login docker-clean login clean

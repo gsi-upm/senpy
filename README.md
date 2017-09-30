@@ -5,7 +5,7 @@ To add them to your project, simply do:
 git remote add makefiles ssh://git@lab.cluster.gsi.dit.upm.es:2200/docs/templates/makefiles.git
 git subtree add --prefix=.makefiles/ makefiles master
 touch Makefile
-echo "include .makefiles/makefiles.mk" >> Makefile
+echo "include .makefiles/base.mk" >> Makefile
 ```
 
 Now you can take advantage of the recipes.
