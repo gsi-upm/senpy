@@ -83,6 +83,7 @@ deploy:
     - make -e deploy
   only:
     - master
+    - fix-makefiles
 
 push-github:
   stage: deploy
