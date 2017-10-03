@@ -2,17 +2,15 @@ export
 NAME ?= $(shell basename $(CURDIR))
 VERSION ?= $(shell git describe --tags --dirty 2>/dev/null)
 
+ifeq ($(wildcard $VERSION),)
+	VERSION:=unknown
+endif
+
 # Get the location of this makefile.
 MK_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 -include .env
 -include ../.env
-
-.FORCE:
-
-version: .FORCE
-	@echo $(VERSION) > $(NAME)/VERSION
-	@echo $(VERSION)
 
 help:           ## Show this help.
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/\(.*:\)[^#]*##\s*\(.*\)/\1\t\2/' | column -t -s "	"
@@ -35,4 +33,4 @@ include $(MK_DIR)/git.mk
 info:: ## List all variables
 	env
 
-.PHONY:: config help ci version .FORCE
+.PHONY:: config help ci
