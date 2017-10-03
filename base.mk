@@ -1,8 +1,13 @@
+export
 NAME ?= $(shell basename $(CURDIR))
 VERSION ?= $(shell git describe --tags --dirty 2>/dev/null)
 
 # Get the location of this makefile.
 MK_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+-include .env
+-include ../.env
+
 .FORCE:
 
 version: .FORCE
@@ -13,7 +18,7 @@ help:           ## Show this help.
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/\(.*:\)[^#]*##\s*\(.*\)/\1\t\2/' | column -t -s "	"
 
 config:  ## Load config from the environment. You should run it once in every session before other tasks. Run: eval $(make config)
-	@echo ". ../.env || true;"
+	@awk '{ print "export " $$0}' ../.env
 	@awk '{ print "export " $$0}' .env
 	@echo "# Please, run: "
 	@echo "# eval \$$(make config)"
@@ -26,5 +31,8 @@ ci:  ## Run a task using gitlab-runner. Only use to debug problems in the CI pip
 include $(MK_DIR)/makefiles.mk
 include $(MK_DIR)/docker.mk
 include $(MK_DIR)/git.mk
+
+info:: ## List all variables
+	env
 
 .PHONY:: config help ci version .FORCE
