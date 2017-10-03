@@ -69,7 +69,8 @@ deploy_pypi:
   stage: deploy
   script:   # Configure the PyPI credentials, then push the package, and cleanup the creds.
     - echo "[server-login]" >> ~/.pypirc
-    - echo "username=" ${PYPI_USER} >> ~/.pypirc
+    - echo "repository=https://upload.pypi.org/legacy/" >> ~/.pypirc
+    - echo "password=" ${PYPI_PASSWORD} >> ~/.pypirc
     - echo "password=" ${PYPI_PASSWORD} >> ~/.pypirc
     - make pip_upload
     - echo "" > ~/.pypirc && rm ~/.pypirc  # If the above fails, this won't run.
