@@ -36,6 +36,7 @@ test-2.7:
   only:
     - tags
     - triggers
+    - fix-makefiles
 
 push-3.5:
   <<: *image_definition
