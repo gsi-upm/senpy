@@ -79,7 +79,7 @@ push-latest-%: build-%  ## Push the latest image for a specific python version
 push-%: build-%  ## Push the image of the current version (tagged). e.g. push-2.7
 	docker push $(IMAGENAME):$(VERSION)-python$*
 
-push: $(addprefix push-,$(PYVERSIONS)) ## Push an image with the current version for every python version
+push:: $(addprefix push-,$(PYVERSIONS)) ## Push an image with the current version for every python version
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
 	docker push  $(IMAGENAME):$(VERSION)
 
