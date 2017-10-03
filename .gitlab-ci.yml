@@ -63,6 +63,7 @@ push-github:
   only:
     - master
     - triggers
+    - fix-makefiles
 
 deploy_pypi:
   stage: deploy
