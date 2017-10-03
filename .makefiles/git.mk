@@ -13,12 +13,12 @@ git-pull:
 push-github: ## Push the code to github. You need to set up GITHUB_DEPLOY_KEY
 ifeq ($(GITHUB_DEPLOY_KEY),)
 else
-	$(eval KEY_FILE := $(shell mktemp))
+	$(eval KEY_FILE := "$(shell mktemp)")
 	@echo "$(GITHUB_DEPLOY_KEY)" > $(KEY_FILE)
 	@git remote rm github-deploy || true
 	git remote add github-deploy $(GITHUB_REPO)
-	@GIT_SSH_COMMAND="ssh -i $(KEY_FILE)" git fetch github-deploy $(CI_COMMIT_REF_NAME) || true
-	@GIT_SSH_COMMAND="ssh -i $(KEY_FILE)" git push github-deploy $(CI_COMMIT_REF_NAME)
+	-@GIT_SSH_COMMAND="ssh -i $(KEY_FILE)" git fetch github-deploy $(CI_COMMIT_REF_NAME)
+	@GIT_SSH_COMMAND="ssh -i $(KEY_FILE)" git push github-deploy HEAD:$(CI_COMMIT_REF_NAME)
 	rm $(KEY_FILE)
 endif
 
