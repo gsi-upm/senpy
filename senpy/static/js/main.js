@@ -1,7 +1,7 @@
 var ONYX = "http://www.gsi.dit.upm.es/ontologies/onyx/ns#";
 var RDF_TYPE =  "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 var plugins_params={};
-var default_params = JSON.parse($.ajax({type: "GET", url: "/api?help=True" , async: false}).responseText);
+var default_params = JSON.parse($.ajax({type: "GET", url: "/api?help=true" , async: false}).responseText);
 function replaceURLWithHTMLLinks(text) {
     console.log('Text: ' + text);
     var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
@@ -105,29 +105,40 @@ function change_params(){
         html=""
 		for (param in default_params){
 		  if ((default_params[param]['options']) && (['help','conversion'].indexOf(param) < 0)){  
-			html+= "<label> "+param+"</label>"
-            html+= "<select id=\""+param+"\" name=\""+param+"\">"
-			for (option in default_params[param]['options']){
-				if (default_params[param]['options'][option] == default_params[param]['default']){  
-					html+="<option value \""+default_params[param]['options'][option]+"\" selected >"+default_params[param]['options'][option]+"</option>"
-				}
-				else{
-					html+="<option value \""+default_params[param]['options'][option]+"\">"+default_params[param]['options'][option]+"</option>"
-							
-				}
-			}
-			html+="</select><br>"
-		  }
+          html+= "<label> "+param+"</label>"
+          if (default_params[param]['options'].length < 1) {
+              html +="<input></input>";
+          }
+          else {
+              html+= "<select id=\""+param+"\" name=\""+param+"\">"
+              for (option in default_params[param]['options']){
+                  if (default_params[param]['options'][option] == default_params[param]['default']){  
+                      html+="<option value \""+default_params[param]['options'][option]+"\" selected >"+default_params[param]['options'][option]+"</option>"
+                  }
+                  else{
+                      html+="<option value \""+default_params[param]['options'][option]+"\">"+default_params[param]['options'][option]+"</option>"
+                      
+                  }
+              }
+          }
+      html+="</select><br>"
+      }
 		}
         for (param in plugins_params[plugin]){
           if (param || plugins_params[plugin][param].length > 1){
-            html+= "<label> Parameter "+param+"</label>"
-            html+= "<select id=\""+param+"\" name=\""+param+"\">"
-            for (option in plugins_params[plugin][param]){
-                  html+="<option value \""+plugins_params[plugin][param][option]+"\">"+plugins_params[plugin][param][option]+"</option>"
-            }
+              html+= "<label> Parameter "+param+"</label>"
+              param_opts = plugins_params[plugin][param]
+              if (param_opts.length > 0) {
+                  html+= "<select id=\""+param+"\" name=\""+param+"\">"
+                  for (option in param_opts){
+                      html+="<option value \""+param_opts[option]+"\">"+param_opts[option]+"</option>"
+                  }
+                  html+="</select>"
+              }
+              else {
+                  html +="<input id=\""+param+"\" name=\""+param+"\"></input>";
+              }
           }
-          html+="</select>"
         }
         document.getElementById("params").innerHTML = html
 };
@@ -143,9 +154,13 @@ function load_JSON(){
       url += "?algo="+plugin+"&i="+input
       for (param in plugins_params[plugin]){
         if (param != null){
-            var param_value = encodeURIComponent(document.getElementById(param).options[document.getElementById(param).selectedIndex].text);
-            if (param_value){
-              url+="&"+param+"="+param_value
+            if (plugins_params[plugin].length > 0){
+                var param_value = encodeURIComponent(document.getElementById(param).options[document.getElementById(param).selectedIndex].text);
+            } else {
+                var param_value = encodeURIComponent(document.getElementById(param).value);
+            }
+            if (param_value !== "undefined" && param_value.length > 0){
+                url+="&"+param+"="+param_value
             }
         }
       }
