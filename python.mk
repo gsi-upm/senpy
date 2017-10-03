@@ -1,8 +1,16 @@
 PYVERSIONS ?= 2.7
 PYMAIN ?= $(firstword $(PYVERSIONS))
 TARNAME ?= $(NAME)-$(VERSION).tar.gz 
+VERSIONFILE ?= $(NAME)/VERSION
 
 DEVPORT ?= 6000
+
+
+.FORCE:
+
+version: .FORCE
+	@echo $(VERSION) > $(VERSIONFILE)
+	@echo $(VERSION)
 
 yapf: ## Format python code
 	yapf -i -r $(NAME)
@@ -89,4 +97,4 @@ clean:: ## Clean older docker images and containers related to this project and 
 	@docker ps -a | grep $(IMAGENAME) | awk '{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1;}}' | xargs docker rm -v 2>/dev/null|| true
 	@docker images | grep $(IMAGENAME) | awk '{ split($$2, vers, "-"); if(vers[0] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
 
-.PHONY:: yapf dockerfiles Dockerfile-% quick_build build build-% dev-% quick-dev test quick_test push-latest push-latest-% push-% push
+.PHONY:: yapf dockerfiles Dockerfile-% quick_build build build-% dev-% quick-dev test quick_test push-latest push-latest-% push-% push version .FORCE
