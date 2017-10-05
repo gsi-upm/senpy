@@ -2,7 +2,7 @@ export
 NAME ?= $(shell basename $(CURDIR))
 VERSION ?= $(shell git describe --tags --dirty 2>/dev/null)
 
-ifeq ($(wildcard $VERSION),)
+ifeq ($(VERSION),)
 	VERSION:=unknown
 endif
 
