@@ -3,7 +3,7 @@ NAME ?= $(shell basename $(CURDIR))
 VERSION ?= $(shell git describe --tags --dirty 2>/dev/null)
 
 ifeq ($(VERSION),)
-	VERSION:="unknown"
+	VERSION:=unknown
 endif
 
 # Get the location of this makefile.
