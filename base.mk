@@ -2,8 +2,8 @@ export
 NAME ?= $(shell basename $(CURDIR))
 VERSION ?= $(shell git describe --tags --dirty 2>/dev/null)
 
-ifeq ($(wildcard $VERSION),)
-	VERSION:=unknown
+ifeq ($(VERSION),)
+	VERSION:="unknown"
 endif
 
 # Get the location of this makefile.
