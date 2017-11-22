@@ -5,7 +5,6 @@ import os.path
 import os
 import pickle
 import logging
-import tempfile
 import copy
 
 import fnmatch
@@ -16,6 +15,8 @@ import importlib
 import yaml
 import threading
 
+from contextlib import contextmanager
+
 from .. import models, utils
 from ..api import API_PARAMS
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class Plugin(models.Plugin):
-    def __init__(self, info=None):
+    def __init__(self, info=None, data_folder=None):
         """
         Provides a canonical name for plugins and serves as base for other
         kinds of plugins.
@@ -36,6 +37,7 @@ class Plugin(models.Plugin):
         super(Plugin, self).__init__(id=id, **info)
         self.is_activated = False
         self._lock = threading.Lock()
+        self.data_folder = data_folder or os.getcwd()
 
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
@@ -60,6 +62,13 @@ class Plugin(models.Plugin):
             utils.check_template(res, exp)
             for r in res:
                 r.validate()
+
+    @contextmanager
+    def open(self, fpath, *args, **kwargs):
+        if not os.path.isabs(fpath):
+            fpath = os.path.join(self.data_folder, fpath)
+        with open(fpath, *args, **kwargs) as f:
+            yield f
 
 
 SenpyPlugin = Plugin
@@ -121,7 +130,8 @@ class ShelfMixin(object):
             self.__dict__['_sh'] = {}
             if os.path.isfile(self.shelf_file):
                 try:
-                    self.__dict__['_sh'] = pickle.load(open(self.shelf_file, 'rb'))
+                    with self.open(self.shelf_file, 'rb') as p:
+                        self.__dict__['_sh'] = pickle.load(p)
                 except (IndexError, EOFError, pickle.UnpicklingError):
                     logger.warning('{} has a corrupted shelf file!'.format(self.id))
                     if not self.get('force_shelf', False):
@@ -138,14 +148,13 @@ class ShelfMixin(object):
     @property
     def shelf_file(self):
         if 'shelf_file' not in self or not self['shelf_file']:
-            sd = os.environ.get('SENPY_DATA', tempfile.gettempdir())
-            self.shelf_file = os.path.join(sd, self.name + '.p')
+            self.shelf_file = os.path.join(self.data_folder, self.name + '.p')
         return self['shelf_file']
 
     def save(self):
         logger.debug('saving pickle')
         if hasattr(self, '_sh') and self._sh is not None:
-            with open(self.shelf_file, 'wb') as f:
+            with self.open(self.shelf_file, 'wb') as f:
                 pickle.dump(self._sh, f)
 
 
@@ -207,12 +216,11 @@ def log_subprocess_output(process):
 
 
 def install_deps(*plugins):
+    installed = False
     for info in plugins:
         requirements = info.get('requirements', [])
         if requirements:
-            pip_args = [sys.executable, '-m', 'pip']
-            pip_args.append('install')
-            pip_args.append('--use-wheel')
+            pip_args = [sys.executable, '-m', 'pip', 'install', '--use-wheel']
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
@@ -221,11 +229,13 @@ def install_deps(*plugins):
                                        stderr=subprocess.PIPE)
             log_subprocess_output(process)
             exitcode = process.wait()
+            installed = True
             if exitcode != 0:
                 raise models.Error("Dependencies not properly installed")
+    return installed
 
 
-def load_plugin_from_info(info, root=None, validator=validate_info, install=True):
+def load_plugin_from_info(info, root=None, validator=validate_info, install=True, *args, **kwargs):
     if not root and '_path' in info:
         root = os.path.dirname(info['_path'])
     if not validator(info):
@@ -249,7 +259,7 @@ def load_plugin_from_info(info, root=None, validator=validate_info, install=True
     if not candidate:
         logger.debug("No valid plugin for: {}".format(module))
         return
-    module = candidate(info=info)
+    module = candidate(info=info, *args, **kwargs)
     return module
 
 
@@ -262,14 +272,14 @@ def parse_plugin_info(fpath):
     return name, info
 
 
-def load_plugin(fpath):
+def load_plugin(fpath, *args, **kwargs):
     name, info = parse_plugin_info(fpath)
     logger.debug("Info: {}".format(info))
-    plugin = load_plugin_from_info(info)
+    plugin = load_plugin_from_info(info, *args, **kwargs)
     return name, plugin
 
 
-def load_plugins(folders, loader=load_plugin):
+def load_plugins(folders, loader=load_plugin, *args, **kwargs):
     plugins = {}
     for search_folder in folders:
         for root, dirnames, filenames in os.walk(search_folder):
@@ -277,7 +287,7 @@ def load_plugins(folders, loader=load_plugin):
             dirnames[:] = [d for d in dirnames if d[0] not in ['.', '_']]
             for filename in fnmatch.filter(filenames, '*.senpy'):
                 fpath = os.path.join(root, filename)
-                name, plugin = loader(fpath)
+                name, plugin = loader(fpath, *args, **kwargs)
                 if plugin and name:
                     plugins[name] = plugin
     return plugins

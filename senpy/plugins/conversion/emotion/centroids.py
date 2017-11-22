@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class CentroidConversion(EmotionConversionPlugin):
-    def __init__(self, info):
+    def __init__(self, info, *args, **kwargs):
         if 'centroids' not in info:
             raise Error('Centroid conversion plugins should provide '
                         'the centroids in their senpy file')
@@ -33,7 +33,7 @@ class CentroidConversion(EmotionConversionPlugin):
                 ncentroids[aliases.get(k1, k1)] = nv1
             info['centroids'] = ncentroids
 
-        super(CentroidConversion, self).__init__(info)
+        super(CentroidConversion, self).__init__(info, *args, **kwargs)
 
         self.dimensions = set()
         for c in self.centroids.values():

@@ -76,6 +76,12 @@ def main():
         default=False,
         help='Do not run a server, only install plugin dependencies')
     parser.add_argument(
+        '--data-folder',
+        '--data',
+        type=str,
+        default=None,
+        help='Where to look for data. It be set with the SENPY_DATA environment variable as well.')
+    parser.add_argument(
         '--threaded',
         action='store_false',
         default=True,
@@ -96,7 +102,9 @@ def main():
     rl.setLevel(getattr(logging, args.level))
     app = Flask(__name__)
     app.debug = args.debug
-    sp = Senpy(app, args.plugins_folder, default_plugins=args.default_plugins)
+    sp = Senpy(app, args.plugins_folder,
+               default_plugins=args.default_plugins,
+               data_folder=args.data_folder)
     sp.install_deps()
     if args.only_install:
         return

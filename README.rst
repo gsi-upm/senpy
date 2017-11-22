@@ -1,5 +1,5 @@
 .. image:: img/header.png
-   :height: 6em
+   :width: 100%
    :target: http://demos.gsi.dit.upm.es/senpy
 
 .. image:: https://travis-ci.org/gsi-upm/senpy.svg?branch=master
