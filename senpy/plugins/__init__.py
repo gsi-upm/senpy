@@ -210,7 +210,7 @@ def install_deps(*plugins):
     for info in plugins:
         requirements = info.get('requirements', [])
         if requirements:
-            pip_args = ['pip']
+            pip_args = [sys.executable, '-m', 'pip']
             pip_args.append('install')
             pip_args.append('--use-wheel')
             for req in requirements:

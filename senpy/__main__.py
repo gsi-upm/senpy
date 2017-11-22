@@ -25,6 +25,7 @@ from senpy.extensions import Senpy
 
 import logging
 import os
+import sys
 import argparse
 import senpy
 
@@ -88,6 +89,7 @@ def main():
     args = parser.parse_args()
     if args.version:
         print('Senpy version {}'.format(senpy.__version__))
+        print(sys.version)
         exit(1)
     logging.basicConfig()
     rl = logging.getLogger()
