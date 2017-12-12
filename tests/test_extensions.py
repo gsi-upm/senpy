@@ -49,14 +49,13 @@ class ExtensionsTest(TestCase):
         """ Installing a plugin """
         info = {
             'name': 'TestPip',
-            'module': 'dummy',
+            'module': 'noop_plugin',
             'description': None,
             'requirements': ['noop'],
             'version': 0
         }
-        root = os.path.join(self.dir, 'plugins', 'dummy_plugin')
-        module = plugins.load_plugin_from_info(info, root=root)
-        plugins.install_deps(info)
+        root = os.path.join(self.dir, 'plugins', 'noop')
+        module = plugins.load_plugin_from_info(info, root=root, install=True)
         assert module.name == 'TestPip'
         assert module
         import noop

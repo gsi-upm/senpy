@@ -222,8 +222,9 @@ def make_mini_test(plugin_info):
 
 
 def _add_tests():
-    root = os.path.dirname(__file__)
-    plugs = plugins.load_plugins(os.path.join(root, ".."), loader=plugins.parse_plugin_info)
+    root = os.path.join(os.path.dirname(__file__), '..')
+    print(root)
+    plugs = plugins.load_plugins([root, ], loader=plugins.parse_plugin_info)
     for k, v in plugs.items():
         pass
         t_method = make_mini_test(v)

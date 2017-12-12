@@ -15,6 +15,7 @@ from functools import partial
 
 import os
 import copy
+import errno
 import logging
 import traceback
 
@@ -27,6 +28,7 @@ class Senpy(object):
     def __init__(self,
                  app=None,
                  plugin_folder=".",
+                 data_folder=None,
                  default_plugins=False):
         self.app = app
         self._search_folders = set()
@@ -41,6 +43,17 @@ class Senpy(object):
             # Add only conversion plugins
             self.add_folder(os.path.join('plugins', 'conversion'),
                             from_root=True)
+
+        self.data_folder = data_folder or os.environ.get('SENPY_DATA',
+                                                         os.path.join(os.getcwd(),
+                                                                      'senpy_data'))
+        try:
+            os.makedirs(self.data_folder)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                print('Directory not created.')
+            else:
+                raise
 
         if app is not None:
             self.init_app(app)
@@ -312,7 +325,8 @@ class Senpy(object):
     def plugins(self):
         """ Return the plugins registered for a given application.  """
         if self._outdated:
-            self._plugin_list = plugins.load_plugins(self._search_folders)
+            self._plugin_list = plugins.load_plugins(self._search_folders,
+                                                     data_folder=self.data_folder)
             self._outdated = False
         return self._plugin_list
 
