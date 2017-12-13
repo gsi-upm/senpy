@@ -55,6 +55,7 @@ push-latest:
   only:
     - master
     - triggers
+    - fix-makefiles
 
 push-github:
   stage: deploy
