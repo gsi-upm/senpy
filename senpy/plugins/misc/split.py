@@ -12,13 +12,14 @@ class SplitPlugin(AnalysisPlugin):
 
     def analyse_entry(self, entry, params):
         chunker_type = params.get("delimiter", "sentence")
-        original_text = entry.get('nif:isString', None)
+        original_text = entry['nif:isString']
         if chunker_type == "sentence":
             tokenizer = PunktSentenceTokenizer()
         if chunker_type == "paragraph":
             tokenizer = LineTokenizer()
-        chars = tokenizer.span_tokenize(original_text)
+        chars = list(tokenizer.span_tokenize(original_text))
         for i, chunk in enumerate(tokenizer.tokenize(original_text)):
+            print(chunk)
             e = Entry()
             e['nif:isString'] = chunk
             if entry.id:
@@ -45,19 +46,19 @@ class SplitPlugin(AnalysisPlugin):
         {
             'entry': {
                 "id": ":test",
-                'nif:isString': 'Hello. World.'
+                'nif:isString': 'Hello\nWorld'
             },
             'params': {
-                'delimiter': 'sentence',
+                'delimiter': 'paragraph',
             },
             'expected': [
                 {
-                    "@id": ":test#char=0,6",
-                    'nif:isString': 'Hello.'
+                    "@id": ":test#char=0,5",
+                    'nif:isString': 'Hello'
                 },
                 {
-                    "@id": ":test#char=7,13",
-                    'nif:isString': 'World.'
+                    "@id": ":test#char=6,11",
+                    'nif:isString': 'World'
                 }
             ]
         }
