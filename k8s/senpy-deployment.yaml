@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: senpy-latest
-        image: gsiupm/senpy:latest
+        image: $IMAGEWTAG
         imagePullPolicy: Always
         args:
           - "--default-plugins"
