@@ -25,8 +25,8 @@ def analyse(instance, **kwargs):
 class ExtensionsTest(TestCase):
     def setUp(self):
         self.app = Flask('test_extensions')
-        self.dir = os.path.dirname(__file__)
-        self.senpy = Senpy(plugin_folder=self.dir,
+        self.examples_dir = os.path.join(os.path.dirname(__file__), '..', 'example-plugins')
+        self.senpy = Senpy(plugin_folder=self.examples_dir,
                            app=self.app,
                            default_plugins=False)
         self.senpy.activate_plugin("Dummy", sync=True)
@@ -41,7 +41,7 @@ class ExtensionsTest(TestCase):
     def test_discovery(self):
         """ Discovery of plugins in given folders.  """
         # noinspection PyProtectedMember
-        assert self.dir in self.senpy._search_folders
+        assert self.examples_dir in self.senpy._search_folders
         print(self.senpy.plugins)
         assert "Dummy" in self.senpy.plugins
 
@@ -54,7 +54,7 @@ class ExtensionsTest(TestCase):
             'requirements': ['noop'],
             'version': 0
         }
-        root = os.path.join(self.dir, 'plugins', 'noop')
+        root = os.path.join(self.examples_dir, 'noop')
         module = plugins.load_plugin_from_info(info, root=root, install=True)
         assert module.name == 'TestPip'
         assert module
@@ -166,7 +166,7 @@ class ExtensionsTest(TestCase):
             self.senpy.filter_plugins(name="Dummy", is_activated=True))
 
     def test_load_default_plugins(self):
-        senpy = Senpy(plugin_folder=self.dir, default_plugins=True)
+        senpy = Senpy(plugin_folder=self.examples_dir, default_plugins=True)
         assert len(senpy.plugins) > 1
 
     def test_convert_emotions(self):

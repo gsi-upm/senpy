@@ -43,6 +43,7 @@ class PluginsTest(TestCase):
     def test_shelf_file(self):
         a = ShelfDummyPlugin(
             info={'name': 'default_shelve_file',
+                  'description': 'Dummy plugin for tests',
                   'version': 'test'})
         a.activate()
         assert os.path.isfile(a.shelf_file)
@@ -53,6 +54,7 @@ class PluginsTest(TestCase):
         newfile = self.shelf_file + "new"
         a = ShelfDummyPlugin(info={
             'name': 'shelve',
+            'description': 'Shelf plugin for tests',
             'version': 'test',
             'shelf_file': newfile
         })
@@ -75,6 +77,7 @@ class PluginsTest(TestCase):
             pickle.dump({'counter': 99}, f)
         a = ShelfDummyPlugin(info={
             'name': 'DummyShelf',
+            'description': 'Dummy plugin for tests',
             'shelf_file': self.shelf_file,
             'version': 'test'
         })
@@ -105,7 +108,8 @@ class PluginsTest(TestCase):
             with open(fn, 'rb') as f:
                 msg, error = files[fn]
                 a = ShelfDummyPlugin(info={
-                    'name': 'shelve',
+                    'name': 'test_corrupt_shelf_{}'.format(msg),
+                    'description': 'Dummy plugin for tests',
                     'version': 'test',
                     'shelf_file': f.name
                 })
@@ -126,6 +130,7 @@ class PluginsTest(TestCase):
         ''' Reusing the values of a previous shelf '''
         a = ShelfDummyPlugin(info={
             'name': 'shelve',
+            'description': 'Dummy plugin for tests',
             'version': 'test',
             'shelf_file': self.shelf_file
         })
@@ -136,6 +141,7 @@ class PluginsTest(TestCase):
 
         b = ShelfDummyPlugin(info={
             'name': 'shelve',
+            'description': 'Dummy plugin for tests',
             'version': 'test',
             'shelf_file': self.shelf_file
         })
@@ -148,6 +154,7 @@ class PluginsTest(TestCase):
         ''' Should be able to set extra parameters'''
         a = ShelfDummyPlugin(info={
             'name': 'shelve',
+            'description': 'Dummy shelf plugin for tests',
             'version': 'test',
             'shelf_file': self.shelf_file,
             'extra_params': {

@@ -15,8 +15,6 @@ import importlib
 import yaml
 import threading
 
-from contextlib import contextmanager
-
 from .. import models, utils
 from ..api import API_PARAMS
 
@@ -29,15 +27,20 @@ class Plugin(models.Plugin):
         Provides a canonical name for plugins and serves as base for other
         kinds of plugins.
         """
-        if not info:
+        logger.debug("Initialising {}".format(info))
+        if info:
+            self.update(info)
+        super(Plugin, self).__init__(**self)
+        if not self.validate():
             raise models.Error(message=("You need to provide configuration"
                                         "information for the plugin."))
-        logger.debug("Initialising {}".format(info))
-        id = 'plugins/{}_{}'.format(info['name'], info['version'])
-        super(Plugin, self).__init__(id=id, **info)
+        self.id = 'plugins/{}_{}'.format(self['name'], self['version'])
         self.is_activated = False
         self._lock = threading.Lock()
         self.data_folder = data_folder or os.getcwd()
+
+    def validate(self):
+        return all(x in self for x in ('name', 'description', 'version'))
 
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
@@ -50,12 +53,21 @@ class Plugin(models.Plugin):
 
     def test(self):
         if not hasattr(self, 'test_cases'):
-            import inspect
             raise AttributeError(('Plugin {} [{}] does not have any defined '
                                   'test cases').format(self.id, inspect.getfile(self.__class__)))
         for case in self.test_cases:
-            res = list(self.analyse_entry(models.Entry(case['entry']),
-                                          case['params']))
+            entry = models.Entry(case['entry'])
+            params = case.get('params', {})
+            fails = case.get('fails', False)
+            try:
+                res = list(self.analyse_entry(entry, params))
+            except models.Error:
+                if fails:
+                    continue
+                raise
+            if fails:
+                raise Exception('This test should have raised an exception.')
+
             exp = case['expected']
             if not isinstance(exp, list):
                 exp = [exp]
@@ -63,12 +75,13 @@ class Plugin(models.Plugin):
             for r in res:
                 r.validate()
 
-    @contextmanager
     def open(self, fpath, *args, **kwargs):
         if not os.path.isabs(fpath):
             fpath = os.path.join(self.data_folder, fpath)
-        with open(fpath, *args, **kwargs) as f:
-            yield f
+        return open(fpath, *args, **kwargs)
+
+    def serve(self, **kwargs):
+        utils.serve(plugin=self, **kwargs)
 
 
 SenpyPlugin = Plugin
@@ -106,17 +119,13 @@ class ConversionPlugin(Plugin):
 
 
 class SentimentPlugin(models.SentimentPlugin, AnalysisPlugin):
-    def __init__(self, info, *args, **kwargs):
-        super(SentimentPlugin, self).__init__(info, *args, **kwargs)
-        self.minPolarityValue = float(info.get("minPolarityValue", 0))
-        self.maxPolarityValue = float(info.get("maxPolarityValue", 1))
+    minPolarityValue = 0
+    maxPolarityValue = 1
 
 
 class EmotionPlugin(models.EmotionPlugin, AnalysisPlugin):
-    def __init__(self, info, *args, **kwargs):
-        super(EmotionPlugin, self).__init__(info, *args, **kwargs)
-        self.minEmotionValue = float(info.get("minEmotionValue", -1))
-        self.maxEmotionValue = float(info.get("maxEmotionValue", 1))
+    minEmotionValue = 0
+    maxEmotionValue = 1
 
 
 class EmotionConversionPlugin(models.EmotionConversionPlugin, ConversionPlugin):
@@ -127,11 +136,11 @@ class ShelfMixin(object):
     @property
     def sh(self):
         if not hasattr(self, '_sh') or self._sh is None:
-            self.__dict__['_sh'] = {}
+            self._sh = {}
             if os.path.isfile(self.shelf_file):
                 try:
                     with self.open(self.shelf_file, 'rb') as p:
-                        self.__dict__['_sh'] = pickle.load(p)
+                        self._sh = pickle.load(p)
                 except (IndexError, EOFError, pickle.UnpicklingError):
                     logger.warning('{} has a corrupted shelf file!'.format(self.id))
                     if not self.get('force_shelf', False):
@@ -142,8 +151,12 @@ class ShelfMixin(object):
     def sh(self):
         if os.path.isfile(self.shelf_file):
             os.remove(self.shelf_file)
-            del self.__dict__['_sh']
+            del self._sh
         self.save()
+
+    @sh.setter
+    def sh(self, value):
+        self._sh = value
 
     @property
     def shelf_file(self):
@@ -196,7 +209,7 @@ def pfilter(plugins, **kwargs):
 
 
 def validate_info(info):
-    return all(x in info for x in ('name', 'module', 'description', 'version'))
+    return all(x in info for x in ('name',))
 
 
 def load_module(name, root=None):
@@ -235,6 +248,17 @@ def install_deps(*plugins):
     return installed
 
 
+def get_plugin_class(module):
+    candidate = None
+    for _, obj in inspect.getmembers(module):
+        if inspect.isclass(obj) and inspect.getmodule(obj) == module:
+            logger.debug(("Found plugin class:"
+                          " {}@{}").format(obj, inspect.getmodule(obj)))
+            candidate = obj
+            break
+    return candidate
+
+
 def load_plugin_from_info(info, root=None, validator=validate_info, install=True, *args, **kwargs):
     if not root and '_path' in info:
         root = os.path.dirname(info['_path'])
@@ -249,18 +273,12 @@ def load_plugin_from_info(info, root=None, validator=validate_info, install=True
             raise
         install_deps(info)
         tmp = load_module(module, root)
-    candidate = None
-    for _, obj in inspect.getmembers(tmp):
-        if inspect.isclass(obj) and inspect.getmodule(obj) == tmp:
-            logger.debug(("Found plugin class:"
-                          " {}@{}").format(obj, inspect.getmodule(obj)))
-            candidate = obj
-            break
-    if not candidate:
-        logger.debug("No valid plugin for: {}".format(module))
-        return
-    module = candidate(info=info, *args, **kwargs)
-    return module
+    cls = None
+    if '@type' not in info:
+        cls = get_plugin_class(tmp)
+    if not cls:
+        raise Exception("No valid plugin for: {}".format(module))
+    return cls(info=info, *args, **kwargs)
 
 
 def parse_plugin_info(fpath):

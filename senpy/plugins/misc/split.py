@@ -45,7 +45,7 @@ class SplitPlugin(AnalysisPlugin):
         },
         {
             'entry': {
-                "id": ":test",
+                "@id": ":test",
                 'nif:isString': 'Hello\nWorld'
             },
             'params': {

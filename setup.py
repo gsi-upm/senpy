@@ -34,6 +34,11 @@ setup(
     install_requires=install_reqs,
     tests_require=test_reqs,
     setup_requires=['pytest-runner', ],
+    extras_require={
+        'evaluation': [
+            'gsitk'
+        ]
+    },
     include_package_data=True,
     entry_points={
         'console_scripts':

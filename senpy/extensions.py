@@ -83,7 +83,7 @@ class Senpy(object):
             self._search_folders.add(folder)
             self._outdated = True
         else:
-            logger.debug("Not a folder: %s", folder)
+            raise AttributeError("Not a folder: %s", folder)
 
     def _get_plugins(self, request):
         if not self.analysis_plugins:

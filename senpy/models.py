@@ -14,6 +14,7 @@ import json
 import os
 import jsonref
 import jsonschema
+import inspect
 
 from flask import Response as FlaskResponse
 from pyld import jsonld
@@ -102,7 +103,7 @@ class SenpyMixin(object):
             })
         return FlaskResponse(
             response=content,
-            status=getattr(self, "status", 200),
+            status=self.get('status', 200),
             headers=headers,
             mimetype=mimetype)
 
@@ -188,34 +189,61 @@ class SenpyMixin(object):
 
 
 class BaseModel(SenpyMixin, dict):
+    '''
+    Entities of the base model are a special kind of dictionary that emulates
+    a JSON-LD object. For convenience, the values can also be accessed as attributes
+    (a la Javascript). e.g.:
+
+    > myobject.key == myobject['key']
+    True
+    > myobject.ns__name == myobject['ns:name']
+    True
+    '''
 
     schema = base_schema
 
     def __init__(self, *args, **kwargs):
+        self.attrs_to_dict()
         if 'id' in kwargs:
             self.id = kwargs.pop('id')
         elif kwargs.pop('_auto_id', True):
             self.id = '_:{}_{}'.format(type(self).__name__, time.time())
-        temp = dict(*args, **kwargs)
 
+        temp = self.get_defaults()
+        temp.update(dict(*args))
+        for k, v in kwargs.items():
+            temp[self._get_key(k)] = v
+        super(BaseModel, self).__init__(temp)
+
+        if '@type' not in self:
+            logger.warn('Created an instance of an unknown model')
+
+    def get_defaults(self):
+        temp = {}
         for obj in [
                 self.schema,
         ] + self.schema.get('allOf', []):
             for k, v in obj.get('properties', {}).items():
                 if 'default' in v and k not in temp:
                     temp[k] = copy.deepcopy(v['default'])
+        return temp
 
-        for i in temp:
-            nk = self._get_key(i)
-            if nk != i:
-                temp[nk] = temp[i]
-                del temp[i]
-        try:
-            temp['@type'] = getattr(self, '@type')
-        except AttributeError:
-            logger.warn('Creating an instance of an unknown model')
+    def attrs_to_dict(self):
+        '''
+        Copy the attributes of the class to the instance.
 
-        super(BaseModel, self).__init__(temp)
+        This allows adding default values in the class definition.
+        e.g.:
+
+        class MyPlugin(Plugin):
+            version=0.3
+            description='A dull plugin'
+        '''
+        def is_attr(x):
+            return not(inspect.isroutine(x) or inspect.ismethod(x) or isinstance(x, property))
+        for key, value in inspect.getmembers(self.__class__, is_attr):
+            if key[0] != '_' and key != 'schema':
+                self[key] = value
 
     def _get_key(self, key):
         if key is 'id':
@@ -224,26 +252,37 @@ class BaseModel(SenpyMixin, dict):
         return key
 
     def __delitem__(self, key):
+        key = self._get_key(key)
         dict.__delitem__(self, key)
 
-    def __getattr__(self, key):
-        try:
-            return self.__getitem__(self._get_key(key))
-        except KeyError:
-            raise AttributeError(key)
-
-    def __setattr__(self, key, value):
-        self.__setitem__(self._get_key(key), value)
-
-    def __delattr__(self, key):
-        try:
-            object.__delattr__(self, key)
-        except AttributeError:
-            self.__delitem__(self._get_key(key))
+    def _internal_key(self, key):
+        return key[0] == '_' or key in self.__dict__
 
     def _plain_dict(self):
         d = {k: v for (k, v) in self.items() if k[0] != "_"}
         return d
+
+    def __getattr__(self, key):
+        '''
+        __getattr__ only gets called when the attribute could not
+        be found in the __dict__. So we only need to look for the
+        the element in the dictionary, or raise an Exception.
+        '''
+        if self._internal_key(key):
+            raise AttributeError(key)
+        return self.__getitem__(self._get_key(key))
+
+    def __setattr__(self, key, value):
+        if self._internal_key(key):
+            return super(BaseModel, self).__setattr__(key, value)
+        key = self._get_key(key)
+        return self.__setitem__(self._get_key(key), value)
+
+    def __delattr__(self, key):
+        if self._internal_key(key):
+            return object.__delattr__(self, key)
+        key = self._get_key(key)
+        self.__delitem__(self._get_key(key))
 
 
 def register(rsubclass, rtype=None):

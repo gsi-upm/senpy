@@ -23,3 +23,23 @@ def check_template(indict, template):
     else:
         if indict != template:
             raise models.Error('{} and {} are different'.format(indict, template))
+
+
+def easy(app=None, plugin=None, host='0.0.0.0', port=5000, **kwargs):
+    '''
+    Run a server with a specific plugin.
+    '''
+
+    from flask import Flask
+    from senpy.extensions import Senpy
+
+    if not app:
+        app = Flask(__name__)
+    sp = Senpy(app)
+    if plugin:
+        sp.add_plugin(plugin)
+    sp.install_deps()
+    app.run(host,
+            port,
+            debug=app.debug,
+            **kwargs)

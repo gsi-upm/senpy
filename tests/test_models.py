@@ -100,6 +100,7 @@ class ModelsTest(TestCase):
     def test_plugins(self):
         self.assertRaises(Error, plugins.Plugin)
         p = plugins.Plugin({"name": "dummy",
+                            "description": "I do nothing",
                             "version": 0,
                             "extra_params": {
                                 "none": {
@@ -123,7 +124,9 @@ class ModelsTest(TestCase):
     def test_str(self):
         """The string representation shouldn't include private variables"""
         r = Results()
-        p = plugins.Plugin({"name": "STR test", "version": 0})
+        p = plugins.Plugin({"name": "STR test",
+                            "description": "Test of private variables.",
+                            "version": 0})
         p._testing = 0
         s = str(p)
         assert "_testing" not in s
