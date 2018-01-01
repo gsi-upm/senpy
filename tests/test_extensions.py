@@ -106,7 +106,7 @@ class ExtensionsTest(TestCase):
         r2 = analyse(self.senpy, input="tupni", output="tuptuo")
         assert r1.analysis[0] == "plugins/Dummy_0.1"
         assert r2.analysis[0] == "plugins/Dummy_0.1"
-        assert r1.entries[0]['nif:iString'] == 'input'
+        assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_jsonld(self):
         """ Using a plugin with JSON-LD input"""
@@ -130,7 +130,7 @@ class ExtensionsTest(TestCase):
                      output="tuptuo")
         assert r1.analysis[0] == "plugins/Dummy_0.1"
         assert r2.analysis[0] == "plugins/Dummy_0.1"
-        assert r1.entries[0]['nif:iString'] == 'input'
+        assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_error(self):
         mm = mock.MagicMock()
@@ -185,7 +185,7 @@ class ExtensionsTest(TestCase):
         response = Results({
             'analysis': [{'plugin': plugin}],
             'entries': [Entry({
-                'nif:iString': 'much ado about nothing',
+                'nif:isString': 'much ado about nothing',
                 'emotions': [eSet1]
             })]
         })

@@ -7,11 +7,11 @@
       "description": "Help containing accepted parameters",
       "type": "object",
       "properties": {
-        "parameters": {
+        "valid_parameters": {
           "type": "object"
           }
         },
-        "required": "parameters"
+        "required": "valid_parameters"
       }
     ]
 }

@@ -88,28 +88,52 @@
 
         <div class="tab-pane active" id="test">
           <div class="well">
-            <form id="form" onsubmit="return getPlugins();" accept-charset="utf-8">
-              <div id="inputswrapper">
+            <form id="form" class="container" onsubmit="return getPlugins();" accept-charset="utf-8">
                 <div><textarea id="input" class="boxsizingBorder" rows="5" name="i">This text makes me sad.
 whilst this text makes me happy and surprised at the same time.
-I cannot believe it!</textarea></div>
-                <label>Select the plugin:</label>
-                <select id="plugins" name="plugins" onchange="change_params()">
-                </select>
-                        </br>
-                        <div id ="params">
+I cannot believe it!</textarea>
+                </div>
+                <div>
+                    <label>Select the plugin:</label>
+                    <select id="plugins" name="plugins" onchange="draw_extra_parameters()">
+                    </select>
+                </div>
+                <!-- PARAMETERS -->
+                <div class="panel-group" id="parameters">
+                    <div class="panel panel-default">
+                        <a data-toggle="collapse" class="deco-none" href="#basic_params">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    Basic API parameters
+                                </h4>
+                            </div>
+                        </a>
+                        <div id="basic_params" class="panel-collapse collapse panel-body">
                         </div>
-                </br>
+                    </div>
+                    <div class="panel panel-default">
+                        <a data-toggle="collapse" class="deco-none" href="#extra_params">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    Plugin extra parameters
+                                </h4>
+                            </div>
+                        </a>
+                        <div id="extra_params" class="panel-collapse collapse in panel-body">
+                        </div>
+                    </div>
+                </div> 
+                <!-- END PARAMETERS -->
+ 
                 <a id="preview" class="btn btn-lg btn-primary" onclick="load_JSON()">Analyse!</a>
                 <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
-              </div>
             </form>
           </div>
             <span id="input_request"></span>
             <div id="results-div">
               <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="active"><a class="active" href="#viewer">Viewer</a></li>
-                <li role="presentation"><a class="active" href="#raw">Raw</a></li>
+                <li role="presentation" class="active"><a data-toggle="tab" class="active" href="#viewer">Viewer</a></li>
+                <li role="presentation"><a data-toggle="tab" class="active" href="#raw">Raw</a></li>
               </ul>
               <div class="tab-content" id="results-container">
                 
@@ -119,7 +143,7 @@ I cannot believe it!</textarea></div>
                   </div>
                 </div>
                 
-                <div class="tab-pane" id="raw">
+                <div class="tab-pane"  id="raw">
                   <div id="content">
                     <pre id="jsonraw" class="results"></pre>
                   </div>

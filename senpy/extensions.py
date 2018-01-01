@@ -123,7 +123,7 @@ class Senpy(object):
             return
         plugin = plugins[0]
         self._activate(plugin)  # Make sure the plugin is activated
-        specific_params = api.get_extra_params(req, plugin)
+        specific_params = api.parse_extra_params(req, plugin)
         req.analysis.append({'plugin': plugin,
                              'parameters': specific_params})
         results = plugin.analyse_entries(entries, specific_params)
@@ -262,17 +262,11 @@ class Senpy(object):
         with plugin._lock:
             if plugin.is_activated:
                 return
-            try:
-                plugin.activate()
-                msg = "Plugin activated: {}".format(plugin.name)
-                logger.info(msg)
-                success = True
-                self._set_active(plugin, success)
-            except Exception as ex:
-                msg = "Error activating plugin {} - {} : \n\t{}".format(
-                    plugin.name, ex, traceback.format_exc())
-                logger.error(msg)
-                raise Error(msg)
+            plugin.activate()
+            msg = "Plugin activated: {}".format(plugin.name)
+            logger.info(msg)
+            success = True
+            self._set_active(plugin, success)
 
     def activate_plugin(self, plugin_name, sync=True):
         try:
@@ -294,13 +288,8 @@ class Senpy(object):
         with plugin._lock:
             if not plugin.is_activated:
                 return
-            try:
-                plugin.deactivate()
-                logger.info("Plugin deactivated: {}".format(plugin.name))
-            except Exception as ex:
-                logger.error(
-                    "Error deactivating plugin {}: {}".format(plugin.name, ex))
-                logger.error("Trace: {}".format(traceback.format_exc()))
+            plugin.deactivate()
+            logger.info("Plugin deactivated: {}".format(plugin.name))
 
     def deactivate_plugin(self, plugin_name, sync=True):
         try:

@@ -13,8 +13,9 @@ API_PARAMS = {
     "expanded-jsonld": {
         "@id": "expanded-jsonld",
         "aliases": ["expanded"],
+        "options": "boolean",
         "required": True,
-        "default": 0
+        "default": False
     },
     "with_parameters": {
         "aliases": ['withparameters',
@@ -22,13 +23,6 @@ API_PARAMS = {
         "options": "boolean",
         "default": False,
         "required": True
-    },
-    "plugin_type": {
-        "@id": "pluginType",
-        "description": 'What kind of plugins to list',
-        "aliases": ["pluginType"],
-        "required": True,
-        "default": "analysisPlugin"
     },
     "outformat": {
         "@id": "outformat",
@@ -56,6 +50,16 @@ API_PARAMS = {
         "required": True,
         "options": ["filtered", "nested", "full"],
         "default": "full"
+    }
+}
+
+PLUGINS_PARAMS = {
+    "plugin_type": {
+        "@id": "pluginType",
+        "description": 'What kind of plugins to list',
+        "aliases": ["pluginType"],
+        "required": True,
+        "default": 'analysisPlugin'
     }
 }
 
@@ -126,24 +130,26 @@ def parse_params(indict, *specs):
     wrong_params = {}
     for spec in specs:
         for param, options in iteritems(spec):
-            if param[0] != "@":  # Exclude json-ld properties
-                for alias in options.get("aliases", []):
-                    # Replace each alias with the correct name of the parameter
-                    if alias in indict and alias is not param:
-                        outdict[param] = indict[alias]
-                        del indict[alias]
-                        continue
-                if param not in outdict:
-                    if options.get("required", False) and "default" not in options:
-                        wrong_params[param] = spec[param]
-                    else:
-                        if "default" in options:
-                            outdict[param] = options["default"]
-                elif "options" in spec[param]:
-                    if spec[param]["options"] == "boolean":
-                        outdict[param] = outdict[param] in [None, True, 'true', '1']
-                    elif outdict[param] not in spec[param]["options"]:
-                        wrong_params[param] = spec[param]
+            if param[0] == "@":  # Exclude json-ld properties
+                continue
+            for alias in options.get("aliases", []):
+                # Replace each alias with the correct name of the parameter
+                if alias in indict and alias is not param:
+                    outdict[param] = indict[alias]
+                    del indict[alias]
+                    continue
+            if param not in outdict:
+                if "default" in options:
+                    # We assume the default is correct
+                    outdict[param] = options["default"]
+                elif options.get("required", False):
+                    wrong_params[param] = spec[param]
+                continue
+            if "options" in options:
+                if options["options"] == "boolean":
+                    outdict[param] = outdict[param] in [None, True, 'true', '1']
+                elif outdict[param] not in options["options"]:
+                    wrong_params[param] = spec[param]
     if wrong_params:
         logger.debug("Error parsing: %s", wrong_params)
         message = Error(
@@ -158,7 +164,7 @@ def parse_params(indict, *specs):
     return outdict
 
 
-def get_extra_params(request, plugin=None):
+def parse_extra_params(request, plugin=None):
     params = request.parameters.copy()
     if plugin:
         extra_params = parse_params(params, plugin.get('extra_params', {}))
@@ -177,6 +183,6 @@ def parse_call(params):
     elif params['informat'] == 'json-ld':
         results = from_string(params['input'], cls=Results)
     else:
-        raise NotImplemented('Informat {} is not implemented'.format(params['informat']))
+        raise NotImplementedError('Informat {} is not implemented'.format(params['informat']))
     results.parameters = params
     return results

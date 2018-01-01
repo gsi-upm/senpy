@@ -1,7 +1,6 @@
 import requests
 import logging
 from . import models
-from .plugins import default_plugin_type
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +12,8 @@ class Client(object):
     def analyse(self, input, method='GET', **kwargs):
         return self.request('/', method=method, input=input, **kwargs)
 
-    def plugins(self, ptype=default_plugin_type):
-        resp = self.request(path='/plugins', plugin_type=ptype).plugins
+    def plugins(self, *args, **kwargs):
+        resp = self.request(path='/plugins').plugins
         return {p.name: p for p in resp}
 
     def request(self, path=None, method='GET', **params):

@@ -67,7 +67,7 @@ def main():
         '--plugins-folder',
         '-f',
         type=str,
-        default='plugins',
+        default='.',
         help='Where to look for plugins.')
     parser.add_argument(
         '--only-install',

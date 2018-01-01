@@ -19,6 +19,9 @@ Sentiment analysis server in Python
 """
 from .version import __version__
 
+from future.standard_library import install_aliases
+install_aliases()
+
 import logging
 
 logger = logging.getLogger(__name__)

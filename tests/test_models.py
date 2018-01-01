@@ -12,8 +12,8 @@ from senpy.models import (Emotion,
                           Error,
                           Results,
                           Sentiment,
+                          SentimentPlugin,
                           Plugins,
-                          Plugin,
                           from_string,
                           from_dict)
 from senpy import plugins
@@ -99,19 +99,19 @@ class ModelsTest(TestCase):
 
     def test_plugins(self):
         self.assertRaises(Error, plugins.Plugin)
-        p = plugins.Plugin({"name": "dummy",
-                            "description": "I do nothing",
-                            "version": 0,
-                            "extra_params": {
-                                "none": {
-                                    "options": ["es", ],
-                                    "required": False,
-                                    "default": "0"
-                                }
-                            }})
+        p = plugins.SentimentPlugin({"name": "dummy",
+                                     "description": "I do nothing",
+                                     "version": 0,
+                                     "extra_params": {
+                                         "none": {
+                                             "options": ["es", ],
+                                             "required": False,
+                                             "default": "0"
+                                         }
+                                     }})
         c = p.jsonld()
         assert '@type' in c
-        assert c['@type'] == 'plugin'
+        assert c['@type'] == 'sentimentPlugin'
         assert 'info' not in c
         assert 'repo' not in c
         assert 'extra_params' in c
@@ -173,13 +173,14 @@ class ModelsTest(TestCase):
     def test_single_plugin(self):
         """A response with a single plugin should still return a list"""
         plugs = Plugins()
-        p = Plugin({'id': str(1),
-                    'version': 0,
-                    'description': 'dummy'})
+        p = SentimentPlugin({'id': str(1),
+                             'version': 0,
+                             'description': 'dummy'})
         plugs.plugins.append(p)
         assert isinstance(plugs.plugins, list)
         js = plugs.jsonld()
         assert isinstance(js['plugins'], list)
+        assert js['plugins'][0]['@type'] == 'sentimentPlugin'
 
     def test_from_string(self):
         results = {
@@ -192,6 +193,7 @@ class ModelsTest(TestCase):
             }]
         }
         recovered = from_dict(results)
+        assert recovered.id == results['@id']
         assert isinstance(recovered, Results)
         assert isinstance(recovered.entries[0], Entry)
 

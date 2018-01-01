@@ -162,5 +162,5 @@ class BlueprintsTest(TestCase):
         resp = self.client.get("/api/?help=true")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert "parameters" in js
-        assert "help" in js["parameters"]
+        assert "valid_parameters" in js
+        assert "help" in js["valid_parameters"]

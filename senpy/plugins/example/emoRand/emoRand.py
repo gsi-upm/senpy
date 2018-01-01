@@ -4,7 +4,7 @@ from senpy.plugins import EmotionPlugin
 from senpy.models import EmotionSet, Emotion, Entry
 
 
-class RmoRandPlugin(EmotionPlugin):
+class EmoRandPlugin(EmotionPlugin):
     def analyse_entry(self, entry, params):
         category = "emoml:big6happiness"
         number = max(-1, min(1, random.gauss(0, 0.5)))

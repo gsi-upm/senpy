@@ -25,6 +25,7 @@ from .version import __version__
 from functools import wraps
 
 import logging
+import traceback
 import json
 
 logger = logging.getLogger(__name__)
@@ -72,12 +73,19 @@ def schema(schema="definitions"):
 
 
 def basic_api(f):
+    default_params = {
+        'inHeaders': False,
+        'expanded-jsonld': False,
+        'outformat': 'json-ld',
+        'with_parameters': True,
+    }
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         raw_params = get_params(request)
         headers = {'X-ORIGINAL-PARAMS': json.dumps(raw_params)}
+        params = default_params
 
-        outformat = 'json-ld'
         try:
             print('Getting request:')
             print(request)
@@ -87,26 +95,32 @@ def basic_api(f):
             else:
                 request.parameters = params
             response = f(*args, **kwargs)
-        except Error as ex:
-            response = ex
-            response.parameters = params
-            logger.error(ex)
+        except (Exception) as ex:
             if current_app.debug:
                 raise
+            if not isinstance(ex, Error):
+                msg = "{}:\n\t{}".format(ex,
+                                         traceback.format_exc())
+                ex = Error(message=msg, status=500)
+            logger.exception('Error returning analysis result')
+            response = ex
+            response.parameters = raw_params
+            logger.error(ex)
 
-        in_headers = params['inHeaders']
-        expanded = params['expanded-jsonld']
-        outformat = params['outformat']
+        if 'parameters' in response and not params['with_parameters']:
+            print(response)
+            print(response.data)
+            del response.parameters
 
         return response.flask(
-            in_headers=in_headers,
+            in_headers=params['inHeaders'],
             headers=headers,
             prefix=url_for('.api_root', _external=True),
             context_uri=url_for('api.context',
                                 entity=type(response).__name__,
                                 _external=True),
-            outformat=outformat,
-            expanded=expanded)
+            outformat=params['outformat'],
+            expanded=params['expanded-jsonld'])
 
     return decorated_function
 
@@ -116,19 +130,18 @@ def basic_api(f):
 def api_root():
     if request.parameters['help']:
         dic = dict(api.API_PARAMS, **api.NIF_PARAMS)
-        response = Help(parameters=dic)
+        response = Help(valid_parameters=dic)
         return response
-    else:
-        req = api.parse_call(request.parameters)
-        response = current_app.senpy.analyse(req)
-        return response
+    req = api.parse_call(request.parameters)
+    return current_app.senpy.analyse(req)
 
 
 @api_blueprint.route('/plugins/', methods=['POST', 'GET'])
 @basic_api
 def plugins():
     sp = current_app.senpy
-    ptype = request.parameters.get('plugin_type')
+    params = api.parse_params(request.parameters, api.PLUGINS_PARAMS)
+    ptype = params.get('plugin_type')
     plugins = sp.filter_plugins(plugin_type=ptype)
     dic = Plugins(plugins=list(plugins.values()))
     return dic

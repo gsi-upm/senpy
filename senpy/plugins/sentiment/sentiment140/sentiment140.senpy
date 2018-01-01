@@ -16,6 +16,7 @@ extra_params:
     - es
     - en
     - auto
+    default: auto
 requirements: {}
 maxPolarityValue: 1
 minPolarityValue: 0

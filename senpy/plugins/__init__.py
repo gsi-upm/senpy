@@ -1,5 +1,6 @@
 from future import standard_library
 standard_library.install_aliases()
+from future.utils import with_metaclass
 
 import os.path
 import os
@@ -16,21 +17,33 @@ import yaml
 import threading
 
 from .. import models, utils
-from ..api import API_PARAMS
+from .. import api
 
 logger = logging.getLogger(__name__)
 
 
-class Plugin(models.Plugin):
-    def __init__(self, info=None, data_folder=None):
+class PluginMeta(models.BaseMeta):
+
+    def __new__(mcs, name, bases, attrs, **kwargs):
+        plugin_type = []
+        if hasattr(bases[0], 'plugin_type'):
+            plugin_type += bases[0].plugin_type
+        plugin_type.append(name)
+        attrs['plugin_type'] = plugin_type
+        return super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
+
+
+class Plugin(with_metaclass(PluginMeta, models.Plugin)):
+
+    def __init__(self, info=None, data_folder=None, **kwargs):
         """
         Provides a canonical name for plugins and serves as base for other
         kinds of plugins.
         """
         logger.debug("Initialising {}".format(info))
+        super(Plugin, self).__init__(**kwargs)
         if info:
             self.update(info)
-        super(Plugin, self).__init__(**self)
         if not self.validate():
             raise models.Error(message=("You need to provide configuration"
                                         "information for the plugin."))
@@ -57,7 +70,8 @@ class Plugin(models.Plugin):
                                   'test cases').format(self.id, inspect.getfile(self.__class__)))
         for case in self.test_cases:
             entry = models.Entry(case['entry'])
-            params = case.get('params', {})
+            given_parameters = case.get('params', {})
+            params = api.parse_params(given_parameters, self.extra_params)
             fails = case.get('fails', False)
             try:
                 res = list(self.analyse_entry(entry, params))
@@ -90,7 +104,7 @@ SenpyPlugin = Plugin
 class AnalysisPlugin(Plugin):
 
     def analyse(self, *args, **kwargs):
-        raise NotImplemented(
+        raise NotImplementedError(
             'Your method should implement either analyse or analyse_entry')
 
     def analyse_entry(self, entry, parameters):
@@ -118,17 +132,17 @@ class ConversionPlugin(Plugin):
     pass
 
 
-class SentimentPlugin(models.SentimentPlugin, AnalysisPlugin):
+class SentimentPlugin(AnalysisPlugin, models.SentimentPlugin):
     minPolarityValue = 0
     maxPolarityValue = 1
 
 
-class EmotionPlugin(models.EmotionPlugin, AnalysisPlugin):
+class EmotionPlugin(AnalysisPlugin, models.EmotionPlugin):
     minEmotionValue = 0
     maxEmotionValue = 1
 
 
-class EmotionConversionPlugin(models.EmotionConversionPlugin, ConversionPlugin):
+class EmotionConversionPlugin(ConversionPlugin):
     pass
 
 
@@ -171,19 +185,18 @@ class ShelfMixin(object):
                 pickle.dump(self._sh, f)
 
 
-default_plugin_type = API_PARAMS['plugin_type']['default']
-
-
 def pfilter(plugins, **kwargs):
     """ Filter plugins by different criteria """
     if isinstance(plugins, models.Plugins):
         plugins = plugins.plugins
     elif isinstance(plugins, dict):
         plugins = plugins.values()
-    ptype = kwargs.pop('plugin_type', default_plugin_type)
+    ptype = kwargs.pop('plugin_type', AnalysisPlugin)
     logger.debug('#' * 100)
     logger.debug('ptype {}'.format(ptype))
     if ptype:
+        if isinstance(ptype, PluginMeta):
+            ptype = ptype.__name__
         try:
             ptype = ptype[0].upper() + ptype[1:]
             pclass = globals()[ptype]

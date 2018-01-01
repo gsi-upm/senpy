@@ -6,7 +6,7 @@ import shutil
 import tempfile
 
 from unittest import TestCase
-from senpy.models import Results, Entry, EmotionSet, Emotion
+from senpy.models import Results, Entry, EmotionSet, Emotion, Plugins
 from senpy import plugins
 from senpy.plugins.conversion.emotion.centroids import CentroidConversion
 
@@ -48,6 +48,25 @@ class PluginsTest(TestCase):
         a.activate()
         assert os.path.isfile(a.shelf_file)
         os.remove(a.shelf_file)
+
+    def test_plugin_filter(self):
+        ps = Plugins()
+        for i in (plugins.SentimentPlugin,
+                  plugins.EmotionPlugin,
+                  plugins.AnalysisPlugin):
+            p = i(name='Plugin_{}'.format(i.__name__),
+                  description='TEST',
+                  version=0,
+                  author='NOBODY')
+            ps.plugins.append(p)
+        assert len(ps.plugins) == 3
+        cases = [('AnalysisPlugin', 3),
+                 ('SentimentPlugin', 1),
+                 ('EmotionPlugin', 1)]
+
+        for name, num in cases:
+            res = plugins.pfilter(ps.plugins, plugin_type=name)
+            assert len(res) == num
 
     def test_shelf(self):
         ''' A shelf is created and the value is stored '''

@@ -152,3 +152,18 @@ textarea{
     /* background: white; */
     display: none;
 }
+
+.deco-none {
+    color: inherit;
+    text-decoration: inherit;
+}
+
+.deco-none:link {
+    color: inherit;
+    text-decoration: inherit;
+}
+
+.deco-none:hover {
+    color: inherit;
+    text-decoration: inherit;
+}

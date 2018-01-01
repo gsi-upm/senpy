@@ -11,7 +11,7 @@ class SplitPlugin(AnalysisPlugin):
         nltk.download('punkt')
 
     def analyse_entry(self, entry, params):
-        chunker_type = params.get("delimiter", "sentence")
+        chunker_type = params["delimiter"]
         original_text = entry['nif:isString']
         if chunker_type == "sentence":
             tokenizer = PunktSentenceTokenizer()
