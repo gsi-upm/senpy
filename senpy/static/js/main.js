@@ -57,22 +57,22 @@ $(document).ready(function() {
                 html+= " disabled=\"disabled\" "
             }
             html+=">"+plugin["name"]+"</option>"
-        }
 
-        if (plugin["extra_params"]){
-            plugins_params[plugin["name"]]={};
-            for (param in plugin["extra_params"]){
-                if (typeof plugin["extra_params"][param] !="string"){
-                    var params = new Array();
-                    var alias = plugin["extra_params"][param]["aliases"][0];
-                    params[alias]=new Array();
-                    for (option in plugin["extra_params"][param]["options"]){
-                        params[alias].push(plugin["extra_params"][param]["options"][option])
-                    }
-                    plugins_params[plugin["name"]][alias] = (params[alias])
+            if (plugin["extra_params"]){
+                plugins_params[plugin["name"]]={};
+                for (param in plugin["extra_params"]){
+                    if (typeof plugin["extra_params"][param] !="string"){
+                        var params = new Array();
+                        var alias = plugin["extra_params"][param]["aliases"][0];
+                        params[alias]=new Array();
+                        for (option in plugin["extra_params"][param]["options"]){
+                            params[alias].push(plugin["extra_params"][param]["options"][option])
+                        }
+                        plugins_params[plugin["name"]][alias] = (params[alias])
+			              }
 			          }
-			      }
-		    }
+		        }
+        }
         var pluginEntry = document.createElement('li');
         
         newHtml = ""
