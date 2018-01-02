@@ -1,7 +1,7 @@
 from senpy.plugins import SentimentPlugin
 
 
-class DummyPlugin(SentimentPlugin):
+class DummyNoInfo(SentimentPlugin):
 
     description = 'This is a dummy self-contained plugin'
     author = '@balkian'
@@ -23,5 +23,5 @@ class DummyPlugin(SentimentPlugin):
 
 
 if __name__ == '__main__':
-    d = DummyPlugin()
+    d = DummyNoInfo()
     d.test()

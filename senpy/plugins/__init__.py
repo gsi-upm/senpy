@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class PluginMeta(models.BaseMeta):
+    _classes = {}
 
     def __new__(mcs, name, bases, attrs, **kwargs):
         plugin_type = []
@@ -30,7 +31,16 @@ class PluginMeta(models.BaseMeta):
             plugin_type += bases[0].plugin_type
         plugin_type.append(name)
         attrs['plugin_type'] = plugin_type
-        return super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
+        cls = super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
+        if name in mcs._classes:
+            raise Exception(('The type of plugin {} already exists. '
+                             'Please, choose a different name').format(name))
+        mcs._classes[name] = cls
+        return cls
+
+    @classmethod
+    def for_type(cls, ptype):
+        return cls._classes[ptype]
 
 
 class Plugin(with_metaclass(PluginMeta, models.Plugin)):
@@ -234,7 +244,7 @@ def load_module(name, root=None):
     return tmp
 
 
-def log_subprocess_output(process):
+def _log_subprocess_output(process):
     for line in iter(process.stdout.readline, b''):
         logger.info('%r', line)
     for line in iter(process.stderr.readline, b''):
@@ -253,7 +263,7 @@ def install_deps(*plugins):
             process = subprocess.Popen(pip_args,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
-            log_subprocess_output(process)
+            _log_subprocess_output(process)
             exitcode = process.wait()
             installed = True
             if exitcode != 0:
@@ -289,6 +299,8 @@ def load_plugin_from_info(info, root=None, validator=validate_info, install=True
     cls = None
     if '@type' not in info:
         cls = get_plugin_class(tmp)
+    else:
+        cls = PluginMeta.from_type(info['@type'])
     if not cls:
         raise Exception("No valid plugin for: {}".format(module))
     return cls(info=info, *args, **kwargs)

@@ -1,5 +1,5 @@
 from senpy.plugins import SentimentPlugin
 
 
-class DummyPlugin(SentimentPlugin):
+class NoOp(SentimentPlugin):
     import noop
