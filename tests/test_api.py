@@ -19,11 +19,8 @@ class APITest(TestCase):
 
     def test_basic(self):
         a = {}
-        try:
-            parse_params(a, NIF_PARAMS)
-            raise AssertionError()
-        except Error:
-            pass
+        self.assertRaises(Error, parse_params, a)
+        self.assertRaises(Error, parse_params, a, NIF_PARAMS)
         a = {'input': 'hello'}
         p = parse_params(a, NIF_PARAMS)
         assert 'input' in p
@@ -39,11 +36,7 @@ class APITest(TestCase):
                 'required': True
             }
         }
-        try:
-            parse_params(query, plug_params)
-            raise AssertionError()
-        except Error:
-            pass
+        self.assertRaises(Error, parse_params, plug_params)
         query['hello'] = 'world'
         p = parse_params(query, plug_params)
         assert 'hello' in p
@@ -53,7 +46,6 @@ class APITest(TestCase):
         query['hiya'] = 'dlrow'
         p = parse_params(query, plug_params)
         assert 'hello' in p
-        assert 'hiya' in p
         assert p['hello'] == 'dlrow'
 
     def test_default(self):

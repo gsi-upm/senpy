@@ -12,7 +12,8 @@ class CLITest(TestCase):
     def test_basic(self):
         self.assertRaises(Error, partial(main_function, []))
 
-        res = main_function(['--input', 'test', '--algo', 'rand', '--with-parameters'])
+        res = main_function(['--input', 'test', '--algo', 'rand',
+                             '--with-parameters', '--default-plugins'])
         assert res.parameters['input'] == 'test'
         assert 'rand' in res.parameters['algorithm']
         assert res.parameters['input'] == 'test'

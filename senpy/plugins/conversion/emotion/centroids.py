@@ -6,6 +6,11 @@ logger = logging.getLogger(__name__)
 
 
 class CentroidConversion(EmotionConversionPlugin):
+    '''
+    This plugin converts emotion annotations from a dimensional model to a
+    categorical one, and vice versa. The centroids used in the conversion
+    are configurable and appear in the semantic description of the plugin.
+    '''
     def __init__(self, info, *args, **kwargs):
         if 'centroids' not in info:
             raise Error('Centroid conversion plugins should provide '

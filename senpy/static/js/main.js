@@ -48,18 +48,7 @@ function get_parameters(){
     for (p in plugins){	
         plugin = plugins[p];
         if (plugin["extra_params"]){
-            plugins_params[plugin["name"]]={};
-            for (param in plugin["extra_params"]){
-                if (typeof plugin["extra_params"][param] !="string"){
-                    var params = new Array();
-                    var alias = plugin["extra_params"][param]["aliases"][0];
-                    params[alias]=new Array();
-                    for (option in plugin["extra_params"][param]["options"]){
-                        params[alias].push(plugin["extra_params"][param]["options"][option])
-                    }
-                    plugins_params[plugin["name"]][alias] = (params[alias])
-                }
-            }
+            plugins_params[plugin["name"]] = plugin["extra_params"];
         }
     }
 }
@@ -175,13 +164,13 @@ function params_div(params){
         param = params[pname];
         html+='<div class="form-group">';
         html += '<div class="row">'
-        html+= '<label class="col-sm-2" for="'+pname+'">'+pname+'</label>'
+        html+= '<label class="col-sm-4" for="'+pname+'">'+pname+'</label>'
         if (param.options){
             opts = param.options;
             if(param.options.length == 1 && param.options[0] == 'boolean') {
                 opts = [true, false];
             }
-            html+= '<select class="col-sm-10" id="'+pname+"\" name=\""+pname+"\">"
+            html+= '<select class="col-sm-8" id="'+pname+"\" name=\""+pname+"\">"
             var defaultopt = param.default;
             for (option in opts){
                 isselected = "";
@@ -198,7 +187,7 @@ function params_div(params){
             if(param.default != undefined){
                 default_value = param.default;
             };
-            html +='<input class="col-sm-10" id="'+pname+'" name="'+pname+'" value="' + default_value + '"></input>';
+            html +='<input class="col-sm-8" id="'+pname+'" name="'+pname+'" value="' + default_value + '"></input>';
         }
         html+='</div>';
         html+='<div class="row">';

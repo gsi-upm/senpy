@@ -12,6 +12,7 @@ from senpy.plugins.conversion.emotion.centroids import CentroidConversion
 
 
 class ShelfDummyPlugin(plugins.SentimentPlugin, plugins.ShelfMixin):
+    '''Dummy plugin for tests.'''
     def activate(self, *args, **kwargs):
         if 'counter' not in self.sh:
             self.sh['counter'] = 0
@@ -65,7 +66,7 @@ class PluginsTest(TestCase):
                  ('EmotionPlugin', 1)]
 
         for name, num in cases:
-            res = plugins.pfilter(ps.plugins, plugin_type=name)
+            res = list(plugins.pfilter(ps.plugins, plugin_type=name))
             assert len(res) == num
 
     def test_shelf(self):
@@ -240,21 +241,20 @@ class PluginsTest(TestCase):
         assert res["onyx:hasEmotionCategory"] == "c2"
 
 
-def make_mini_test(plugin_info):
+def make_mini_test(fpath):
     def mini_test(self):
-        plugin = plugins.load_plugin_from_info(plugin_info, install=True)
-        plugin.test()
+        for plugin in plugins.from_path(fpath, install=True):
+            plugin.test()
     return mini_test
 
 
 def _add_tests():
     root = os.path.join(os.path.dirname(__file__), '..')
     print(root)
-    plugs = plugins.load_plugins([root, ], loader=plugins.parse_plugin_info)
-    for k, v in plugs.items():
+    for fpath in plugins.find_plugins([root, ]):
         pass
-        t_method = make_mini_test(v)
-        t_method.__name__ = 'test_plugin_{}'.format(k)
+        t_method = make_mini_test(fpath)
+        t_method.__name__ = 'test_plugin_{}'.format(fpath)
         setattr(PluginsTest, t_method.__name__, t_method)
         del t_method
 

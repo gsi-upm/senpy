@@ -1,4 +1,4 @@
-from senpy.plugins import AnalysisPlugin
+from senpy import AnalysisPlugin
 
 import multiprocessing
 
@@ -7,10 +7,15 @@ def _train(process_number):
     return process_number
 
 
-class AsyncPlugin(AnalysisPlugin):
+class Async(AnalysisPlugin):
+    '''An example of an asynchronous module'''
+    author = '@balkian'
+    version = '0.2'
+    async = True
+
     def _do_async(self, num_processes):
         pool = multiprocessing.Pool(processes=num_processes)
-        values = pool.map(_train, range(num_processes))
+        values = sorted(pool.map(_train, range(num_processes)))
 
         return values
 
@@ -22,5 +27,11 @@ class AsyncPlugin(AnalysisPlugin):
         entry.async_values = values
         yield entry
 
-    def test(self):
-        pass
+    test_cases = [
+        {
+            'input': 'any',
+            'expected': {
+                'async_values': [0, 1]
+            }
+        }
+    ]

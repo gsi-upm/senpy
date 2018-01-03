@@ -99,7 +99,7 @@ NIF_PARAMS = {
         "aliases": ["f"],
         "required": False,
         "default": "text",
-        "options": ["turtle", "text", "json-ld"],
+        "options": ["text", "json-ld"],
     },
     "language": {
         "@id": "language",
@@ -130,13 +130,11 @@ def parse_params(indict, *specs):
     wrong_params = {}
     for spec in specs:
         for param, options in iteritems(spec):
-            if param[0] == "@":  # Exclude json-ld properties
-                continue
             for alias in options.get("aliases", []):
                 # Replace each alias with the correct name of the parameter
                 if alias in indict and alias is not param:
                     outdict[param] = indict[alias]
-                    del indict[alias]
+                    del outdict[alias]
                     continue
             if param not in outdict:
                 if "default" in options:
@@ -154,10 +152,9 @@ def parse_params(indict, *specs):
         logger.debug("Error parsing: %s", wrong_params)
         message = Error(
             status=400,
-            message="Missing or invalid parameters",
+            message='Missing or invalid parameters',
             parameters=outdict,
-            errors={param: error
-                    for param, error in iteritems(wrong_params)})
+            errors=wrong_params)
         raise message
     if 'algorithm' in outdict and not isinstance(outdict['algorithm'], list):
         outdict['algorithm'] = outdict['algorithm'].split(',')
@@ -182,7 +179,7 @@ def parse_call(params):
         results.entries.append(entry)
     elif params['informat'] == 'json-ld':
         results = from_string(params['input'], cls=Results)
-    else:
+    else:  # pragma: no cover
         raise NotImplementedError('Informat {} is not implemented'.format(params['informat']))
     results.parameters = params
     return results

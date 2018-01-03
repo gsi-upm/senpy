@@ -29,6 +29,7 @@ class ExtensionsTest(TestCase):
         self.senpy = Senpy(plugin_folder=self.examples_dir,
                            app=self.app,
                            default_plugins=False)
+        self.senpy.deactivate_all()
         self.senpy.activate_plugin("Dummy", sync=True)
 
     def test_init(self):
@@ -41,21 +42,37 @@ class ExtensionsTest(TestCase):
     def test_discovery(self):
         """ Discovery of plugins in given folders.  """
         # noinspection PyProtectedMember
-        assert self.examples_dir in self.senpy._search_folders
-        print(self.senpy.plugins)
-        assert "Dummy" in self.senpy.plugins
+        print(self.senpy.plugins())
+        assert self.senpy.get_plugin("dummy")
+
+    def test_add_delete(self):
+        '''Should be able to add and delete new plugins. '''
+        new = plugins.Plugin(name='new', description='new', version=0)
+        self.senpy.add_plugin(new)
+        assert new in self.senpy.plugins()
+        self.senpy.delete_plugin(new)
+        assert new not in self.senpy.plugins()
+
+    def test_adding_folder(self):
+        """ It should be possible for senpy to look for plugins in more folders. """
+        senpy = Senpy(plugin_folder=None,
+                      app=self.app,
+                      default_plugins=False)
+        assert not senpy.analysis_plugins
+        senpy.add_folder(self.examples_dir)
+        assert senpy.analysis_plugins
+        self.assertRaises(AttributeError, senpy.add_folder, 'DOES NOT EXIST')
 
     def test_installing(self):
         """ Installing a plugin """
         info = {
             'name': 'TestPip',
-            'module': 'noop_plugin',
+            'module': 'mynoop',
             'description': None,
             'requirements': ['noop'],
             'version': 0
         }
-        root = os.path.join(self.examples_dir, 'noop')
-        module = plugins.load_plugin_from_info(info, root=root, install=True)
+        module = plugins.from_info(info, root=self.examples_dir, install=True)
         assert module.name == 'TestPip'
         assert module
         import noop
@@ -64,8 +81,8 @@ class ExtensionsTest(TestCase):
     def test_enabling(self):
         """ Enabling a plugin """
         self.senpy.activate_all(sync=True)
-        assert len(self.senpy.plugins) >= 3
-        assert self.senpy.plugins["Sleep"].is_activated
+        assert len(self.senpy.plugins()) >= 3
+        assert self.senpy.get_plugin("Sleep").is_activated
 
     def test_installing_nonexistent(self):
         """ Fail if the dependencies cannot be met """
@@ -82,8 +99,8 @@ class ExtensionsTest(TestCase):
     def test_disabling(self):
         """ Disabling a plugin """
         self.senpy.deactivate_all(sync=True)
-        assert not self.senpy.plugins["Dummy"].is_activated
-        assert not self.senpy.plugins["Sleep"].is_activated
+        assert not self.senpy.get_plugin("dummy").is_activated
+        assert not self.senpy.get_plugin("sleep").is_activated
 
     def test_default(self):
         """ Default plugin should be set """
@@ -107,6 +124,17 @@ class ExtensionsTest(TestCase):
         assert r1.analysis[0] == "plugins/Dummy_0.1"
         assert r2.analysis[0] == "plugins/Dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
+
+    def test_analyse_empty(self):
+        """ Trying to analyse when no plugins are installed should raise an error."""
+        senpy = Senpy(plugin_folder=None,
+                      app=self.app,
+                      default_plugins=False)
+        self.assertRaises(Error, senpy.analyse, Results())
+
+    def test_analyse_wrong(self):
+        """ Trying to analyse with a non-existent plugin should raise an error."""
+        self.assertRaises(Error, analyse, self.senpy, algorithm='DOES NOT EXIST', input='test')
 
     def test_analyse_jsonld(self):
         """ Using a plugin with JSON-LD input"""
@@ -135,9 +163,10 @@ class ExtensionsTest(TestCase):
     def test_analyse_error(self):
         mm = mock.MagicMock()
         mm.id = 'magic_mock'
+        mm.name = 'mock'
         mm.is_activated = True
         mm.analyse_entries.side_effect = Error('error in analysis', status=500)
-        self.senpy.plugins['MOCK'] = mm
+        self.senpy.add_plugin(mm)
         try:
             analyse(self.senpy, input='nothing', algorithm='MOCK')
             assert False
@@ -145,29 +174,29 @@ class ExtensionsTest(TestCase):
             assert 'error in analysis' in ex['message']
             assert ex['status'] == 500
 
-        mm.analyse.side_effect = Exception('generic exception on analysis')
-        mm.analyse_entries.side_effect = Exception(
-            'generic exception on analysis')
+        ex = Exception('generic exception on analysis')
+        mm.analyse.side_effect = ex
+        mm.analyse_entries.side_effect = ex
 
         try:
             analyse(self.senpy, input='nothing', algorithm='MOCK')
             assert False
-        except Error as ex:
+        except Exception as ex:
             assert 'generic exception on analysis' in ex['message']
             assert ex['status'] == 500
 
     def test_filtering(self):
         """ Filtering plugins """
-        assert len(self.senpy.filter_plugins(name="Dummy")) > 0
-        assert not len(self.senpy.filter_plugins(name="notdummy"))
-        assert self.senpy.filter_plugins(name="Dummy", is_activated=True)
+        assert len(self.senpy.plugins(name="Dummy")) > 0
+        assert not len(self.senpy.plugins(name="NotDummy"))
+        assert self.senpy.plugins(name="Dummy", is_activated=True)
         self.senpy.deactivate_plugin("Dummy", sync=True)
-        assert not len(
-            self.senpy.filter_plugins(name="Dummy", is_activated=True))
+        assert not len(self.senpy.plugins(name="Dummy",
+                                          is_activated=True))
 
     def test_load_default_plugins(self):
         senpy = Senpy(plugin_folder=self.examples_dir, default_plugins=True)
-        assert len(senpy.plugins) > 1
+        assert len(senpy.plugins()) > 1
 
     def test_convert_emotions(self):
         self.senpy.activate_all(sync=True)

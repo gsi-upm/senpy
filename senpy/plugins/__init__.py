@@ -4,11 +4,12 @@ from future.utils import with_metaclass
 
 import os.path
 import os
+import re
 import pickle
 import logging
 import copy
+import pprint
 
-import fnmatch
 import inspect
 import sys
 import subprocess
@@ -30,12 +31,25 @@ class PluginMeta(models.BaseMeta):
         if hasattr(bases[0], 'plugin_type'):
             plugin_type += bases[0].plugin_type
         plugin_type.append(name)
+        alias = attrs.get('name', name)
         attrs['plugin_type'] = plugin_type
+        attrs['name'] = alias
+        if 'description' not in attrs:
+            doc = attrs.get('__doc__', None)
+            if not doc:
+                raise Exception(('Please, add a description or '
+                                 'documentation to class {}').format(name))
+            attrs['description'] = doc
+            attrs['name'] = alias
         cls = super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
-        if name in mcs._classes:
-            raise Exception(('The type of plugin {} already exists. '
-                             'Please, choose a different name').format(name))
-        mcs._classes[name] = cls
+
+        if alias in mcs._classes:
+            if os.environ.get('SENPY_TESTING', ""):
+                raise Exception(('The type of plugin {} already exists. '
+                                'Please, choose a different name').format(name))
+            else:
+                logger.warn('Overloading plugin class: {}'.format(alias))
+        mcs._classes[alias] = cls
         return cls
 
     @classmethod
@@ -44,6 +58,17 @@ class PluginMeta(models.BaseMeta):
 
 
 class Plugin(with_metaclass(PluginMeta, models.Plugin)):
+    '''
+    Base class for all plugins in senpy.
+    A plugin must provide at least these attributes:
+
+        - version
+        - description (or docstring)
+        - author
+
+    Additionally, they may provide a URL (url) of a repository or website.
+
+    '''
 
     def __init__(self, info=None, data_folder=None, **kwargs):
         """
@@ -54,16 +79,19 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         super(Plugin, self).__init__(**kwargs)
         if info:
             self.update(info)
-        if not self.validate():
-            raise models.Error(message=("You need to provide configuration"
-                                        "information for the plugin."))
+        self.validate()
         self.id = 'plugins/{}_{}'.format(self['name'], self['version'])
         self.is_activated = False
         self._lock = threading.Lock()
         self.data_folder = data_folder or os.getcwd()
 
     def validate(self):
-        return all(x in self for x in ('name', 'description', 'version'))
+        missing = []
+        for x in ['name', 'description', 'version']:
+            if x not in self:
+                missing.append(x)
+        if missing:
+            raise models.Error('Missing configuration parameters: {}'.format(missing))
 
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
@@ -74,48 +102,61 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     def deactivate(self):
         pass
 
-    def test(self):
-        if not hasattr(self, 'test_cases'):
-            raise AttributeError(('Plugin {} [{}] does not have any defined '
-                                  'test cases').format(self.id, inspect.getfile(self.__class__)))
-        for case in self.test_cases:
-            entry = models.Entry(case['entry'])
-            given_parameters = case.get('params', {})
-            params = api.parse_params(given_parameters, self.extra_params)
-            fails = case.get('fails', False)
+    def test(self, test_cases=None):
+        if not test_cases:
+            if not hasattr(self, 'test_cases'):
+                raise AttributeError(('Plugin {} [{}] does not have any defined '
+                                      'test cases').format(self.id,
+                                                           inspect.getfile(self.__class__)))
+            test_cases = self.test_cases
+        for case in test_cases:
             try:
-                res = list(self.analyse_entry(entry, params))
-            except models.Error:
-                if fails:
-                    continue
+                self.test_case(case)
+            except Exception as ex:
+                logger.warn('Test case failed:\n{}'.format(pprint.pformat(case)))
                 raise
-            if fails:
-                raise Exception('This test should have raised an exception.')
 
-            exp = case['expected']
-            if not isinstance(exp, list):
-                exp = [exp]
-            utils.check_template(res, exp)
-            for r in res:
-                r.validate()
+    def test_case(self, case):
+        entry = models.Entry(case['entry'])
+        given_parameters = case.get('params', case.get('parameters', {}))
+        expected = case['expected']
+        try:
+            params = api.parse_params(given_parameters, self.extra_params)
+            res = list(self.analyse_entry(entry, params))
+        except models.Error:
+            if not expected:
+                return
+            raise
+        if not expected:
+            raise Exception('This test should have raised an exception.')
+
+        if not isinstance(expected, list):
+            expected = [expected]
+        utils.check_template(res, expected)
+        for r in res:
+            r.validate()
 
     def open(self, fpath, *args, **kwargs):
         if not os.path.isabs(fpath):
             fpath = os.path.join(self.data_folder, fpath)
         return open(fpath, *args, **kwargs)
 
-    def serve(self, **kwargs):
-        utils.serve(plugin=self, **kwargs)
+    def serve(self, debug=True, **kwargs):
+        utils.easy(plugin_list=[self, ], plugin_folder=None, debug=debug, **kwargs)
 
 
+# For backwards compatibility
 SenpyPlugin = Plugin
 
 
-class AnalysisPlugin(Plugin):
+class Analysis(Plugin):
+    '''
+    A subclass of Plugin that analyses text and provides an annotation.
+    '''
 
     def analyse(self, *args, **kwargs):
         raise NotImplementedError(
-            'Your method should implement either analyse or analyse_entry')
+            'Your plugin should implement either analyse or analyse_entry')
 
     def analyse_entry(self, entry, parameters):
         """ An implemented plugin should override this method.
@@ -134,26 +175,70 @@ class AnalysisPlugin(Plugin):
     def analyse_entries(self, entries, parameters):
         for entry in entries:
             logger.debug('Analysing entry with plugin {}: {}'.format(self, entry))
-            for result in self.analyse_entry(entry, parameters):
-                yield result
+            results = self.analyse_entry(entry, parameters)
+            if inspect.isgenerator(results):
+                for result in results:
+                    yield result
+            else:
+                yield results
+
+    def test_case(self, case):
+        if 'entry' not in case and 'input' in case:
+            entry = models.Entry(_auto_id=False)
+            entry.nif__isString = case['input']
+            case['entry'] = entry
+        super(Analysis, self).test_case(case)
 
 
-class ConversionPlugin(Plugin):
+AnalysisPlugin = Analysis
+
+
+class Conversion(Plugin):
+    '''
+    A subclass of Plugins that convert between different annotation models.
+    e.g. a conversion of emotion models, or normalization of sentiment values.
+    '''
     pass
 
 
-class SentimentPlugin(AnalysisPlugin, models.SentimentPlugin):
+ConversionPlugin = Conversion
+
+
+class SentimentPlugin(Analysis, models.SentimentPlugin):
+    '''
+    Sentiment plugins provide sentiment annotation (using Marl)
+    '''
     minPolarityValue = 0
     maxPolarityValue = 1
 
+    def test_case(self, case):
+        expected = case.get('expected', {})
+        if 'polarity' in case:
+            s = models.Sentiment(_auto_id=False)
+            s.marl__hasPolarity = case['polarity']
+            if 'sentiments' not in expected:
+                expected['sentiments'] = []
+            expected['sentiments'].append(s)
+            case['expected'] = expected
+        super(SentimentPlugin, self).test_case(case)
 
-class EmotionPlugin(AnalysisPlugin, models.EmotionPlugin):
+
+class EmotionPlugin(Analysis, models.EmotionPlugin):
+    '''
+    Emotion plugins provide emotion annotation (using Onyx)
+    '''
     minEmotionValue = 0
     maxEmotionValue = 1
 
 
-class EmotionConversionPlugin(ConversionPlugin):
+class EmotionConversion(Conversion):
+    '''
+    A subclass of Conversion that converts emotion annotations using different models
+    '''
     pass
+
+
+EmotionConversionPlugin = EmotionConversion
 
 
 class ShelfMixin(object):
@@ -201,7 +286,7 @@ def pfilter(plugins, **kwargs):
         plugins = plugins.plugins
     elif isinstance(plugins, dict):
         plugins = plugins.values()
-    ptype = kwargs.pop('plugin_type', AnalysisPlugin)
+    ptype = kwargs.pop('plugin_type', Plugin)
     logger.debug('#' * 100)
     logger.debug('ptype {}'.format(ptype))
     if ptype:
@@ -228,11 +313,7 @@ def pfilter(plugins, **kwargs):
 
     if kwargs:
         candidates = filter(matches, candidates)
-    return {p.name: p for p in candidates}
-
-
-def validate_info(info):
-    return all(x in info for x in ('name',))
+    return candidates
 
 
 def load_module(name, root=None):
@@ -271,66 +352,109 @@ def install_deps(*plugins):
     return installed
 
 
-def get_plugin_class(module):
-    candidate = None
-    for _, obj in inspect.getmembers(module):
-        if inspect.isclass(obj) and inspect.getmodule(obj) == module:
-            logger.debug(("Found plugin class:"
-                          " {}@{}").format(obj, inspect.getmodule(obj)))
-            candidate = obj
-            break
-    return candidate
+is_plugin_file = re.compile(r'.*\.senpy$|senpy_[a-zA-Z0-9_]+\.py$|[a-zA-Z0-9_]+_plugin.py$')
 
 
-def load_plugin_from_info(info, root=None, validator=validate_info, install=True, *args, **kwargs):
-    if not root and '_path' in info:
-        root = os.path.dirname(info['_path'])
-    if not validator(info):
-        raise ValueError('Plugin info is not valid: {}'.format(info))
-    module = info["module"]
-
-    try:
-        tmp = load_module(module, root)
-    except ImportError:
-        if not install:
-            raise
-        install_deps(info)
-        tmp = load_module(module, root)
-    cls = None
-    if '@type' not in info:
-        cls = get_plugin_class(tmp)
-    else:
-        cls = PluginMeta.from_type(info['@type'])
-    if not cls:
-        raise Exception("No valid plugin for: {}".format(module))
-    return cls(info=info, *args, **kwargs)
-
-
-def parse_plugin_info(fpath):
-    logger.debug("Loading plugin: {}".format(fpath))
-    with open(fpath, 'r') as f:
-        info = yaml.load(f)
-    info['_path'] = fpath
-    name = info['name']
-    return name, info
-
-
-def load_plugin(fpath, *args, **kwargs):
-    name, info = parse_plugin_info(fpath)
-    logger.debug("Info: {}".format(info))
-    plugin = load_plugin_from_info(info, *args, **kwargs)
-    return name, plugin
-
-
-def load_plugins(folders, loader=load_plugin, *args, **kwargs):
-    plugins = {}
+def find_plugins(folders):
     for search_folder in folders:
         for root, dirnames, filenames in os.walk(search_folder):
             # Do not look for plugins in hidden or special folders
             dirnames[:] = [d for d in dirnames if d[0] not in ['.', '_']]
-            for filename in fnmatch.filter(filenames, '*.senpy'):
+            for filename in filter(is_plugin_file.match, filenames):
                 fpath = os.path.join(root, filename)
-                name, plugin = loader(fpath, *args, **kwargs)
-                if plugin and name:
-                    plugins[name] = plugin
+                yield fpath
+
+
+def from_path(fpath, **kwargs):
+    logger.debug("Loading plugin from {}".format(fpath))
+    if fpath.endswith('.py'):
+        # We asume root is the dir of the file, and module is the name of the file
+        root = os.path.dirname(fpath)
+        module = os.path.basename(fpath)[:-3]
+        for instance in _from_module_name(module=module, root=root, **kwargs):
+            yield instance
+    else:
+        info = parse_plugin_info(fpath)
+        yield from_info(info, **kwargs)
+
+
+def from_folder(folders, loader=from_path, **kwargs):
+    plugins = []
+    for fpath in find_plugins(folders):
+        for plugin in loader(fpath, **kwargs):
+            plugins.append(plugin)
     return plugins
+
+
+def from_info(info, root=None, **kwargs):
+    if any(x not in info for x in ('module',)):
+        raise ValueError('Plugin info is not valid: {}'.format(info))
+    module = info["module"]
+
+    if not root and '_path' in info:
+        root = os.path.dirname(info['_path'])
+
+    return one_from_module(module, root=root, info=info, **kwargs)
+
+
+def parse_plugin_info(fpath):
+    logger.debug("Parsing plugin info: {}".format(fpath))
+    with open(fpath, 'r') as f:
+        info = yaml.load(f)
+    info['_path'] = fpath
+    return info
+
+
+def from_module(module, **kwargs):
+
+    if inspect.ismodule(module):
+        res = _from_loaded_module(module, **kwargs)
+    else:
+        res = _from_module_name(module, **kwargs)
+    for p in res:
+        yield p
+
+
+def one_from_module(module, root, info, **kwargs):
+    if '@type' in info:
+        cls = PluginMeta.from_type(info['@type'])
+        return cls(info=info, **kwargs)
+    instance = next(from_module(module=module, root=root, info=info, **kwargs), None)
+    if not instance:
+        raise Exception("No valid plugin for: {}".format(module))
+    return instance
+
+
+def _classes_in_module(module):
+    for _, obj in inspect.getmembers(module):
+        if inspect.isclass(obj) and inspect.getmodule(obj) == module:
+            logger.debug(("Found plugin class:"
+                          " {}@{}").format(obj, inspect.getmodule(obj)))
+            yield obj
+
+
+def _instances_in_module(module):
+    for _, obj in inspect.getmembers(module):
+        if isinstance(obj, Plugin) and inspect.getmodule(obj) == module:
+            logger.debug(("Found plugin instance:"
+                          " {}@{}").format(obj, inspect.getmodule(obj)))
+            yield obj
+
+
+def _from_module_name(module, root, info=None, install=True, **kwargs):
+    try:
+        module = load_module(module, root)
+    except ImportError:
+        if not install or not info:
+            raise
+        install_deps(info)
+        module = load_module(module, root)
+    for plugin in _from_loaded_module(module=module, root=root, info=info, **kwargs):
+        yield plugin
+
+
+def _from_loaded_module(module, info=None, **kwargs):
+    for cls in _classes_in_module(module):
+        yield cls(info=info, **kwargs)
+    for instance in _instances_in_module(module):
+        yield instance

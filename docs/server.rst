@@ -7,21 +7,29 @@ The senpy server is launched via the `senpy` command:
 
     usage: senpy [-h] [--level logging_level] [--debug] [--default-plugins]
                 [--host HOST] [--port PORT] [--plugins-folder PLUGINS_FOLDER]
-                [--only-install]
+                [--only-install] [--only-list] [--data-folder DATA_FOLDER]
+                [--threaded] [--version]
 
     Run a Senpy server
 
     optional arguments:
-    -h, --help            show this help message and exit
-    --level logging_level, -l logging_level
+      -h, --help            show this help message and exit
+      --level logging_level, -l logging_level
                             Logging level
-    --debug, -d           Run the application in debug mode
-    --default-plugins     Load the default plugins
-    --host HOST           Use 0.0.0.0 to accept requests from any host.
-    --port PORT, -p PORT  Port to listen on.
-    --plugins-folder PLUGINS_FOLDER, -f PLUGINS_FOLDER
+      --debug, -d           Run the application in debug mode
+      --default-plugins     Load the default plugins
+      --host HOST           Use 0.0.0.0 to accept requests from any host.
+      --port PORT, -p PORT  Port to listen on.
+      --plugins-folder PLUGINS_FOLDER, -f PLUGINS_FOLDER
                             Where to look for plugins.
-    --only-install, -i    Do not run a server, only install plugin dependencies
+      --only-install, -i    Do not run a server, only install plugin dependencies
+      --only-list, --list   Do not run a server, only list plugins found
+      --data-folder DATA_FOLDER, --data DATA_FOLDER
+                            Where to look for data. It be set with the SENPY_DATA
+                            environment variable as well.
+      --threaded            Run a threaded server
+      --version, -v         Output the senpy version and exit
+
 
 
 When launched, the server will recursively look for plugins in the specified plugins folder (the current working directory by default).

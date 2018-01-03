@@ -17,19 +17,20 @@ import copy
 import json
 import os
 import jsonref
-import jsonschema
-import inspect
 from collections import UserDict
-from abc import ABCMeta
 
 from flask import Response as FlaskResponse
 from pyld import jsonld
 
-from rdflib import Graph
-
 import logging
 
+logging.getLogger('rdflib').setLevel(logging.WARN)
 logger = logging.getLogger(__name__)
+
+from rdflib import Graph
+
+
+from .meta import BaseMeta
 
 DEFINITIONS_FILE = 'definitions.json'
 CONTEXT_PATH = os.path.join(
@@ -52,94 +53,32 @@ def read_schema(schema_file, absolute=False):
         return jsonref.load(f, base_uri=schema_uri)
 
 
-base_schema = read_schema(DEFINITIONS_FILE)
-
-
-class Context(dict):
-    @staticmethod
-    def load(context):
-        logging.debug('Loading context: {}'.format(context))
-        if not context:
+def load_context(context):
+    logging.debug('Loading context: {}'.format(context))
+    if not context:
+        return context
+    elif isinstance(context, list):
+        contexts = []
+        for c in context:
+            contexts.append(load_context(c))
+        return contexts
+    elif isinstance(context, dict):
+        return dict(context)
+    elif isinstance(context, basestring):
+        try:
+            with open(context) as f:
+                return dict(json.loads(f.read()))
+        except IOError:
             return context
-        elif isinstance(context, list):
-            contexts = []
-            for c in context:
-                contexts.append(Context.load(c))
-            return contexts
-        elif isinstance(context, dict):
-            return Context(context)
-        elif isinstance(context, basestring):
-            try:
-                with open(context) as f:
-                    return Context(json.loads(f.read()))
-            except IOError:
-                return context
-        else:
-            raise AttributeError('Please, provide a valid context')
+    else:
+        raise AttributeError('Please, provide a valid context')
 
 
-base_context = Context.load(CONTEXT_PATH)
+base_context = load_context(CONTEXT_PATH)
 
 
-class BaseMeta(ABCMeta):
-    '''
-    Metaclass for models. It extracts the default values for the fields in
-    the model.
-
-    For instance, instances of the following class wouldn't need to mark
-    their version or description on initialization:
-
-    .. code-block:: python
-
-       class MyPlugin(Plugin):
-           version=0.3
-           description='A dull plugin'
-
-
-    Note that these operations could be included in the __init__ of the
-    class, but it would be very inefficient.
-    '''
-    def __new__(mcs, name, bases, attrs, **kwargs):
-        defaults = {}
-        if 'schema' in attrs:
-            defaults = mcs.get_defaults(attrs['schema'])
-        for b in bases:
-            if hasattr(b, 'defaults'):
-                defaults.update(b.defaults)
-        info = mcs.attrs_to_dict(attrs)
-        defaults.update(info)
-        attrs['defaults'] = defaults
-        return super(BaseMeta, mcs).__new__(mcs, name, bases, attrs)
-
-    @staticmethod
-    def attrs_to_dict(attrs):
-        '''
-        Extract the attributes of the class.
-
-        This allows adding default values in the class definition.
-        e.g.:
-        '''
-        def is_attr(k, v):
-            return (not(inspect.isroutine(v) or
-                        inspect.ismethod(v) or
-                        inspect.ismodule(v) or
-                        isinstance(v, property)) and
-                    k[0] != '_' and
-                    k != 'schema' and
-                    k != 'data')
-
-        return {key: copy.deepcopy(value) for key, value in attrs.items() if is_attr(key, value)}
-
-    @staticmethod
-    def get_defaults(schema):
-        temp = {}
-        for obj in [
-                schema,
-        ] + schema.get('allOf', []):
-            for k, v in obj.get('properties', {}).items():
-                if 'default' in v and k not in temp:
-                    temp[k] = copy.deepcopy(v['default'])
-        return temp
+def register(rsubclass, rtype=None):
+    BaseMeta.register(rsubclass, rtype)
 
 
 class CustomDict(UserDict, object):
@@ -155,10 +94,10 @@ class CustomDict(UserDict, object):
     > d.ns__name == d['ns:name']
     '''
 
-    defaults = []
+    _defaults = []
 
     def __init__(self, *args, **kwargs):
-        temp = copy.deepcopy(self.defaults)
+        temp = copy.deepcopy(self._defaults)
         for arg in args:
             temp.update(copy.deepcopy(arg))
         for k, v in kwargs.items():
@@ -210,13 +149,38 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
     For convenience, the values can also be accessed as attributes
     (a la Javascript). e.g.:
 
-    > myobject.key == myobject['key']
+    >>> myobject.key == myobject['key']
     True
-    > myobject.ns__name == myobject['ns:name']
+    >>> myobject.ns__name == myobject['ns:name']
     True
+
+    Additionally, subclasses of this class can specify default values for their
+    instances. These defaults are inherited by subclasses. e.g.:
+
+    >>> class NewModel(BaseModel):
+    ...     mydefault = 5
+    >>> n1 = NewModel()
+    >>> n1['mydefault'] == 5
+    True
+    >>> n1.mydefault = 3
+    >>> n1['mydefault'] = 3
+    True
+    >>> n2 = NewModel()
+    >>> n2 == 5
+    True
+    >>> class SubModel(NewModel):
+            pass
+    >>> subn = SubModel()
+    >>> subn.mydefault == 5
+    True
+
+    Lastly, every subclass that also specifies a schema will get registered, so it
+    is possible to deserialize JSON and get the right type.
+    i.e. to recover an instance of the original class from a plain JSON.
+
     '''
 
-    schema = base_schema
+    schema_file = DEFINITIONS_FILE
     _context = base_context["@context"]
 
     def __init__(self, *args, **kwargs):
@@ -300,7 +264,7 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
         return ser_or_down(self.data)
 
     def jsonld(self,
-               with_context=True,
+               with_context=False,
                context_uri=None,
                prefix=None,
                expanded=False):
@@ -338,54 +302,22 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
     def __str__(self):
         return str(self.serialize())
 
-
-_subtypes = {}
-
-
-def register(rsubclass, rtype=None):
-    _subtypes[rtype or rsubclass.__name__] = rsubclass
+    def prov(self, another):
+        self['prov:wasGeneratedBy'] = another.id
 
 
-def from_schema(name, schema=None, schema_file=None, base_classes=None):
-    base_classes = base_classes or []
-    base_classes.append(BaseModel)
-    schema_file = schema_file or '{}.json'.format(name)
-    class_name = '{}{}'.format(name[0].upper(), name[1:])
-    if '/' not in 'schema_file':
-        thisdir = os.path.dirname(os.path.realpath(__file__))
-        schema_file = os.path.join(thisdir,
-                                   'schemas',
-                                   schema_file)
-
-    schema_path = 'file://' + schema_file
-
-    with open(schema_file) as f:
-        schema = json.load(f)
-
-    dct = {}
-
-    resolver = jsonschema.RefResolver(schema_path, schema)
-    dct['@type'] = name
-    dct['_schema_file'] = schema_file
-    dct['schema'] = schema
-    dct['_validator'] = jsonschema.Draft4Validator(schema, resolver=resolver)
-
-    newclass = type(class_name, tuple(base_classes), dct)
-
-    register(newclass, name)
-    return newclass
+def subtypes():
+    return BaseMeta._subtypes
 
 
 def from_dict(indict, cls=None):
     if not cls:
         target = indict.get('@type', None)
+        cls = BaseModel
         try:
-            if target and target in _subtypes:
-                cls = _subtypes[target]
-            else:
-                cls = BaseModel
-        except Exception:
-            cls = BaseModel
+            cls = subtypes()[target]
+        except KeyError:
+            pass
     outdict = dict()
     for k, v in indict.items():
         if k == '@context':
@@ -410,8 +342,53 @@ def from_json(injson):
     return from_dict(indict)
 
 
-def _add_from_schema(*args, **kwargs):
-    generatedClass = from_schema(*args, **kwargs)
+class Entry(BaseModel, Exception):
+    schema = 'entry'
+
+    @property
+    def text(self):
+        return self['nif:isString']
+
+    @text.setter
+    def text(self, value):
+        self['nif:isString'] = value
+
+
+class Error(BaseModel, Exception):
+    schema = 'error'
+
+    def __init__(self, message, *args, **kwargs):
+        Exception.__init__(self, message)
+        super(Error, self).__init__(*args, **kwargs)
+        self.message = message
+
+    def __str__(self):
+        if not hasattr(self, 'errors'):
+            return self.message
+        return '{}:\n\t{}'.format(self.message, self.errors)
+
+    def __hash__(self):
+        return Exception.__hash__(self)
+
+
+# Add the remaining schemas programmatically
+
+def _class_from_schema(name, schema=None, schema_file=None, base_classes=None):
+    base_classes = base_classes or []
+    base_classes.append(BaseModel)
+    attrs = {}
+    if schema:
+        attrs['schema'] = schema
+    elif schema_file:
+        attrs['schema_file'] = schema_file
+    else:
+        attrs['schema'] = name
+    name = "".join((name[0].upper(), name[1:]))
+    return BaseMeta(name, base_classes, attrs)
+
+
+def _add_class_from_schema(*args, **kwargs):
+    generatedClass = _class_from_schema(*args, **kwargs)
     globals()[generatedClass.__name__] = generatedClass
     del generatedClass
 
@@ -425,7 +402,6 @@ for i in [
         'emotionModel',
         'emotionPlugin',
         'emotionSet',
-        'entry',
         'help',
         'plugin',
         'plugins',
@@ -435,19 +411,4 @@ for i in [
         'sentimentPlugin',
         'suggestion',
 ]:
-    _add_from_schema(i)
-
-_ErrorModel = from_schema('error')
-
-
-class Error(_ErrorModel, Exception):
-    def __init__(self, message, *args, **kwargs):
-        Exception.__init__(self, message)
-        super(Error, self).__init__(*args, **kwargs)
-        self.message = message
-
-    def __hash__(self):
-        return Exception.__hash__(self)
-
-
-register(Error, 'error')
+    _add_class_from_schema(i)

@@ -6,6 +6,7 @@ import nltk
 
 
 class SplitPlugin(AnalysisPlugin):
+    '''description: A sample plugin that chunks input text'''
 
     def activate(self):
         nltk.download('punkt')

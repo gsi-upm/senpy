@@ -6,13 +6,12 @@ from future import standard_library
 standard_library.install_aliases()
 
 from . import plugins, api
-from .plugins import SenpyPlugin
+from .plugins import Plugin
 from .models import Error
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 
 from threading import Thread
 from functools import partial
-
 import os
 import copy
 import errno
@@ -30,31 +29,29 @@ class Senpy(object):
                  plugin_folder=".",
                  data_folder=None,
                  default_plugins=False):
-        self.app = app
-        self._search_folders = set()
-        self._plugin_list = []
-        self._outdated = True
-        self._default = None
 
-        self.add_folder(plugin_folder)
+        default_data = os.path.join(os.getcwd(), 'senpy_data')
+        self.data_folder = data_folder or os.environ.get('SENPY_DATA', default_data)
+        try:
+            os.makedirs(self.data_folder)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                logger.debug('Data folder exists: {}'.format(self.data_folder))
+            else:  # pragma: no cover
+                raise
+
+        self._default = None
+        self._plugins = {}
+        if plugin_folder:
+            self.add_folder(plugin_folder)
+
         if default_plugins:
             self.add_folder('plugins', from_root=True)
         else:
             # Add only conversion plugins
             self.add_folder(os.path.join('plugins', 'conversion'),
                             from_root=True)
-
-        self.data_folder = data_folder or os.environ.get('SENPY_DATA',
-                                                         os.path.join(os.getcwd(),
-                                                                      'senpy_data'))
-        try:
-            os.makedirs(self.data_folder)
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                print('Directory not created.')
-            else:
-                raise
-
+        self.app = app
         if app is not None:
             self.init_app(app)
 
@@ -69,21 +66,52 @@ class Senpy(object):
         # otherwise fall back to the request context
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
-        else:
+        else:  # pragma: no cover
             app.teardown_request(self.teardown)
         app.register_blueprint(api_blueprint, url_prefix="/api")
         app.register_blueprint(ns_blueprint, url_prefix="/ns")
         app.register_blueprint(demo_blueprint, url_prefix="/")
 
+    def add_plugin(self, plugin):
+        self._plugins[plugin.name.lower()] = plugin
+
+    def delete_plugin(self, plugin):
+        del self._plugins[plugin.name.lower()]
+
+    def plugins(self, **kwargs):
+        """ Return the plugins registered for a given application. Filtered by criteria  """
+        return list(plugins.pfilter(self._plugins, **kwargs))
+
+    def get_plugin(self, name, default=None):
+        if name == 'default':
+            return self.default_plugin
+        plugin = name.lower()
+        if plugin in self._plugins:
+            return self._plugins[plugin]
+
+        results = self.plugins(id='plugins/{}'.format(name))
+
+        if not results:
+            return Error(message="Plugin not found", status=404)
+        return results[0]
+
+    @property
+    def analysis_plugins(self):
+        """ Return only the analysis plugins """
+        return self.plugins(plugin_type='analysisPlugin')
+
     def add_folder(self, folder, from_root=False):
+        """ Find plugins in this folder and add them to this instance """
         if from_root:
             folder = os.path.join(os.path.dirname(__file__), folder)
         logger.debug("Adding folder: %s", folder)
         if os.path.isdir(folder):
-            self._search_folders.add(folder)
-            self._outdated = True
+            new_plugins = plugins.from_folder([folder],
+                                              data_folder=self.data_folder)
+            for plugin in new_plugins:
+                self.add_plugin(plugin)
         else:
-            raise AttributeError("Not a folder: %s", folder)
+            raise AttributeError("Not a folder or does not exist: %s", folder)
 
     def _get_plugins(self, request):
         if not self.analysis_plugins:
@@ -102,14 +130,16 @@ class Senpy(object):
 
         plugins = list()
         for algo in algos:
-            if algo not in self.plugins:
-                logger.debug(("The algorithm '{}' is not valid\n"
-                              "Valid algorithms: {}").format(algo,
-                                                             self.plugins.keys()))
+            algo = algo.lower()
+            if algo not in self._plugins:
+                msg = ("The algorithm '{}' is not valid\n"
+                       "Valid algorithms: {}").format(algo,
+                                                      self._plugins.keys())
+                logger.debug(msg)
                 raise Error(
                     status=404,
-                    message="The algorithm '{}' is not valid".format(algo))
-            plugins.append(self.plugins[algo])
+                    message=msg)
+            plugins.append(self._plugins[algo])
         return plugins
 
     def _process_entries(self, entries, req, plugins):
@@ -131,7 +161,7 @@ class Senpy(object):
             yield i
 
     def install_deps(self):
-        for plugin in self.filter_plugins(is_activated=True):
+        for plugin in self.plugins(is_activated=True):
             plugins.install_deps(plugin)
 
     def analyse(self, request):
@@ -149,8 +179,6 @@ class Senpy(object):
             for i in self._process_entries(entries, results, plugins):
                 results.entries.append(i)
             self.convert_emotions(results)
-            if 'with_parameters' not in results.parameters:
-                del results.parameters
             logger.debug("Returning analysis result: {}".format(results))
         except (Error, Exception) as ex:
             if not isinstance(ex, Error):
@@ -163,14 +191,13 @@ class Senpy(object):
         return results
 
     def _conversion_candidates(self, fromModel, toModel):
-        candidates = self.filter_plugins(plugin_type='emotionConversionPlugin')
-        for name, candidate in candidates.items():
+        candidates = self.plugins(plugin_type='emotionConversionPlugin')
+        for candidate in candidates:
             for pair in candidate.onyx__doesConversion:
                 logging.debug(pair)
 
                 if pair['onyx:conversionFrom'] == fromModel \
                    and pair['onyx:conversionTo'] == toModel:
-                    # logging.debug('Found candidate: {}'.format(candidate))
                     yield candidate
 
     def convert_emotions(self, resp):
@@ -197,7 +224,8 @@ class Senpy(object):
                 logger.debug('Analysis plugin {} uses model: {}'.format(plugin.id, fromModel))
             except StopIteration:
                 e = Error(('No conversion plugin found for: '
-                           '{} -> {}'.format(fromModel, toModel)))
+                           '{} -> {}'.format(fromModel, toModel)),
+                          status=404)
                 e.original_response = resp
                 e.parameters = params
                 raise e
@@ -223,36 +251,40 @@ class Senpy(object):
 
     @property
     def default_plugin(self):
-        candidate = self._default
-        if not candidate:
-            candidates = self.filter_plugins(plugin_type='analysisPlugin',
-                                             is_activated=True)
+        if not self._default or not self._default.is_activated:
+            candidates = self.plugins(plugin_type='analysisPlugin',
+                                      is_activated=True)
             if len(candidates) > 0:
-                candidate = list(candidates.values())[0]
-        logger.debug("Default: {}".format(candidate))
-        return candidate
+                self._default = candidates[0]
+            else:
+                self._default = None
+            logger.debug("Default: {}".format(self._default))
+        return self._default
 
     @default_plugin.setter
     def default_plugin(self, value):
-        if isinstance(value, SenpyPlugin):
+        if isinstance(value, Plugin):
+            if not value.is_activated:
+                raise AttributeError('The default plugin has to be activated.')
             self._default = value
+
         else:
-            self._default = self.plugins[value]
+            self._default = self._plugins[value.lower()]
 
     def activate_all(self, sync=True):
         ps = []
-        for plug in self.plugins.keys():
+        for plug in self._plugins.keys():
             ps.append(self.activate_plugin(plug, sync=sync))
         return ps
 
     def deactivate_all(self, sync=True):
         ps = []
-        for plug in self.plugins.keys():
+        for plug in self._plugins.keys():
             ps.append(self.deactivate_plugin(plug, sync=sync))
         return ps
 
     def _set_active(self, plugin, active=True, *args, **kwargs):
-        ''' We're using a variable in the plugin itself to activate/deactive plugins.\
+        ''' We're using a variable in the plugin itself to activate/deactivate plugins.\
         Note that plugins may activate themselves by setting this variable.
         '''
         plugin.is_activated = active
@@ -269,11 +301,11 @@ class Senpy(object):
             self._set_active(plugin, success)
 
     def activate_plugin(self, plugin_name, sync=True):
-        try:
-            plugin = self.plugins[plugin_name]
-        except KeyError:
+        plugin_name = plugin_name.lower()
+        if plugin_name not in self._plugins:
             raise Error(
                 message="Plugin not found: {}".format(plugin_name), status=404)
+        plugin = self._plugins[plugin_name]
 
         logger.info("Activating plugin: {}".format(plugin.name))
 
@@ -292,11 +324,11 @@ class Senpy(object):
             logger.info("Plugin deactivated: {}".format(plugin.name))
 
     def deactivate_plugin(self, plugin_name, sync=True):
-        try:
-            plugin = self.plugins[plugin_name]
-        except KeyError:
+        plugin_name = plugin_name.lower()
+        if plugin_name not in self._plugins:
             raise Error(
                 message="Plugin not found: {}".format(plugin_name), status=404)
+        plugin = self._plugins[plugin_name]
 
         self._set_active(plugin, False)
 
@@ -309,20 +341,3 @@ class Senpy(object):
 
     def teardown(self, exception):
         pass
-
-    @property
-    def plugins(self):
-        """ Return the plugins registered for a given application.  """
-        if self._outdated:
-            self._plugin_list = plugins.load_plugins(self._search_folders,
-                                                     data_folder=self.data_folder)
-            self._outdated = False
-        return self._plugin_list
-
-    def filter_plugins(self, **kwargs):
-        return plugins.pfilter(self.plugins, **kwargs)
-
-    @property
-    def analysis_plugins(self):
-        """ Return only the analysis plugins """
-        return self.filter_plugins(plugin_type='analysisPlugin')

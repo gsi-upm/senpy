@@ -28,11 +28,15 @@ def main_function(argv):
                               api.API_PARAMS,
                               api.NIF_PARAMS)
     plugin_folder = params['plugin_folder']
-    sp = Senpy(default_plugins=False, plugin_folder=plugin_folder)
+    default_plugins = params.get('default-plugins', False)
+    sp = Senpy(default_plugins=default_plugins, plugin_folder=plugin_folder)
     request = api.parse_call(params)
-    algos = request.parameters.get('algorithm', sp.plugins.keys())
-    for algo in algos:
-        sp.activate_plugin(algo)
+    algos = request.parameters.get('algorithm', None)
+    if algos:
+        for algo in algos:
+            sp.activate_plugin(algo)
+    else:
+        sp.activate_all()
     res = sp.analyse(request)
     return res
 

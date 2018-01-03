@@ -31,7 +31,7 @@ import json
 logger = logging.getLogger(__name__)
 
 api_blueprint = Blueprint("api", __name__)
-demo_blueprint = Blueprint("demo", __name__)
+demo_blueprint = Blueprint("demo", __name__, template_folder='templates')
 ns_blueprint = Blueprint("ns", __name__)
 
 
@@ -83,12 +83,11 @@ def basic_api(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         raw_params = get_params(request)
+        logger.info('Getting request: {}'.format(raw_params))
         headers = {'X-ORIGINAL-PARAMS': json.dumps(raw_params)}
         params = default_params
 
         try:
-            print('Getting request:')
-            print(request)
             params = api.parse_params(raw_params, api.WEB_PARAMS, api.API_PARAMS)
             if hasattr(request, 'parameters'):
                 request.parameters.update(params)
@@ -108,10 +107,9 @@ def basic_api(f):
             logger.error(ex)
 
         if 'parameters' in response and not params['with_parameters']:
-            print(response)
-            print(response.data)
             del response.parameters
 
+        logger.info('Response: {}'.format(response))
         return response.flask(
             in_headers=params['inHeaders'],
             headers=headers,
@@ -142,8 +140,8 @@ def plugins():
     sp = current_app.senpy
     params = api.parse_params(request.parameters, api.PLUGINS_PARAMS)
     ptype = params.get('plugin_type')
-    plugins = sp.filter_plugins(plugin_type=ptype)
-    dic = Plugins(plugins=list(plugins.values()))
+    plugins = list(sp.plugins(plugin_type=ptype))
+    dic = Plugins(plugins=plugins)
     return dic
 
 
@@ -151,12 +149,4 @@ def plugins():
 @basic_api
 def plugin(plugin=None):
     sp = current_app.senpy
-    if plugin == 'default' and sp.default_plugin:
-        return sp.default_plugin
-    plugins = sp.filter_plugins(
-        id='plugins/{}'.format(plugin)) or sp.filter_plugins(name=plugin)
-    if plugins:
-        response = list(plugins.values())[0]
-    else:
-        return Error(message="Plugin not found", status=404)
-    return response
+    return sp.get_plugin(plugin)

@@ -39,7 +39,7 @@ def main():
         '-l',
         metavar='logging_level',
         type=str,
-        default="INFO",
+        default="ERROR",
         help='Logging level')
     parser.add_argument(
         '--debug',
@@ -76,6 +76,12 @@ def main():
         default=False,
         help='Do not run a server, only install plugin dependencies')
     parser.add_argument(
+        '--only-list',
+        '--list',
+        action='store_true',
+        default=False,
+        help='Do not run a server, only list plugins found')
+    parser.add_argument(
         '--data-folder',
         '--data',
         type=str,
@@ -97,7 +103,6 @@ def main():
         print('Senpy version {}'.format(senpy.__version__))
         print(sys.version)
         exit(1)
-    logging.basicConfig()
     rl = logging.getLogger()
     rl.setLevel(getattr(logging, args.level))
     app = Flask(__name__)
@@ -105,6 +110,14 @@ def main():
     sp = Senpy(app, args.plugins_folder,
                default_plugins=args.default_plugins,
                data_folder=args.data_folder)
+    if args.only_list:
+        plugins = sp.plugins()
+        maxwidth = max(len(x.id) for x in plugins)
+        for plugin in plugins:
+            import inspect
+            fpath = inspect.getfile(plugin.__class__)
+            print('{: <{width}} @ {}'.format(plugin.id, fpath, width=maxwidth))
+        return
     sp.install_deps()
     if args.only_install:
         return

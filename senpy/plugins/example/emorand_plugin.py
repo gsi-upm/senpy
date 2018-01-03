@@ -5,12 +5,10 @@ from senpy.models import EmotionSet, Emotion, Entry
 
 
 class EmoRand(EmotionPlugin):
-    name = "emoRand"
-    description = 'A sample plugin that returns a random emotion annotation'
+    '''A sample plugin that returns a random emotion annotation'''
     author = '@balkian'
     version = '0.1'
     url = "https://github.com/gsi-upm/senpy-plugins-community"
-    requirements = {}
     onyx__usesEmotionModel = "emoml:big6"
 
     def analyse_entry(self, entry, params):

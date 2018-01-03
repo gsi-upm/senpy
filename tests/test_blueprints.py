@@ -23,7 +23,7 @@ class BlueprintsTest(TestCase):
         cls.app = Flask("test_extensions")
         cls.app.debug = False
         cls.client = cls.app.test_client()
-        cls.senpy = Senpy()
+        cls.senpy = Senpy(default_plugins=True)
         cls.senpy.init_app(cls.app)
         cls.dir = os.path.join(os.path.dirname(__file__), "..")
         cls.senpy.add_folder(cls.dir)
@@ -34,11 +34,14 @@ class BlueprintsTest(TestCase):
     def assertCode(self, resp, code):
         self.assertEqual(resp.status_code, code)
 
+    def test_playground(self):
+        resp = self.client.get("/")
+        assert "main.js" in resp.data.decode()
+
     def test_home(self):
         """
         Calling with no arguments should ask the user for more arguments
         """
-        self.app.debug = False
         resp = self.client.get("/api/")
         self.assertCode(resp, 400)
         js = parse_resp(resp)
@@ -84,6 +87,10 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         logging.debug("Got response: %s", js)
         assert isinstance(js, models.Error)
+        resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired&example=notvalid")
+        self.assertCode(resp, 400)
+        resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired&example=a")
+        self.assertCode(resp, 200)
 
     def test_error(self):
         """
@@ -155,8 +162,7 @@ class BlueprintsTest(TestCase):
     def test_schema(self):
         resp = self.client.get("/api/schemas/definitions.json")
         self.assertCode(resp, 200)
-        js = parse_resp(resp)
-        assert "$schema" in js
+        assert "$schema" in resp.data.decode()
 
     def test_help(self):
         resp = self.client.get("/api/?help=true")
@@ -164,3 +170,7 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         assert "valid_parameters" in js
         assert "help" in js["valid_parameters"]
+
+    def test_conversion(self):
+        resp = self.client.get("/api/?input=hello&algo=emoRand&emotionModel=DOES NOT EXIST")
+        self.assertCode(resp, 404)

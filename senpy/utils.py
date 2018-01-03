@@ -1,5 +1,9 @@
-from . import models
+from . import models, __version__
 from collections import MutableMapping
+import pprint
+
+import logging
+logger = logging.getLogger(__name__)
 
 # MutableMapping should be enough, but it causes problems with py2
 DICTCLASSES = (MutableMapping, dict, models.BaseModel)
@@ -9,40 +13,78 @@ def check_template(indict, template):
     if isinstance(template, DICTCLASSES) and isinstance(indict, DICTCLASSES):
         for k, v in template.items():
             if k not in indict:
-                return '{} not in {}'.format(k, indict)
+                raise models.Error('{} not in {}'.format(k, indict))
             check_template(indict[k], v)
     elif isinstance(template, list) and isinstance(indict, list):
         for e in template:
-            found = False
             for i in indict:
                 try:
                     check_template(i, e)
-                    found = True
+                    break
                 except models.Error as ex:
                     # raise
                     continue
-            if not found:
-                raise models.Error('{} not found in {}'.format(e, indict))
+            else:
+                raise models.Error(('Element not found.'
+                                   '\nExpected: {}\nIn: {}').format(pprint.pformat(e),
+                                                                    pprint.pformat(indict)))
     else:
         if indict != template:
-            raise models.Error('{} and {} are different'.format(indict, template))
+            raise models.Error(('Differences found.\n'
+                                '\tExpected: {}\n'
+                                '\tFound: {}').format(pprint.pformat(indict),
+                                                      pprint.pformat(template)))
 
 
-def easy(app=None, plugin=None, host='0.0.0.0', port=5000, **kwargs):
+def easy_load(app=None, plugin_list=None, plugin_folder=None, **kwargs):
     '''
     Run a server with a specific plugin.
     '''
 
     from flask import Flask
-    from senpy.extensions import Senpy
+    from .extensions import Senpy
 
     if not app:
         app = Flask(__name__)
-    sp = Senpy(app)
-    if plugin:
+    sp = Senpy(app, plugin_folder=plugin_folder, **kwargs)
+    if not plugin_list:
+        from . import plugins
+        import __main__
+        plugin_list = plugins.from_module(__main__)
+    for plugin in plugin_list:
         sp.add_plugin(plugin)
     sp.install_deps()
+    sp.activate_all()
+    return sp, app
+
+
+def easy_test(plugin_list=None):
+    logger.setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
+    if not plugin_list:
+        from . import plugins
+        import __main__
+        plugin_list = plugins.from_module(__main__)
+    for plug in plugin_list:
+        plug.test()
+    logger.info('All tests passed!')
+
+
+def easy(host='0.0.0.0', port=5000, debug=True, **kwargs):
+    '''
+    Run a server with a specific plugin.
+    '''
+    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger('senpy').setLevel(logging.INFO)
+    sp, app = easy_load(**kwargs)
+    easy_test(sp.plugins())
+    app.debug = debug
+    import time
+    logger.info(time.time())
+    logger.info('Senpy version {}'.format(__version__))
+    logger.info('Server running on port %s:%d. Ctrl+C to quit' % (host,
+                                                                  port))
+    app.debug = debug
     app.run(host,
             port,
-            debug=app.debug,
-            **kwargs)
+            debug=app.debug)

@@ -28,4 +28,10 @@ logger = logging.getLogger(__name__)
 
 logger.info('Using senpy version: {}'.format(__version__))
 
+from .utils import easy, easy_load, easy_test  # noqa: F401
+
+from .models import *  # noqa: F401,F403
+from .plugins import *  # noqa: F401,F403
+from .extensions import *  # noqa: F401,F403
+
 __all__ = ['api', 'blueprints', 'cli', 'extensions', 'models', 'plugins']

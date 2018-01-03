@@ -1,0 +1,3 @@
+module: mynoop
+requirements:
+ - noop
