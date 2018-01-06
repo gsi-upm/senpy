@@ -46,9 +46,9 @@ def main():
     '''
     try:
         res = main_function(sys.argv[1:])
-        print(res.to_JSON())
+        print(res.serialize())
     except Error as err:
-        print(err.to_JSON())
+        print(err.serialize())
         sys.exit(2)
 
 

@@ -15,7 +15,8 @@ from senpy.models import (Emotion,
                           SentimentPlugin,
                           Plugins,
                           from_string,
-                          from_dict)
+                          from_dict,
+                          subtypes)
 from senpy import plugins
 from pprint import pprint
 
@@ -133,6 +134,11 @@ class ModelsTest(TestCase):
         r.analysis.append(p)
         s = str(r)
         assert "_testing" not in s
+
+    def test_serialize(self):
+        for k, v in subtypes().items():
+            e = v()
+            e.serialize()
 
     def test_turtle(self):
         """Any model should be serializable as a turtle file"""

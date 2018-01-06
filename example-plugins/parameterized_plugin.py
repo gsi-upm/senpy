@@ -7,8 +7,8 @@ import basic
 
 
 class ParameterizedDictionary(plugins.SentimentPlugin):
+    '''This is a basic self-contained plugin'''
 
-    description = 'This is a basic self-contained plugin'
     author = '@balkian'
     version = '0.2'
 

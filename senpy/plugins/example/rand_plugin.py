@@ -27,7 +27,7 @@ class Rand(SentimentPlugin):
         '''Run several random analyses.'''
         params = dict()
         results = list()
-        for i in range(20):
+        for i in range(50):
             res = next(self.analyse_entry(Entry(nif__isString="Hello"),
                                           params))
             res.validate()

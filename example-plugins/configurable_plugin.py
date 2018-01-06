@@ -14,8 +14,12 @@ class Dictionary(plugins.SentimentPlugin):
 
     dictionaries = [basic.emojis, basic.emoticons]
 
+    mappings = {'pos': 'marl:Positive', 'neg': 'marl:Negative'}
+
     def analyse_entry(self, entry, params):
         polarity = basic.get_polarity(entry.text, self.dictionaries)
+        if polarity in self.mappings:
+            polarity = self.mappings[polarity]
 
         s = models.Sentiment(marl__hasPolarity=polarity)
         s.prov(self)
@@ -80,14 +84,14 @@ class Salutes(Dictionary):
     '''Sentiment annotation with a custom lexicon, for illustration purposes'''
     dictionaries = [{
         'marl:Positive': ['Hello', '!'],
-        'marl:Negative': ['sad', ]
+        'marl:Negative': ['Good bye', ]
     }]
 
     test_cases = [{
         'input': 'Hello :)',
         'polarity': 'marl:Positive'
     }, {
-        'input': 'So sad :(',
+        'input': 'Good bye :(',
         'polarity': 'marl:Negative'
     }, {
         'input': 'Yay! Emojis  😁',

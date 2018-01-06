@@ -17,8 +17,6 @@ import copy
 import json
 import os
 import jsonref
-from collections import UserDict
-
 from flask import Response as FlaskResponse
 from pyld import jsonld
 
@@ -30,7 +28,7 @@ logger = logging.getLogger(__name__)
 from rdflib import Graph
 
 
-from .meta import BaseMeta
+from .meta import BaseMeta, CustomDict, alias
 
 DEFINITIONS_FILE = 'definitions.json'
 CONTEXT_PATH = os.path.join(
@@ -81,67 +79,6 @@ def register(rsubclass, rtype=None):
     BaseMeta.register(rsubclass, rtype)
 
 
-class CustomDict(UserDict, object):
-    '''
-    A dictionary whose elements can also be accessed as attributes. Since some
-    characters are not valid in the dot-notation, the attribute names also
-    converted. e.g.:
-
-    > d = CustomDict()
-    > d.key = d['ns:name'] = 1
-    > d.key == d['key']
-    True
-    > d.ns__name == d['ns:name']
-    '''
-
-    _defaults = []
-
-    def __init__(self, *args, **kwargs):
-        temp = copy.deepcopy(self._defaults)
-        for arg in args:
-            temp.update(copy.deepcopy(arg))
-        for k, v in kwargs.items():
-            temp[self._get_key(k)] = v
-
-        super(CustomDict, self).__init__(temp)
-
-    @staticmethod
-    def _get_key(key):
-        if key is 'id':
-            key = '@id'
-        key = key.replace("__", ":", 1)
-        return key
-
-    @staticmethod
-    def _internal_key(key):
-        return key[0] == '_' or key == 'data'
-
-    def __getattr__(self, key):
-        '''
-        __getattr__ only gets called when the attribute could not be found
-        in the __dict__. So we only need to look for the the element in the
-        dictionary, or raise an Exception.
-        '''
-        mkey = self._get_key(key)
-        if not self._internal_key(key) and mkey in self:
-            return self[mkey]
-        raise AttributeError(key)
-
-    def __setattr__(self, key, value):
-        # Work as usual for internal properties or already existing
-        # properties
-        if self._internal_key(key) or key in self.__dict__:
-            return super(CustomDict, self).__setattr__(key, value)
-        key = self._get_key(key)
-        return self.__setitem__(self._get_key(key), value)
-
-    def __delattr__(self, key):
-        if self._internal_key(key):
-            return object.__delattr__(self, key)
-        key = self._get_key(key)
-        self.__delitem__(self._get_key(key))
-
-
 class BaseModel(with_metaclass(BaseMeta, CustomDict)):
     '''
     Entities of the base model are a special kind of dictionary that emulates
@@ -185,13 +122,24 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
 
     def __init__(self, *args, **kwargs):
         auto_id = kwargs.pop('_auto_id', True)
+
         super(BaseModel, self).__init__(*args, **kwargs)
 
-        if '@id' not in self and auto_id:
-            self.id = ':{}_{}'.format(type(self).__name__, time.time())
+        if auto_id:
+            self.id
 
         if '@type' not in self:
             logger.warn('Created an instance of an unknown model')
+
+    @property
+    def id(self):
+        if '@id' not in self:
+            self['@id'] = ':{}_{}'.format(type(self).__name__, time.time())
+        return self['@id']
+
+    @id.setter
+    def id(self, value):
+        self['@id'] = value
 
     def flask(self,
               in_headers=True,
@@ -246,23 +194,6 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
         else:
             return content
 
-    def serializable(self):
-        def ser_or_down(item):
-            if hasattr(item, 'serializable'):
-                return item.serializable()
-            elif isinstance(item, dict):
-                temp = dict()
-                for kp in item:
-                    vp = item[kp]
-                    temp[kp] = ser_or_down(vp)
-                return temp
-            elif isinstance(item, list) or isinstance(item, set):
-                return list(ser_or_down(i) for i in item)
-            else:
-                return item
-
-        return ser_or_down(self.data)
-
     def jsonld(self,
                with_context=False,
                context_uri=None,
@@ -288,19 +219,12 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
             del result['@context']
         return result
 
-    def to_JSON(self, *args, **kwargs):
-        js = json.dumps(self.jsonld(*args, **kwargs), indent=4, sort_keys=True)
-        return js
-
     def validate(self, obj=None):
         if not obj:
             obj = self
         if hasattr(obj, "jsonld"):
             obj = obj.jsonld()
         self._validator.validate(obj)
-
-    def __str__(self):
-        return str(self.serialize())
 
     def prov(self, another):
         self['prov:wasGeneratedBy'] = another.id
@@ -329,7 +253,7 @@ def from_dict(indict, cls=None):
             for ix, v2 in enumerate(v):
                 if isinstance(v2, dict):
                     v[ix] = from_dict(v2)
-        outdict[k] = copy.deepcopy(v)
+        outdict[k] = copy.copy(v)
     return cls(**outdict)
 
 
@@ -342,22 +266,23 @@ def from_json(injson):
     return from_dict(indict)
 
 
-class Entry(BaseModel, Exception):
+class Entry(BaseModel):
     schema = 'entry'
 
-    @property
-    def text(self):
-        return self['nif:isString']
+    text = alias('nif:isString')
 
-    @text.setter
-    def text(self, value):
-        self['nif:isString'] = value
+
+class Sentiment(BaseModel):
+    schema = 'sentiment'
+
+    polarity = alias('marl:hasPolarity')
+    polarityValue = alias('marl:hasPolarityValue')
 
 
 class Error(BaseModel, Exception):
     schema = 'error'
 
-    def __init__(self, message, *args, **kwargs):
+    def __init__(self, message='Generic senpy exception', *args, **kwargs):
         Exception.__init__(self, message)
         super(Error, self).__init__(*args, **kwargs)
         self.message = message
@@ -407,7 +332,6 @@ for i in [
         'plugins',
         'response',
         'results',
-        'sentiment',
         'sentimentPlugin',
         'suggestion',
 ]:

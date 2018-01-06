@@ -1,13 +1,13 @@
 #!/usr/local/bin/python
 # coding: utf-8
 
-from senpy import easy_test, SentimentBox, MappingMixin
+from senpy import easy_test, SentimentBox
 
 import basic
 
 
-class Basic(MappingMixin, SentimentBox):
-    '''Provides sentiment annotation using a lexicon'''
+class BasicBox(SentimentBox):
+    ''' A modified version of Basic that also does converts annotations manually'''
 
     author = '@balkian'
     version = '0.1'
@@ -19,7 +19,8 @@ class Basic(MappingMixin, SentimentBox):
     }
 
     def box(self, input, **kwargs):
-        return basic.get_polarity(input)
+        output = basic.get_polarity(input)
+        return self.mappings.get(output, self.mappings['default'])
 
     test_cases = [{
         'input': 'Hello :)',

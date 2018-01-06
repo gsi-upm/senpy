@@ -1,13 +1,13 @@
 #!/usr/local/bin/python
 # coding: utf-8
 
-from senpy import easy_test, SentimentBox, MappingMixin
+from senpy import easy_test, models, plugins
 
 import basic
 
 
-class Basic(MappingMixin, SentimentBox):
-    '''Provides sentiment annotation using a lexicon'''
+class BasicAnalyseEntry(plugins.SentimentPlugin):
+    '''Equivalent to Basic, implementing the analyse_entry method'''
 
     author = '@balkian'
     version = '0.1'
@@ -18,8 +18,15 @@ class Basic(MappingMixin, SentimentBox):
         'default': 'marl:Neutral'
     }
 
-    def box(self, input, **kwargs):
-        return basic.get_polarity(input)
+    def analyse_entry(self, entry, params):
+        polarity = basic.get_polarity(entry.text)
+
+        polarity = self.mappings.get(polarity, self.mappings['default'])
+
+        s = models.Sentiment(marl__hasPolarity=polarity)
+        s.prov(self)
+        entry.sentiments.append(s)
+        yield entry
 
     test_cases = [{
         'input': 'Hello :)',

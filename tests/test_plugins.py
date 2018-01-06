@@ -13,6 +13,10 @@ from senpy.plugins.conversion.emotion.centroids import CentroidConversion
 
 class ShelfDummyPlugin(plugins.SentimentPlugin, plugins.ShelfMixin):
     '''Dummy plugin for tests.'''
+    name = 'Shelf'
+    version = 0
+    author = 'the senpy community'
+
     def activate(self, *args, **kwargs):
         if 'counter' not in self.sh:
             self.sh['counter'] = 0
@@ -40,6 +44,16 @@ class PluginsTest(TestCase):
     def setUp(self):
         self.shelf_dir = tempfile.mkdtemp()
         self.shelf_file = os.path.join(self.shelf_dir, "shelf")
+
+    def test_serialize(self):
+        '''A plugin should be serializable and de-serializable'''
+        dummy = ShelfDummyPlugin()
+        dummy.serialize()
+
+    def test_jsonld(self):
+        '''A plugin should be serializable and de-serializable'''
+        dummy = ShelfDummyPlugin()
+        dummy.jsonld()
 
     def test_shelf_file(self):
         a = ShelfDummyPlugin(
@@ -186,6 +200,61 @@ class PluginsTest(TestCase):
             }
         })
         assert 'example' in a.extra_params
+
+    def test_box(self):
+
+        class MyBox(plugins.Box):
+            ''' Vague description'''
+
+            author = 'me'
+            version = 0
+
+            def input(self, entry, **kwargs):
+                return entry.text
+
+            def box(self, input, **kwargs):
+                return 'SIGN' in input
+
+            def output(self, output, entry, **kwargs):
+                if output:
+                    entry.myAnnotation = 'DETECTED'
+                return entry
+
+            test_cases = [
+                {
+                    'input': "nothing here",
+                    'expected': {'myAnnotation': 'DETECTED'},
+                    'should_fail': True
+                }, {
+                    'input': "SIGN",
+                    'expected': {'myAnnotation': 'DETECTED'}
+                }]
+
+        MyBox().test()
+
+    def test_sentimentbox(self):
+
+        class SentimentBox(plugins.MappingMixin, plugins.SentimentBox):
+            ''' Vague description'''
+
+            author = 'me'
+            version = 0
+
+            mappings = {'happy': 'marl:Positive', 'sad': 'marl:Negative'}
+
+            def box(self, input, **kwargs):
+                return 'happy' if ':)' in input else 'sad'
+
+            test_cases = [
+                {
+                    'input': 'a happy face :)',
+                    'polarity': 'marl:Positive'
+                }, {
+                    'input': "Nothing",
+                    'polarity': 'marl:Negative'
+                }]
+
+        SentimentBox().test()
 
     def test_conversion_centroids(self):
         info = {

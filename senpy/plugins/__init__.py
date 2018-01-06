@@ -1,5 +1,7 @@
 from future import standard_library
 standard_library.install_aliases()
+
+
 from future.utils import with_metaclass
 
 import os.path
@@ -120,21 +122,20 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         entry = models.Entry(case['entry'])
         given_parameters = case.get('params', case.get('parameters', {}))
         expected = case['expected']
+        should_fail = case.get('should_fail', False)
         try:
             params = api.parse_params(given_parameters, self.extra_params)
-            res = list(self.analyse_entry(entry, params))
-        except models.Error:
-            if not expected:
-                return
-            raise
-        if not expected:
-            raise Exception('This test should have raised an exception.')
+            res = list(self.analyse_entries([entry, ], params))
 
-        if not isinstance(expected, list):
-            expected = [expected]
-        utils.check_template(res, expected)
-        for r in res:
-            r.validate()
+            if not isinstance(expected, list):
+                expected = [expected]
+            utils.check_template(res, expected)
+            for r in res:
+                r.validate()
+        except models.Error:
+            if should_fail:
+                return
+        assert not should_fail
 
     def open(self, fpath, *args, **kwargs):
         if not os.path.isabs(fpath):
@@ -241,6 +242,92 @@ class EmotionConversion(Conversion):
 EmotionConversionPlugin = EmotionConversion
 
 
+class Box(AnalysisPlugin):
+    '''
+    Black box plugins delegate analysis to a function.
+    The flow is like so:
+
+    .. code-block::
+
+                   entry --> input() --> box() --> output() --> entry'
+
+
+    In other words: their ``input`` method convers a query (entry and a set of parameters) into
+    the input to the box method. The ``output`` method convers the results given by the box into
+    an entry that senpy can handle.
+    '''
+
+    def input(self, entry, params=None):
+        '''Transforms a query (entry+param) into an input for the black box'''
+        return entry
+
+    def output(self, output, entry=None, params=None):
+        '''Transforms the results of the black box into an entry'''
+        return output
+
+    def box(self):
+        raise NotImplementedError('You should define the behavior of this plugin')
+
+    def analyse_entries(self, entries, params):
+        for entry in entries:
+            input = self.input(entry=entry, params=params)
+            results = self.box(input=input, params=params)
+            yield self.output(output=results, entry=entry, params=params)
+
+
+class TextBox(Box):
+    '''A black box plugin that takes only text as input'''
+
+    def input(self, entry, params):
+        entry = super(TextBox, self).input(entry, params)
+        return entry['nif:isString']
+
+
+class SentimentBox(TextBox, SentimentPlugin):
+    '''
+    A box plugin where the output is only a polarity label or a tuple (polarity, polarityValue)
+    '''
+
+    def output(self, output, entry, **kwargs):
+        s = models.Sentiment()
+        try:
+            label, value = output
+        except ValueError:
+            label, value = output, None
+        s.prov(self)
+        s.polarity = label
+        if value is not None:
+            s.polarityValue = value
+        entry.sentiments.append(s)
+        return entry
+
+
+class EmotionBox(TextBox, EmotionPlugin):
+    '''
+    A box plugin where the output is only an a tuple of emotion labels
+    '''
+
+    def output(self, output, entry, **kwargs):
+        if not isinstance(output, list):
+            output = [output]
+        s = models.EmotionSet()
+        entry.emotions.append(s)
+        for label in output:
+            e = models.Emotion(onyx__hasEmotionCategory=label)
+            s.append(e)
+        return entry
+
+
+class MappingMixin(object):
+
+    def output(self, output, entry, params):
+        output = self.mappings.get(output,
+                                   self.mappings.get('default', output))
+        return super(MappingMixin, self).output(output=output,
+                                                entry=entry,
+                                                params=params)
+
+
 class ShelfMixin(object):
     @property
     def sh(self):
@@ -269,9 +356,13 @@ class ShelfMixin(object):
 
     @property
     def shelf_file(self):
-        if 'shelf_file' not in self or not self['shelf_file']:
-            self.shelf_file = os.path.join(self.data_folder, self.name + '.p')
-        return self['shelf_file']
+        if not hasattr(self, '_shelf_file') or not self._shelf_file:
+            self._shelf_file = os.path.join(self.data_folder, self.name + '.p')
+        return self._shelf_file
+
+    @shelf_file.setter
+    def shelf_file(self, value):
+        self._shelf_file = value
 
     def save(self):
         logger.debug('saving pickle')

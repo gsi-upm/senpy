@@ -36,6 +36,15 @@ def check_template(indict, template):
                                                       pprint.pformat(template)))
 
 
+def convert_dictionary(original, mappings):
+    result = {}
+    for key, value in original.items():
+        if key in mappings:
+            key = mappings[key]
+        result[key] = value
+    return result
+
+
 def easy_load(app=None, plugin_list=None, plugin_folder=None, **kwargs):
     '''
     Run a server with a specific plugin.
