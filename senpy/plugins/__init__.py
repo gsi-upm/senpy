@@ -114,6 +114,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         for case in test_cases:
             try:
                 self.test_case(case)
+                logger.debug('Test case passed:\n{}'.format(pprint.pformat(case)))
             except Exception as ex:
                 logger.warn('Test case failed:\n{}'.format(pprint.pformat(case)))
                 raise
@@ -121,7 +122,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     def test_case(self, case):
         entry = models.Entry(case['entry'])
         given_parameters = case.get('params', case.get('parameters', {}))
-        expected = case['expected']
+        expected = case.get('expected', None)
         should_fail = case.get('should_fail', False)
         try:
             params = api.parse_params(given_parameters, self.extra_params)
@@ -135,6 +136,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         except models.Error:
             if should_fail:
                 return
+            raise
         assert not should_fail
 
     def open(self, fpath, *args, **kwargs):
@@ -213,8 +215,8 @@ class SentimentPlugin(Analysis, models.SentimentPlugin):
     maxPolarityValue = 1
 
     def test_case(self, case):
-        expected = case.get('expected', {})
         if 'polarity' in case:
+            expected = case.get('expected', {})
             s = models.Sentiment(_auto_id=False)
             s.marl__hasPolarity = case['polarity']
             if 'sentiments' not in expected:
@@ -319,6 +321,14 @@ class EmotionBox(TextBox, EmotionPlugin):
 
 
 class MappingMixin(object):
+
+    @property
+    def mappings(self):
+        return self._mappings
+
+    @mappings.setter
+    def mappings(self, value):
+        self._mappings = value
 
     def output(self, output, entry, params):
         output = self.mappings.get(output,

@@ -22,7 +22,7 @@ class DummyRequired(AnalysisPlugin):
         'entry': {
             'nif:isString': 'Hello',
         },
-        'expected': None
+        'should_fail': True
     }, {
         'entry': {
             'nif:isString': 'Hello',

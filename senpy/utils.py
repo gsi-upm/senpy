@@ -76,6 +76,7 @@ def easy_test(plugin_list=None):
         plugin_list = plugins.from_module(__main__)
     for plug in plugin_list:
         plug.test()
+        logger.info('The tests for {} passed!'.format(plug.name))
     logger.info('All tests passed!')
 
 
