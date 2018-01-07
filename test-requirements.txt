@@ -1,4 +1,6 @@
 mock
 pytest-cov
 pytest
+scikit-learn
+numpy
 gsitk

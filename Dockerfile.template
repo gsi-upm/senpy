@@ -2,6 +2,12 @@ from python:{{PYVERSION}}
 
 MAINTAINER J. Fernando Sánchez <jf.sanchez@upm.es>
 
+RUN apt-get update && apt-get install -y \
+libblas-dev liblapack-dev liblapacke-dev gfortran \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade numpy scipy scikit-learn
+
 RUN mkdir /cache/ /senpy-plugins /data/
 
 VOLUME /data/
