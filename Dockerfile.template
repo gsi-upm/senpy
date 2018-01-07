@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
 libblas-dev liblapack-dev liblapacke-dev gfortran \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade numpy scipy scikit-learn
+RUN pip install --no-cache-dir --upgrade numpy scipy scikit-learn
 
 RUN mkdir /cache/ /senpy-plugins /data/
 
@@ -21,8 +21,8 @@ ONBUILD WORKDIR /senpy-plugins/
 
 WORKDIR /usr/src/app
 COPY test-requirements.txt requirements.txt /usr/src/app/
-RUN pip install --use-wheel -r test-requirements.txt -r requirements.txt
+RUN pip install --no-cache-dir --use-wheel -r test-requirements.txt -r requirements.txt
 COPY . /usr/src/app/
-RUN pip install --no-index --no-deps --editable .
+RUN pip install --no-cache-dir --no-index --no-deps --editable .
 
 ENTRYPOINT ["python", "-m", "senpy", "-f", "/senpy-plugins/", "--host", "0.0.0.0"]
