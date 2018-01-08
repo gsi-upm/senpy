@@ -2,7 +2,10 @@ import pip
 from setuptools import setup
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
 from pip.req import parse_requirements
-from senpy import __version__
+
+with open('senpy/VERSION') as f:
+    __version__ = f.read().strip()
+    assert __version__
 
 try:
     install_reqs = parse_requirements(
