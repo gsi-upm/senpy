@@ -18,7 +18,7 @@ class Basic(MappingMixin, SentimentBox):
         'default': 'marl:Neutral'
     }
 
-    def box(self, input, **kwargs):
+    def predict(self, input):
         return basic.get_polarity(input)
 
     test_cases = [{

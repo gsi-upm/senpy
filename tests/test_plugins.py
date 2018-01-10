@@ -212,7 +212,7 @@ class PluginsTest(TestCase):
             def input(self, entry, **kwargs):
                 return entry.text
 
-            def box(self, input, **kwargs):
+            def predict(self, input):
                 return 'SIGN' in input
 
             def output(self, output, entry, **kwargs):
@@ -242,7 +242,7 @@ class PluginsTest(TestCase):
 
             mappings = {'happy': 'marl:Positive', 'sad': 'marl:Negative'}
 
-            def box(self, input, **kwargs):
+            def predict(self, input, **kwargs):
                 return 'happy' if ':)' in input else 'sad'
 
             test_cases = [

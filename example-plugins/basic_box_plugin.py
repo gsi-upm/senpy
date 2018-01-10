@@ -18,7 +18,7 @@ class BasicBox(SentimentBox):
         'default': 'marl:Neutral'
     }
 
-    def box(self, input, **kwargs):
+    def predict(self, input):
         output = basic.get_polarity(input)
         return self.mappings.get(output, self.mappings['default'])
 

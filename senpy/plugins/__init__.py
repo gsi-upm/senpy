@@ -251,7 +251,7 @@ class Box(AnalysisPlugin):
 
     .. code-block::
 
-                   entry --> input() --> box() --> output() --> entry'
+                   entry --> input() --> predict() --> output() --> entry'
 
 
     In other words: their ``input`` method convers a query (entry and a set of parameters) into
@@ -267,13 +267,13 @@ class Box(AnalysisPlugin):
         '''Transforms the results of the black box into an entry'''
         return output
 
-    def box(self):
+    def predict(self, input):
         raise NotImplementedError('You should define the behavior of this plugin')
 
     def analyse_entries(self, entries, params):
         for entry in entries:
             input = self.input(entry=entry, params=params)
-            results = self.box(input=input, params=params)
+            results = self.predict(input=input)
             yield self.output(output=results, entry=entry, params=params)
 
 
@@ -453,7 +453,8 @@ def install_deps(*plugins):
     return installed
 
 
-is_plugin_file = re.compile(r'.*\.senpy$|senpy_[a-zA-Z0-9_]+\.py$|[a-zA-Z0-9_]+_plugin.py$')
+is_plugin_file = re.compile(r'.*\.senpy$|senpy_[a-zA-Z0-9_]+\.py$|'
+                            '^(?!test_)[a-zA-Z0-9_]+_plugin.py$')
 
 
 def find_plugins(folders):
