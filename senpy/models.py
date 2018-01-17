@@ -327,6 +327,7 @@ for i in [
         'emotionModel',
         'emotionPlugin',
         'emotionSet',
+        'entity',
         'help',
         'plugin',
         'plugins',

@@ -42,7 +42,7 @@ class Sentiment140Plugin(SentimentPlugin):
         from requests.
         '''
         from senpy.test import patch_requests
-        expected = {"data": [{"polarity": 10}]}
+        expected = {"data": [{"polarity": 4}]}
         with patch_requests(expected) as (request, response):
             super(Sentiment140Plugin, self).test(*args, **kwargs)
             assert request.called
