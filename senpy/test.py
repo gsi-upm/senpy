@@ -3,6 +3,8 @@ try:
 except ImportError:
     from mock import patch, MagicMock
 
+from past.builtins import basestring
+
 
 import json
 from contextlib import contextmanager
@@ -15,13 +17,17 @@ def patch_requests(value, code=200):
     success = MagicMock()
     if isinstance(value, BaseModel):
         value = value.jsonld()
-    data = json.dumps(value)
+    if not isinstance(value, basestring):
+        data = json.dumps(value)
+    else:
+        data = value
 
     success.json.return_value = value
-    success.data.return_value = data
-    success.status_code = code
 
-    success.content = json.dumps(value)
+    success.status_code = code
+    success.content = data
+    success.text = data
+
     method_mocker = MagicMock()
     method_mocker.return_value = success
     with patch.multiple('requests', request=method_mocker,
