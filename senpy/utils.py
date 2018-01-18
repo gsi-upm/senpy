@@ -71,8 +71,9 @@ def easy_test(plugin_list=None):
     logger.setLevel(logging.DEBUG)
     logging.getLogger().setLevel(logging.INFO)
     if not plugin_list:
-        from . import plugins
         import __main__
+        logger.info('Loading classes from {}'.format(__main__))
+        from . import plugins
         plugin_list = plugins.from_module(__main__)
     for plug in plugin_list:
         plug.test()
