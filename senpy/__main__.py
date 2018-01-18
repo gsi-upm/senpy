@@ -22,6 +22,7 @@ the server.
 
 from flask import Flask
 from senpy.extensions import Senpy
+from senpy.utils import easy_test
 
 import logging
 import os
@@ -39,7 +40,7 @@ def main():
         '-l',
         metavar='logging_level',
         type=str,
-        default="ERROR",
+        default="WARN",
         help='Logging level')
     parser.add_argument(
         '--debug',
@@ -75,6 +76,12 @@ def main():
         action='store_true',
         default=False,
         help='Do not run a server, only install plugin dependencies')
+    parser.add_argument(
+        '--only-test',
+        '-t',
+        action='store_true',
+        default=False,
+        help='Do not run a server, just test all plugins')
     parser.add_argument(
         '--only-list',
         '--list',
@@ -122,6 +129,9 @@ def main():
     if args.only_install:
         return
     sp.activate_all()
+    if args.only_test:
+        easy_test(sp.plugins())
+        return
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                             args.port))
