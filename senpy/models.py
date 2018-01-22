@@ -334,5 +334,11 @@ for i in [
         'results',
         'sentimentPlugin',
         'suggestion',
+        'aggregatedEvaluation',
+        'evaluation',
+        'metric',
+        'dataset',
+        'datasets',
+
 ]:
     _add_class_from_schema(i)
