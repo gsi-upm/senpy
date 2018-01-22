@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "name": "Dataset",
+  "properties": {
+    "@id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "compression": {
+      "type": "string"
+    },
+    "expected_bytes": {
+      "type": "int"
+    },
+    "filename": {
+      "description": "Name of the dataset",
+      "type": "string"
+    },
+    "url": {
+      "description": "Classifier or plugin evaluated",
+      "type": "string"
+    },
+    "stats": {        
+    }
+  },
+  "required": ["@id"]
+}

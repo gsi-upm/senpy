@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "allOf": [
+    {"$ref": "response.json"},
+    {
+     "required": ["datasets"],
+      "properties": {
+        "datasets": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "dataset.json"
+          }
+        }
+      }
+    }
+  ]
+}
