@@ -22,6 +22,9 @@ import threading
 from .. import models, utils
 from .. import api
 
+from gsitk.evaluation.evaluation import Evaluation as Eval
+from sklearn.pipeline import Pipeline
+
 logger = logging.getLogger(__name__)
 
 
@@ -319,6 +322,48 @@ class EmotionBox(TextBox, EmotionPlugin):
             s.append(e)
         return entry
 
+
+class EvaluationBox():
+    '''
+    A box plugin where it is implemented the evaluation. It is necessary to have a pipeline.
+    '''
+
+    def score(self, datasets):
+        pipelines = [self._pipeline]
+
+        ev = Eval(tuples = None,
+            datasets = datasets,
+            pipelines = pipelines)
+        ev.evaluate()
+        results = ev.results
+        evaluations = self._evaluations_toJSONLD(results)
+        return evaluations
+
+    def _evaluations_toJSONLD(self, results):
+        '''
+        Map the evaluation results to a JSONLD scheme
+        '''
+
+        evaluations = list()
+        metric_names = ['accuracy', 'precision_macro', 'recall_macro', 'f1_macro', 'f1_weighted', 'f1_micro', 'f1_macro']
+        
+        for index, row in results.iterrows():
+            
+            evaluation = models.Evaluation()
+            if row['CV'] == False:
+                evaluation['@type'] = ['StaticCV', 'Evaluation']
+            evaluation.evaluatesOn = row['Dataset']
+            evaluation.evaluates = row['Model']
+            i = 0
+            for name in metric_names:
+                metric = models.Metric()
+                metric['@id'] = 'Metric' + str(i)
+                metric['@type'] = name.capitalize()
+                metric.value = row[name]
+                evaluation.metrics.append(metric)
+                i+=1
+            evaluations.append(evaluation)
+        return evaluations
 
 class MappingMixin(object):
 
