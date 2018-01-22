@@ -7,7 +7,7 @@ standard_library.install_aliases()
 
 from . import plugins, api
 from .plugins import Plugin
-from .models import Error
+from .models import Error, AggregatedEvaluation
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 
 from threading import Thread
@@ -17,6 +17,10 @@ import copy
 import errno
 import logging
 import traceback
+
+#Correct this import for managing the datasets
+from gsitk.datasets.datasets import DatasetManager
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +46,7 @@ class Senpy(object):
 
         self._default = None
         self._plugins = {}
+        self._dm = DatasetManager()
         if plugin_folder:
             self.add_folder(plugin_folder)
 
@@ -189,6 +194,61 @@ class Senpy(object):
             raise ex
         results.analysis = [i['plugin'].id for i in results.analysis]
         return results
+
+    def _get_datasets(self, request):
+        if not self.datasets:
+            raise Error(
+                status=404,
+                message=("No datasets found."
+                         " Please verify DatasetManager"))
+        datasets_name = request.parameters.get('dataset', None).split(',')
+        for dataset in datasets_name:
+            if dataset not in self.datasets:
+                logger.debug(("The dataset '{}' is not valid\n"
+                              "Valid datasets: {}").format(dataset,
+                                                            self.datasets.keys()))
+                raise Error(
+                    status=404,
+                    message="The dataset '{}' is not valid".format(dataset))
+        datasets = self._dm.prepare_datasets(datasets_name)
+        return datasets
+        
+    @property
+    def datasets(self):
+        self._dataset_list = {}
+        for item in self._dm.get_datasets():
+            for key in item:
+                if key in self._dataset_list:
+                    continue
+                properties = item[key]
+                properties['@id'] = key
+                self._dataset_list[key] = properties
+        return self._dataset_list
+
+    def evaluate(self, params):
+
+        logger.debug("evaluating request: {}".format(params))
+        try:
+            results = AggregatedEvaluation()
+            results.parameters = params
+            datasets = self._get_datasets(results)
+            plugins = self._get_plugins(results)
+            collector = list()
+            for plugin in plugins:
+                collector += [eval for eval in plugin.score(datasets)]
+            if 'with_parameters' not in results.parameters:
+                del results.parameters
+            logger.debug("Returning evaluation result: {}".format(results))
+        except (Error,Exception) as ex:
+            if not isinstance(ex, Error):
+                msg = "Error during evaluation: {} \n\t{}".format(ex,
+                                                                traceback.format_exc())
+                ex = Error(message=msg, status=500)
+            logger.exception('Error returning evaluation result')
+            raise ex
+        results.evaluations = collector
+        return results
+
 
     def _conversion_candidates(self, fromModel, toModel):
         candidates = self.plugins(plugin_type='emotionConversionPlugin')
