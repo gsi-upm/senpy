@@ -19,7 +19,7 @@ Blueprints for Senpy
 """
 from flask import (Blueprint, request, current_app, render_template, url_for,
                    jsonify)
-from .models import Error, Response, Help, Plugins, read_schema
+from .models import Error, Response, Help, Plugins, read_schema, Datasets
 from . import api
 from .version import __version__
 from functools import wraps
@@ -133,6 +133,17 @@ def api_root():
     req = api.parse_call(request.parameters)
     return current_app.senpy.analyse(req)
 
+@api_blueprint.route('/evaluate/', methods=['POST', 'GET'])
+@basic_api
+def evaluate():
+    if request.parameters['help']:
+        dic = dict(api.EVAL_PARAMS)
+        response = Help(parameters=dic)
+        return response
+    else:
+        params = api.parse_params(request.parameters, api.EVAL_PARAMS)
+        response = current_app.senpy.evaluate(params)
+        return response
 
 @api_blueprint.route('/plugins/', methods=['POST', 'GET'])
 @basic_api
@@ -150,3 +161,12 @@ def plugins():
 def plugin(plugin=None):
     sp = current_app.senpy
     return sp.get_plugin(plugin)
+
+
+@api_blueprint.route('/datasets/', methods=['POST','GET'])
+@basic_api
+def datasets():
+    sp = current_app.senpy
+    datasets = sp.datasets
+    dic = Datasets(datasets = list(datasets.values()))
+    return dic
