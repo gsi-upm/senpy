@@ -33,6 +33,10 @@ function get_plugins(response){
     plugins = response.plugins;
 }
 
+function get_datasets(response){
+    datasets = response.datasets
+}
+
 function group_plugins(){
     for (r in plugins){
         ptype = plugins[r]['@type'];
@@ -77,7 +81,10 @@ function draw_plugins_selection(){
         }
     }
     html += "</optgroup>"
-    document.getElementById('plugins').innerHTML = html;
+    // Two elements with plugin class
+    // One from the evaluate tab and another one from the analyse tab
+    document.getElementsByClassName('plugin')[0].innerHTML = html;
+    document.getElementsByClassName('plugin')[1].innerHTML = html;
 }
 
 function draw_plugins_list(){
@@ -98,15 +105,29 @@ function draw_plugins_list(){
     }
 }
 
+function draw_datasets(){
+    html = "";
+    repeated_html = "<input class=\"checks-datasets\" type=\"checkbox\" value=\"";
+    for (dataset in datasets){
+        html += repeated_html+datasets[dataset]["@id"]+"\">"+datasets[dataset]["@id"];
+        html += "<br>"
+    }
+    document.getElementById("datasets").innerHTML = html;
+}
+
 $(document).ready(function() {
     var response = JSON.parse($.ajax({type: "GET", url: "/api/plugins/" , async: false}).responseText);
     defaultPlugin= JSON.parse($.ajax({type: "GET", url: "/api/plugins/default" , async: false}).responseText);
+    var response2 = JSON.parse($.ajax({type: "GET", url: "/api/datasets/" , async: false}).responseText);
+
     get_plugins(response);
     get_default_parameters();
+    get_datasets(response2);
 
     draw_plugins_list();
     draw_plugins_selection();
     draw_parameters();
+    draw_datasets();
 
     $(window).on('hashchange', hashchanged);
     hashchanged();
@@ -129,7 +150,7 @@ function draw_default_parameters(){
 }
 
 function draw_extra_parameters(){
-    var plugin = document.getElementById("plugins").options[document.getElementById("plugins").selectedIndex].value;
+    var plugin = document.getElementsByClassName('plugin')[0].options[document.getElementsByClassName('plugin')[0].selectedIndex].value;
     get_parameters();
 
     var extra_params = document.getElementById("extra_params");
@@ -240,13 +261,16 @@ function add_param(key, value){
     return "&"+key+"="+value;
 }
 
+
 function load_JSON(){
     url = "/api";
     var container = document.getElementById('results');
     var rawcontainer = document.getElementById("jsonraw");
     rawcontainer.innerHTML = '';
     container.innerHTML = '';
-    var plugin = document.getElementById("plugins").options[document.getElementById("plugins").selectedIndex].value;
+
+    var plugin = document.getElementsByClassName("plugin")[0].options[document.getElementsByClassName("plugin")[0].selectedIndex].value;
+
     var input = encodeURIComponent(document.getElementById("input").value);
     url += "?algo="+plugin+"&i="+input
 
@@ -277,4 +301,79 @@ function load_JSON(){
         $('#results-div a[href="#raw"]').click();
         // location.hash = 'raw';
     }
+}
+
+function get_datasets_from_checkbox(){
+    var checks = document.getElementsByClassName("checks-datasets");
+
+    datasets = "";
+    for (var i = 0; i < checks.length; i++){
+        if (checks[i].checked){
+            datasets += checks[i].value + ",";
+        }
+    }
+    datasets = datasets.slice(0, -1);
+}
+
+
+function evaluate_JSON(){
+
+    url = "/api/evaluate";
+
+    var container = document.getElementById('results_eval');
+    var rawcontainer = document.getElementById('jsonraw_eval');
+    var table = document.getElementById("evaluation-table");
+
+    rawcontainer.innerHTML = "";
+    container.innerHTML = "";
+
+    var plugin = document.getElementsByClassName("plugin")[0].options[document.getElementsByClassName("plugin")[0].selectedIndex].value;
+
+    get_datasets_from_checkbox();
+
+    url += "?algo="+plugin+"&dataset="+datasets
+
+    var response =  $.ajax({type: "GET", url: url , async: false, dataType: 'json'}).responseText;
+    rawcontainer.innerHTML = replaceURLWithHTMLLinks(response);
+
+    document.getElementById("input_request_eval").innerHTML = "<a href='"+url+"'>"+url+"</a>"
+    document.getElementById("evaluate-div").style.display = 'block';
+    
+    try {
+        response = JSON.parse(response);
+        var options = {
+            mode: 'view'
+        };
+
+        var metric_html = "<table class=\"table table-condensed\">";
+        metric_html += "<tr><th>Plugin</th><th>Dataset</th><th>Accuracy</th><th>Precision_macro</th><th>Recall_macro</th><th>F1_macro</th><th>F1_weighted</th><th>F1_micro</th><th>F1</th></tr>";
+
+        if (!(Array.isArray(response.evaluations))){
+            response.evaluations = [response.evaluations]
+        }
+        for (var eval in response.evaluations){
+            metric_html += "<tr><th>"+response.evaluations[eval].evaluates+"</th><th>"+response.evaluations[eval].evaluatesOn+"</th>";
+            for (var metric in response.evaluations[eval].metrics){
+                metric_html +=  "<th>"+parseFloat(response.evaluations[eval].metrics[metric].value.toFixed(4))+"</th>";
+            }
+            metric_html += "</tr>";
+        }
+        table.innerHTML = metric_html;
+
+        var editor = new JSONEditor(container, options, response);
+        editor.expandAll();
+        // $('#results-div a[href="#viewer"]').tab('show');
+        $('#evaluate-div a[href="#evaluate-viewer"]').click();
+        // location.hash = 'raw';
+        
+        
+    }
+    catch(err){
+        console.log("Error decoding JSON (got turtle?)");
+        $('#evaluate-div a[href="#evaluate-raw"]').click();
+        // location.hash = 'raw';
+    }
+
+    
+
 }

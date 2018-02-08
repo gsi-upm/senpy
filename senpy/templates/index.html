@@ -32,6 +32,8 @@
       <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" ><a class="active" href="#about">About</a></li>
         <li role="presentation"class="active"><a class="active" href="#test">Test it</a></li>
+        <li role="presentation"><a class="active" href="#evaluate">Evaluate Plugins</a></li>
+
       </ul>
 
       <div class="tab-content">
@@ -54,6 +56,7 @@
                     <ul>
                       <li>List all available plugins: <a href="/api/plugins">/api/plugins</a></li>
                       <li>Get information about the default plugin: <a href="/api/plugins/default">/api/plugins/default</a></li>
+                      <li>List all available datasets: <a href="/api/datasets">/api/datasets</a></li>
                       <li>Download the JSON-LD context used: <a href="/api/contexts/Results.jsonld">/api/contexts/Results.jsonld</a></li>
                     </ul>
 
@@ -95,7 +98,7 @@ I cannot believe it!</textarea>
                 </div>
                 <div>
                     <label>Select the plugin:</label>
-                    <select id="plugins" name="plugins" onchange="draw_extra_parameters()">
+                    <select id="plugins" name="plugins" class=plugin onchange="draw_extra_parameters()">
                     </select>
                 </div>
                 <!-- PARAMETERS -->
@@ -151,6 +154,53 @@ I cannot believe it!</textarea>
               </div>
             </div>
         </div>
+
+        <div class="tab-pane" id="evaluate">
+          <div class="well">
+            <form id="form" class="container" onsubmit="return getPlugins();" accept-charset="utf-8">
+                <div>
+                    <label>Select the plugin:</label>
+                    <select id="plugins-eval" name="plugins-eval" class=plugin onchange="draw_extra_parameters()">
+                    </select>
+                </div>
+                <div>
+                    <label>Select the datasets:</label>
+                    <div id="datasets" name="datasets" >
+                    </select>
+                </div>
+ 
+                <a id="preview" class="btn btn-lg btn-primary" onclick="evaluate_JSON()">Evaluate Plugin!</a>
+                <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
+            </form>
+          </div>
+            <span id="input_request_eval"></span>
+            <div id="evaluate-div">
+              <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a data-toggle="tab" class="active" href="#evaluate-viewer">Viewer</a></li>
+                <li role="presentation"><a data-toggle="tab" class="active" href="#evaluate-raw">Raw</a></li>
+                <li role="presentation"><a class="active" href="#evaluate-table">Table</a></li>
+              </ul>
+              <div class="tab-content" id="evaluate-container">
+                
+                <div class="tab-pane active" id="evaluate-viewer">
+                  <div id="content">
+                    <pre id="results_eval" class="results_eval"></pre>
+                  </div>
+                </div>
+                
+                <div class="tab-pane"  id="evaluate-raw">
+                  <div id="content">
+                    <pre id="jsonraw_eval" class="results_eval"></pre>
+                  </div>
+                </div>
+                <div class="tab-pane"  id="evaluate-table">
+                  <div id="evaluation-table" class="evaluation-table">
+                  </div>
+                </div>
+              
+            </div>
+        </div>
+
         <a href="http://www.gsi.dit.upm.es" target="_blank"><img class="center-block" src="static/img/gsi.png"/>  </a> 
 
       </div>

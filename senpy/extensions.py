@@ -235,7 +235,8 @@ class Senpy(object):
             plugins = self._get_plugins(results)
             collector = list()
             for plugin in plugins:
-                collector += [eval for eval in plugin.score(datasets)]
+                for eval in plugin.score(datasets):
+                    results.evaluations.append(eval)
             if 'with_parameters' not in results.parameters:
                 del results.parameters
             logger.debug("Returning evaluation result: {}".format(results))
@@ -246,7 +247,7 @@ class Senpy(object):
                 ex = Error(message=msg, status=500)
             logger.exception('Error returning evaluation result')
             raise ex
-        results.evaluations = collector
+        #results.evaluations = collector
         return results
 
 
