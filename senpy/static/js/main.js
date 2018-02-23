@@ -316,13 +316,27 @@ function get_datasets_from_checkbox(){
 }
 
 
+function create_body_metrics(evaluations){
+	var new_tbody = document.createElement('tbody')
+	var metric_html = ""
+    for (var eval in evaluations){
+        metric_html += "<tr><th>"+evaluations[eval].evaluates+"</th><th>"+evaluations[eval].evaluatesOn+"</th>";
+        for (var metric in evaluations[eval].metrics){
+            metric_html +=  "<th>"+parseFloat(evaluations[eval].metrics[metric].value.toFixed(4))+"</th>";
+        }
+        metric_html += "</tr>";
+    }
+    new_tbody.innerHTML = metric_html
+    return new_tbody
+}
+
 function evaluate_JSON(){
 
     url = "/api/evaluate";
 
     var container = document.getElementById('results_eval');
     var rawcontainer = document.getElementById('jsonraw_eval');
-    var table = document.getElementById("evaluation-table");
+    var table = document.getElementById("eval_table");
 
     rawcontainer.innerHTML = "";
     container.innerHTML = "";
@@ -345,25 +359,18 @@ function evaluate_JSON(){
             mode: 'view'
         };
 
-        var metric_html = "<table class=\"table table-condensed\">";
-        metric_html += "<tr><th>Plugin</th><th>Dataset</th><th>Accuracy</th><th>Precision_macro</th><th>Recall_macro</th><th>F1_macro</th><th>F1_weighted</th><th>F1_micro</th><th>F1</th></tr>";
-
+        //Control the single response results
         if (!(Array.isArray(response.evaluations))){
             response.evaluations = [response.evaluations]
         }
-        for (var eval in response.evaluations){
-            metric_html += "<tr><th>"+response.evaluations[eval].evaluates+"</th><th>"+response.evaluations[eval].evaluatesOn+"</th>";
-            for (var metric in response.evaluations[eval].metrics){
-                metric_html +=  "<th>"+parseFloat(response.evaluations[eval].metrics[metric].value.toFixed(4))+"</th>";
-            }
-            metric_html += "</tr>";
-        }
-        table.innerHTML = metric_html;
+
+        new_tbody = create_body_metrics(response.evaluations)
+        table.replaceChild(new_tbody, table.lastElementChild)
 
         var editor = new JSONEditor(container, options, response);
         editor.expandAll();
         // $('#results-div a[href="#viewer"]').tab('show');
-        $('#evaluate-div a[href="#evaluate-viewer"]').click();
+        $('#evaluate-div a[href="#evaluate-table"]').click();
         // location.hash = 'raw';
         
         

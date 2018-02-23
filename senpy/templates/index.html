@@ -178,7 +178,7 @@ I cannot believe it!</textarea>
               <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a data-toggle="tab" class="active" href="#evaluate-viewer">Viewer</a></li>
                 <li role="presentation"><a data-toggle="tab" class="active" href="#evaluate-raw">Raw</a></li>
-                <li role="presentation"><a class="active" href="#evaluate-table">Table</a></li>
+                <li role="presentation"><a data-toggle="tab" class="active" href="#evaluate-table">Table</a></li>
               </ul>
               <div class="tab-content" id="evaluate-container">
                 
@@ -194,10 +194,27 @@ I cannot believe it!</textarea>
                   </div>
                 </div>
                 <div class="tab-pane"  id="evaluate-table">
-                  <div id="evaluation-table" class="evaluation-table">
+                    <table id="eval_table" class="table table-condensed">
+                      <thead>
+                        <tr>
+                        <th>Plugin</th>
+                        <th>Dataset</th>
+                        <th>Accuracy</th>
+                        <th>Precision_macro</th>
+                        <th>Recall_macro</th>
+                        <th>F1_macro</th>
+                        <th>F1_weighted</th>
+                        <th>F1_micro</th>
+                        <th>F1</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              
+                </div>
+              </div>
             </div>
         </div>
 
