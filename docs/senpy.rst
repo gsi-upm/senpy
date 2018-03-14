@@ -1,8 +1,11 @@
 What is Senpy?
 --------------
 
-Web services can get really complex: data validation, user interaction, formatting, logging., etc. 
-The figure below summarizes the typical features in an analysis service.
+Senpy is a framework for text analysis using Linked Data. There are three main applications of Senpy so far: sentiment and emotion analysis, user profiling and entity recoginition. Annotations and Services are compliant with NIF (NLP Interchange Format).
+
+Senpy aims at providing a framework where analysis modules can be integrated easily as plugins, and providing a core functionality for managing tasks such as data validation, user interaction, formatting, logging, translation to linked data, etc. 
+
+The figure below summarizes the typical features in a text analysis service.
 Senpy implements all the common blocks, so developers can focus on what really matters: great analysis algorithms that solve real problems.
 
 .. image:: senpy-framework.png
