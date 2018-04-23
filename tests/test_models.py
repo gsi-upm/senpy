@@ -9,6 +9,7 @@ from senpy.models import (Emotion,
                           EmotionAnalysis,
                           EmotionSet,
                           Entry,
+                          Entity,
                           Error,
                           Results,
                           Sentiment,
@@ -207,3 +208,14 @@ class ModelsTest(TestCase):
         recovered = from_string(string)
         assert isinstance(recovered, Results)
         assert isinstance(recovered.entries[0], Entry)
+
+    def test_serializable(self):
+        r = Results()
+        e = Entry()
+        ent = Entity()
+        e.entities.append(ent)
+        r.entries.append(e)
+        d = r.serializable()
+        assert d
+        assert d['entries']
+        assert d['entries'][0]['entities']

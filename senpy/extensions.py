@@ -16,7 +16,6 @@ import os
 import copy
 import errno
 import logging
-import traceback
 
 #Correct this import for managing the datasets
 from gsitk.datasets.datasets import DatasetManager
@@ -176,22 +175,14 @@ class Senpy(object):
         by api.parse_call().
         """
         logger.debug("analysing request: {}".format(request))
-        try:
-            entries = request.entries
-            request.entries = []
-            plugins = self._get_plugins(request)
-            results = request
-            for i in self._process_entries(entries, results, plugins):
-                results.entries.append(i)
-            self.convert_emotions(results)
-            logger.debug("Returning analysis result: {}".format(results))
-        except (Error, Exception) as ex:
-            if not isinstance(ex, Error):
-                msg = "Error during analysis: {} \n\t{}".format(ex,
-                                                                traceback.format_exc())
-                ex = Error(message=msg, status=500)
-            logger.exception('Error returning analysis result')
-            raise ex
+        entries = request.entries
+        request.entries = []
+        plugins = self._get_plugins(request)
+        results = request
+        for i in self._process_entries(entries, results, plugins):
+            results.entries.append(i)
+        self.convert_emotions(results)
+        logger.debug("Returning analysis result: {}".format(results))
         results.analysis = [i['plugin'].id for i in results.analysis]
         return results
 

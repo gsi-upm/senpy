@@ -182,8 +182,7 @@ class ExtensionsTest(TestCase):
             analyse(self.senpy, input='nothing', algorithm='MOCK')
             assert False
         except Exception as ex:
-            assert 'generic exception on analysis' in ex['message']
-            assert ex['status'] == 500
+            assert 'generic exception on analysis' in str(ex)
 
     def test_filtering(self):
         """ Filtering plugins """
