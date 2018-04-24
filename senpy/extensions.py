@@ -17,15 +17,19 @@ import copy
 import errno
 import logging
 
-from gsitk.datasets.datasets import DatasetManager
-
 
 logger = logging.getLogger(__name__)
+
+try:
+    from gsitk.datasets.datasets import DatasetManager
+    GSITK_AVAILABLE = True
+except ImportError:
+    logger.warn('GSITK is not installed. Some functions will be unavailable.')
+    GSITK_AVAILABLE = False
 
 
 class Senpy(object):
     """ Default Senpy extension for Flask """
-
     def __init__(self,
                  app=None,
                  plugin_folder=".",
@@ -44,7 +48,6 @@ class Senpy(object):
 
         self._default = None
         self._plugins = {}
-        self._dm = DatasetManager()
         if plugin_folder:
             self.add_folder(plugin_folder)
 
@@ -200,13 +203,17 @@ class Senpy(object):
                 raise Error(
                     status=404,
                     message="The dataset '{}' is not valid".format(dataset))
-        datasets = self._dm.prepare_datasets(datasets_name)
+        dm = DatasetManager()
+        datasets = dm.prepare_datasets(datasets_name)
         return datasets
 
     @property
     def datasets(self):
+        if not GSITK_AVAILABLE:
+            raise Exception('GSITK is not available. Install it to use this function.')
         self._dataset_list = {}
-        for item in self._dm.get_datasets():
+        dm = DatasetManager()
+        for item in dm.get_datasets():
             for key in item:
                 if key in self._dataset_list:
                     continue
@@ -216,7 +223,8 @@ class Senpy(object):
         return self._dataset_list
 
     def evaluate(self, params):
-
+        if not GSITK_AVAILABLE:
+            raise Exception('GSITK is not available. Install it to use this function.')
         logger.debug("evaluating request: {}".format(params))
         results = AggregatedEvaluation()
         results.parameters = params

@@ -19,15 +19,21 @@ import importlib
 import yaml
 import threading
 
+import numpy as np
+
 from .. import models, utils
 from .. import api
 
-from gsitk.evaluation.evaluation import Evaluation as Eval
-from sklearn.pipeline import Pipeline
-
-import numpy as np
 
 logger = logging.getLogger(__name__)
+
+try:
+    from gsitk.evaluation.evaluation import Evaluation as Eval
+    from sklearn.pipeline import Pipeline
+    GSITK_AVAILABLE = True
+except ImportError:
+    logger.warn('GSITK is not installed. Some functions will be unavailable.')
+    GSITK_AVAILABLE = False
 
 
 class PluginMeta(models.BaseMeta):
@@ -461,7 +467,7 @@ def install_deps(*plugins):
     for info in plugins:
         requirements = info.get('requirements', [])
         if requirements:
-            pip_args = [sys.executable, '-m', 'pip', 'install', '--use-wheel']
+            pip_args = [sys.executable, '-m', 'pip', 'install']
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
@@ -586,6 +592,9 @@ def _from_loaded_module(module, info=None, **kwargs):
 
 
 def evaluate(plugins, datasets, **kwargs):
+    if not GSITK_AVAILABLE:
+        raise Exception('GSITK is not available. Install it to use this function.')
+
     ev = Eval(tuples=None,
               datasets=datasets,
               pipelines=[plugin.as_pipe() for plugin in plugins])
