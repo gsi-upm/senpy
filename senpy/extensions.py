@@ -6,7 +6,7 @@ from future import standard_library
 standard_library.install_aliases()
 
 from . import plugins, api
-from .plugins import Plugin
+from .plugins import Plugin, evaluate
 from .models import Error, AggregatedEvaluation
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 
@@ -17,7 +17,6 @@ import copy
 import errno
 import logging
 
-#Correct this import for managing the datasets
 from gsitk.datasets.datasets import DatasetManager
 
 
@@ -197,13 +196,13 @@ class Senpy(object):
             if dataset not in self.datasets:
                 logger.debug(("The dataset '{}' is not valid\n"
                               "Valid datasets: {}").format(dataset,
-                                                            self.datasets.keys()))
+                                                           self.datasets.keys()))
                 raise Error(
                     status=404,
                     message="The dataset '{}' is not valid".format(dataset))
         datasets = self._dm.prepare_datasets(datasets_name)
         return datasets
-        
+
     @property
     def datasets(self):
         self._dataset_list = {}
@@ -219,28 +218,16 @@ class Senpy(object):
     def evaluate(self, params):
 
         logger.debug("evaluating request: {}".format(params))
-        try:
-            results = AggregatedEvaluation()
-            results.parameters = params
-            datasets = self._get_datasets(results)
-            plugins = self._get_plugins(results)
-            collector = list()
-            for plugin in plugins:
-                for eval in plugin.score(datasets):
-                    results.evaluations.append(eval)
-            if 'with_parameters' not in results.parameters:
-                del results.parameters
-            logger.debug("Returning evaluation result: {}".format(results))
-        except (Error,Exception) as ex:
-            if not isinstance(ex, Error):
-                msg = "Error during evaluation: {} \n\t{}".format(ex,
-                                                                traceback.format_exc())
-                ex = Error(message=msg, status=500)
-            logger.exception('Error returning evaluation result')
-            raise ex
-        #results.evaluations = collector
+        results = AggregatedEvaluation()
+        results.parameters = params
+        datasets = self._get_datasets(results)
+        plugins = self._get_plugins(results)
+        for eval in evaluate(plugins, datasets):
+            results.evaluations.append(eval)
+        if 'with_parameters' not in results.parameters:
+            del results.parameters
+        logger.debug("Returning evaluation result: {}".format(results))
         return results
-
 
     def _conversion_candidates(self, fromModel, toModel):
         candidates = self.plugins(plugin_type='emotionConversionPlugin')

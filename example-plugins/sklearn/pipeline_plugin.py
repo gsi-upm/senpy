@@ -18,7 +18,7 @@ class PipelineSentiment(MappingMixin, SentimentBox):
         -1: 'marl:Negative'
     }
 
-    def predict(self, input):
+    def predict_one(self, input):
         return pipeline.predict([input, ])[0]
 
     test_cases = [

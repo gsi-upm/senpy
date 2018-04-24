@@ -43,7 +43,7 @@
     "$ref": "response.json"
   },
   "AggregatedEvaluation": {
-    "$ref": "aggregatedevaluation.json"
+    "$ref": "aggregatedEvaluation.json"
   },
   "Evaluation": {
     "$ref": "evaluation.json"
