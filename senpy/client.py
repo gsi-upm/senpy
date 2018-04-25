@@ -12,9 +12,16 @@ class Client(object):
     def analyse(self, input, method='GET', **kwargs):
         return self.request('/', method=method, input=input, **kwargs)
 
+    def evaluate(self, input, method='GET', **kwargs):
+        return self.request('/evaluate', method = method, input=input, **kwargs)
+
     def plugins(self, *args, **kwargs):
         resp = self.request(path='/plugins').plugins
         return {p.name: p for p in resp}
+
+    def datasets(self):
+        resp = self.request(path='/datasets').datasets
+        return {d.name: d for d in resp}
 
     def request(self, path=None, method='GET', **params):
         url = '{}{}'.format(self.endpoint, path)

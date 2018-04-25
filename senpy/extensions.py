@@ -6,8 +6,8 @@ from future import standard_library
 standard_library.install_aliases()
 
 from . import plugins, api
-from .plugins import Plugin
-from .models import Error
+from .plugins import Plugin, evaluate
+from .models import Error, AggregatedEvaluation
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 
 from threading import Thread
@@ -17,12 +17,19 @@ import copy
 import errno
 import logging
 
+
 logger = logging.getLogger(__name__)
+
+try:
+    from gsitk.datasets.datasets import DatasetManager
+    GSITK_AVAILABLE = True
+except ImportError:
+    logger.warn('GSITK is not installed. Some functions will be unavailable.')
+    GSITK_AVAILABLE = False
 
 
 class Senpy(object):
     """ Default Senpy extension for Flask """
-
     def __init__(self,
                  app=None,
                  plugin_folder=".",
@@ -179,6 +186,55 @@ class Senpy(object):
         self.convert_emotions(results)
         logger.debug("Returning analysis result: {}".format(results))
         results.analysis = [i['plugin'].id for i in results.analysis]
+        return results
+
+    def _get_datasets(self, request):
+        if not self.datasets:
+            raise Error(
+                status=404,
+                message=("No datasets found."
+                         " Please verify DatasetManager"))
+        datasets_name = request.parameters.get('dataset', None).split(',')
+        for dataset in datasets_name:
+            if dataset not in self.datasets:
+                logger.debug(("The dataset '{}' is not valid\n"
+                              "Valid datasets: {}").format(dataset,
+                                                           self.datasets.keys()))
+                raise Error(
+                    status=404,
+                    message="The dataset '{}' is not valid".format(dataset))
+        dm = DatasetManager()
+        datasets = dm.prepare_datasets(datasets_name)
+        return datasets
+
+    @property
+    def datasets(self):
+        if not GSITK_AVAILABLE:
+            raise Exception('GSITK is not available. Install it to use this function.')
+        self._dataset_list = {}
+        dm = DatasetManager()
+        for item in dm.get_datasets():
+            for key in item:
+                if key in self._dataset_list:
+                    continue
+                properties = item[key]
+                properties['@id'] = key
+                self._dataset_list[key] = properties
+        return self._dataset_list
+
+    def evaluate(self, params):
+        if not GSITK_AVAILABLE:
+            raise Exception('GSITK is not available. Install it to use this function.')
+        logger.debug("evaluating request: {}".format(params))
+        results = AggregatedEvaluation()
+        results.parameters = params
+        datasets = self._get_datasets(results)
+        plugins = self._get_plugins(results)
+        for eval in evaluate(plugins, datasets):
+            results.evaluations.append(eval)
+        if 'with_parameters' not in results.parameters:
+            del results.parameters
+        logger.debug("Returning evaluation result: {}".format(results))
         return results
 
     def _conversion_candidates(self, fromModel, toModel):

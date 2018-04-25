@@ -53,6 +53,21 @@ API_PARAMS = {
     }
 }
 
+EVAL_PARAMS = {
+    "algorithm": {
+        "aliases": ["plug", "p", "plugins", "algorithms", 'algo', 'a', 'plugin'],
+        "description": "Plugins to be evaluated",
+        "required": True,
+        "help": "See activated plugins in /plugins"
+    },
+    "dataset": {
+        "aliases": ["datasets", "data", "d"],
+        "description": "Datasets to be evaluated",
+        "required": True,
+        "help": "See avalaible datasets in /datasets"
+    }
+}
+
 PLUGINS_PARAMS = {
     "plugin_type": {
         "@id": "pluginType",

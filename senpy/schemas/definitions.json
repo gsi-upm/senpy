@@ -41,5 +41,20 @@
   },
   "Response": {
     "$ref": "response.json"
+  },
+  "AggregatedEvaluation": {
+    "$ref": "aggregatedEvaluation.json"
+  },
+  "Evaluation": {
+    "$ref": "evaluation.json"
+  },
+  "Metric": {
+    "$ref": "metric.json"
+  },
+  "Dataset": {
+    "$ref": "dataset.json"
+  },
+  "Datasets": {
+    "$ref": "datasets.json"
   }
 }

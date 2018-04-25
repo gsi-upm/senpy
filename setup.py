@@ -1,23 +1,20 @@
-import pip
 from setuptools import setup
-# parse_requirements() returns generator of pip.req.InstallRequirement objects
-from pip.req import parse_requirements
 
 with open('senpy/VERSION') as f:
     __version__ = f.read().strip()
     assert __version__
 
-try:
-    install_reqs = parse_requirements(
-        "requirements.txt", session=pip.download.PipSession())
-    test_reqs = parse_requirements(
-        "test-requirements.txt", session=pip.download.PipSession())
-except AttributeError:
-    install_reqs = parse_requirements("requirements.txt")
-    test_reqs = parse_requirements("test-requirements.txt")
 
-install_reqs = [str(ir.req) for ir in install_reqs]
-test_reqs = [str(ir.req) for ir in test_reqs]
+def parse_requirements(filename):
+    """ load requirements from a pip requirements file """
+    with open(filename, 'r') as f:
+        lineiter = list(line.strip() for line in f)
+    return [line for line in lineiter if line and not line.startswith("#")]
+
+
+install_reqs = parse_requirements("requirements.txt")
+test_reqs = parse_requirements("test-requirements.txt")
+extra_reqs = parse_requirements("extra-requirements.txt")
 
 
 setup(
@@ -38,9 +35,7 @@ setup(
     tests_require=test_reqs,
     setup_requires=['pytest-runner', ],
     extras_require={
-        'evaluation': [
-            'gsitk'
-        ]
+        'evaluation': extra_reqs
     },
     include_package_data=True,
     entry_points={

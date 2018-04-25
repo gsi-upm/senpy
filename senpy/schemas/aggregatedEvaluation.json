@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "allOf": [
+    {"$ref": "response.json"},
+    {
+      "title": "AggregatedEvaluation",
+      "description": "The results of the evaluation",
+      "type": "object",
+      "properties": {
+        "@context": {
+          "$ref": "context.json"
+        },
+        "@type": {
+          "default": "AggregatedEvaluation"
+        },
+        "@id": {
+          "description": "ID of the aggregated evaluation",
+          "type": "string"
+        },
+        "evaluations": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "evaluation.json"
+              },{
+                "type": "string"
+              }
+            ]
+          }
+        }
+
+      },
+      "required": ["@id", "evaluations"]
+    }
+  ]
+}

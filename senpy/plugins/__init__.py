@@ -19,10 +19,21 @@ import importlib
 import yaml
 import threading
 
+import numpy as np
+
 from .. import models, utils
 from .. import api
 
+
 logger = logging.getLogger(__name__)
+
+try:
+    from gsitk.evaluation.evaluation import Evaluation as Eval
+    from sklearn.pipeline import Pipeline
+    GSITK_AVAILABLE = True
+except ImportError:
+    logger.warn('GSITK is not installed. Some functions will be unavailable.')
+    GSITK_AVAILABLE = False
 
 
 class PluginMeta(models.BaseMeta):
@@ -251,7 +262,7 @@ class Box(AnalysisPlugin):
 
     .. code-block::
 
-                   entry --> input() --> predict() --> output() --> entry'
+                   entry --> input() --> predict_one() --> output() --> entry'
 
 
     In other words: their ``input`` method convers a query (entry and a set of parameters) into
@@ -267,14 +278,32 @@ class Box(AnalysisPlugin):
         '''Transforms the results of the black box into an entry'''
         return output
 
-    def predict(self, input):
+    def predict_one(self, input):
         raise NotImplementedError('You should define the behavior of this plugin')
 
     def analyse_entries(self, entries, params):
         for entry in entries:
             input = self.input(entry=entry, params=params)
-            results = self.predict(input=input)
+            results = self.predict_one(input=input)
             yield self.output(output=results, entry=entry, params=params)
+
+    def fit(self, X=None, y=None):
+        return self
+
+    def transform(self, X):
+        return np.array([self.predict_one(x) for x in X])
+
+    def predict(self, X):
+        return self.transform(X)
+
+    def fit_transform(self, X, y):
+        self.fit(X, y)
+        return self.transform(X)
+
+    def as_pipe(self):
+        pipe = Pipeline([('plugin', self)])
+        pipe.name = self.name
+        return pipe
 
 
 class TextBox(Box):
@@ -438,7 +467,7 @@ def install_deps(*plugins):
     for info in plugins:
         requirements = info.get('requirements', [])
         if requirements:
-            pip_args = [sys.executable, '-m', 'pip', 'install', '--use-wheel']
+            pip_args = [sys.executable, '-m', 'pip', 'install']
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
@@ -560,3 +589,50 @@ def _from_loaded_module(module, info=None, **kwargs):
         yield cls(info=info, **kwargs)
     for instance in _instances_in_module(module):
         yield instance
+
+
+def evaluate(plugins, datasets, **kwargs):
+    if not GSITK_AVAILABLE:
+        raise Exception('GSITK is not available. Install it to use this function.')
+
+    ev = Eval(tuples=None,
+              datasets=datasets,
+              pipelines=[plugin.as_pipe() for plugin in plugins])
+    ev.evaluate()
+    results = ev.results
+    evaluations = evaluations_to_JSONLD(results, **kwargs)
+    return evaluations
+
+
+def evaluations_to_JSONLD(results, flatten=False):
+    '''
+    Map the evaluation results to a JSONLD scheme
+    '''
+
+    evaluations = list()
+    metric_names = ['accuracy', 'precision_macro', 'recall_macro',
+                    'f1_macro', 'f1_weighted', 'f1_micro', 'f1_macro']
+
+    for index, row in results.iterrows():
+        evaluation = models.Evaluation()
+        if row.get('CV', True):
+            evaluation['@type'] = ['StaticCV', 'Evaluation']
+        evaluation.evaluatesOn = row['Dataset']
+        evaluation.evaluates = row['Model']
+        i = 0
+        if flatten:
+            metric = models.Metric()
+            for name in metric_names:
+                metric[name] = row[name]
+            evaluation.metrics.append(metric)
+        else:
+            # We should probably discontinue this representation
+            for name in metric_names:
+                metric = models.Metric()
+                metric['@id'] = 'Metric' + str(i)
+                metric['@type'] = name.capitalize()
+                metric.value = row[name]
+                evaluation.metrics.append(metric)
+                i += 1
+        evaluations.append(evaluation)
+    return evaluations
