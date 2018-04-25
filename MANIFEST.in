@@ -1,5 +1,6 @@
 include requirements.txt
 include test-requirements.txt
+include extra-requirements.txt
 include README.rst
 include senpy/VERSION
 graft senpy/plugins
