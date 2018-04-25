@@ -1,11 +1,12 @@
 #!/bin/env python
 
 import os
+import sys
 import pickle
 import shutil
 import tempfile
 
-from unittest import TestCase
+from unittest import TestCase, skipIf
 from senpy.models import Results, Entry, EmotionSet, Emotion, Plugins
 from senpy import plugins
 from senpy.plugins.conversion.emotion.centroids import CentroidConversion
@@ -311,6 +312,8 @@ class PluginsTest(TestCase):
         res = c._backwards_conversion(e)
         assert res["onyx:hasEmotionCategory"] == "c2"
 
+    @skipIf(sys.version_info < (3, 0),
+            reason="requires Python3")
     def test_evaluation(self):
         testdata = []
         for i in range(50):
