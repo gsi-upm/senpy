@@ -14,6 +14,7 @@ def parse_requirements(filename):
 
 install_reqs = parse_requirements("requirements.txt")
 test_reqs = parse_requirements("test-requirements.txt")
+extra_reqs = parse_requirements("extra-requirements.txt")
 
 
 setup(
@@ -34,9 +35,7 @@ setup(
     tests_require=test_reqs,
     setup_requires=['pytest-runner', ],
     extras_require={
-        'evaluation': [
-            'gsitk'
-        ]
+        'evaluation': extra_reqs
     },
     include_package_data=True,
     entry_points={
