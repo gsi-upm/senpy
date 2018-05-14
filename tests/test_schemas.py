@@ -8,6 +8,8 @@ from fnmatch import fnmatch
 
 from jsonschema import RefResolver, Draft4Validator, ValidationError
 
+from senpy.models import read_schema
+
 root_path = path.join(path.dirname(path.realpath(__file__)), '..')
 schema_folder = path.join(root_path, 'senpy', 'schemas')
 examples_path = path.join(root_path, 'docs', 'examples')
@@ -15,7 +17,8 @@ bad_examples_path = path.join(root_path, 'docs', 'bad-examples')
 
 
 class JSONSchemaTests(unittest.TestCase):
-    pass
+    def test_definitions(self):
+        read_schema('definitions.json')
 
 
 def do_create_(jsfile, success):

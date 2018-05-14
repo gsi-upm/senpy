@@ -9,3 +9,6 @@ jsonref
 PyYAML
 rdflib
 rdflib-jsonld
+numpy
+scipy
+scikit-learn

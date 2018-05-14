@@ -6,8 +6,6 @@ RUN apt-get update && apt-get install -y \
 libblas-dev liblapack-dev liblapacke-dev gfortran \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --upgrade numpy scipy scikit-learn
-
 RUN mkdir /cache/ /senpy-plugins /data/
 
 VOLUME /data/

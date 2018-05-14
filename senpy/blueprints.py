@@ -19,7 +19,7 @@ Blueprints for Senpy
 """
 from flask import (Blueprint, request, current_app, render_template, url_for,
                    jsonify)
-from .models import Error, Response, Help, Plugins, read_schema, Datasets
+from .models import Error, Response, Help, Plugins, read_schema, dump_schema, Datasets
 from . import api
 from .version import __version__
 from functools import wraps
@@ -67,9 +67,9 @@ def index():
 @api_blueprint.route('/schemas/<schema>')
 def schema(schema="definitions"):
     try:
-        return jsonify(read_schema(schema))
-    except Exception:  # Should be FileNotFoundError, but it's missing from py2
-        return Error(message="Schema not found", status=404).flask()
+        return dump_schema(read_schema(schema))
+    except Exception as ex:  # Should be FileNotFoundError, but it's missing from py2
+        return Error(message="Schema not found: {}".format(ex), status=404).flask()
 
 
 def basic_api(f):
@@ -133,6 +133,7 @@ def api_root():
     req = api.parse_call(request.parameters)
     return current_app.senpy.analyse(req)
 
+
 @api_blueprint.route('/evaluate/', methods=['POST', 'GET'])
 @basic_api
 def evaluate():
@@ -144,6 +145,7 @@ def evaluate():
         params = api.parse_params(request.parameters, api.EVAL_PARAMS)
         response = current_app.senpy.evaluate(params)
         return response
+
 
 @api_blueprint.route('/plugins/', methods=['POST', 'GET'])
 @basic_api
@@ -163,10 +165,10 @@ def plugin(plugin=None):
     return sp.get_plugin(plugin)
 
 
-@api_blueprint.route('/datasets/', methods=['POST','GET'])
+@api_blueprint.route('/datasets/', methods=['POST', 'GET'])
 @basic_api
 def datasets():
     sp = current_app.senpy
     datasets = sp.datasets
-    dic = Datasets(datasets = list(datasets.values()))
+    dic = Datasets(datasets=list(datasets.values()))
     return dic

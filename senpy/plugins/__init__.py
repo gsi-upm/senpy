@@ -19,8 +19,6 @@ import importlib
 import yaml
 import threading
 
-import numpy as np
-
 from .. import models, utils
 from .. import api
 
@@ -49,11 +47,11 @@ class PluginMeta(models.BaseMeta):
         attrs['name'] = alias
         if 'description' not in attrs:
             doc = attrs.get('__doc__', None)
-            if not doc:
-                raise Exception(('Please, add a description or '
-                                 'documentation to class {}').format(name))
-            attrs['description'] = doc
-            attrs['name'] = alias
+            if doc:
+                attrs['description'] = doc
+            else:
+                logger.warn(('Plugin {} does not have a description. '
+                             'Please, add a short summary to help other developers').format(name))
         cls = super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
 
         if alias in mcs._classes:
@@ -291,7 +289,7 @@ class Box(AnalysisPlugin):
         return self
 
     def transform(self, X):
-        return np.array([self.predict_one(x) for x in X])
+        return [self.predict_one(x) for x in X]
 
     def predict(self, X):
         return self.transform(X)
