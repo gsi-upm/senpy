@@ -51,6 +51,10 @@ def read_schema(schema_file, absolute=False):
         return jsonref.load(f, base_uri=schema_uri)
 
 
+def dump_schema(schema):
+    return jsonref.dumps(schema)
+
+
 def load_context(context):
     logging.debug('Loading context: {}'.format(context))
     if not context:

@@ -32,7 +32,7 @@ class APITest(TestCase):
         query = {}
         plug_params = {
             'hello': {
-                'aliases': ['hello', 'hiya'],
+                'aliases': ['hiya', 'hello'],
                 'required': True
             }
         }
@@ -47,6 +47,26 @@ class APITest(TestCase):
         p = parse_params(query, plug_params)
         assert 'hello' in p
         assert p['hello'] == 'dlrow'
+
+    def test_parameters2(self):
+        in1 = {
+            'meaningcloud-key': 5
+        }
+        in2 = {
+            'apikey': 25
+        }
+        extra_params = {
+            "apikey": {
+                "aliases": [
+                    "apikey",
+                    "meaningcloud-key"
+                ],
+                "required": True
+            }
+        }
+        p1 = parse_params(in1, extra_params)
+        p2 = parse_params(in2, extra_params)
+        assert (p2['apikey'] / p1['apikey']) == 5
 
     def test_default(self):
         spec = {

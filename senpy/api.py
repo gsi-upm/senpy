@@ -147,7 +147,7 @@ def parse_params(indict, *specs):
         for param, options in iteritems(spec):
             for alias in options.get("aliases", []):
                 # Replace each alias with the correct name of the parameter
-                if alias in indict and alias is not param:
+                if alias in indict and alias != param:
                     outdict[param] = indict[alias]
                     del outdict[alias]
                     continue

@@ -19,8 +19,6 @@ import importlib
 import yaml
 import threading
 
-import numpy as np
-
 from .. import models, utils
 from .. import api
 
@@ -291,7 +289,7 @@ class Box(AnalysisPlugin):
         return self
 
     def transform(self, X):
-        return np.array([self.predict_one(x) for x in X])
+        return [self.predict_one(x) for x in X]
 
     def predict(self, X):
         return self.transform(X)
