@@ -16,6 +16,7 @@ All requirements are specified in the .senpy file and, alternatively, in a requi
 Run with:
 
     git clone https://github.com/gsi-upm/senpy-plugins-community.git
+    git submodule update --init --remote --recursive
     senpy -f senpy-plugins-community
 # Loading new plugins to gitlab
 
