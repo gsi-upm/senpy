@@ -2,7 +2,6 @@
 from __future__ import division
 import re
 import nltk
-import logging
 import os
 import string
 import xml.etree.ElementTree as ET
@@ -14,11 +13,29 @@ from senpy.plugins import EmotionPlugin, AnalysisPlugin, ShelfMixin
 from senpy.models import Results, EmotionSet, Entry, Emotion
 
 
-class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
-    '''Emotion classifier using WordNet-Affect to calculate the percentage
-      of each emotion. This plugin classifies among 6 emotions: anger,fear,disgust,joy,sadness
-        or neutral. The only available language is English (en)
-        '''
+class WNAffect(EmotionPlugin, ShelfMixin):
+    '''
+    Emotion classifier using WordNet-Affect to calculate the percentage
+    of each emotion. This plugin classifies among 6 emotions: anger,fear,disgust,joy,sadness
+    or neutral. The only available language is English (en)
+    '''
+    name = 'emotion-wnaffect'
+    author = ["@icorcuera", "@balkian"]
+    version = '0.2'
+    extra_params = {
+      'language': {
+          "@id": 'lang_wnaffect',
+          'aliases': ['language', 'l'],
+          'required': True,
+          'options': ['en',]
+        }
+    }
+    synsets_path = "a-synsets.xml"
+    hierarchy_path = "a-hierarchy.xml"
+    wn16_path = "wordnet1.6/dict"
+    onyx__usesEmotionModel = "emoml:big6"
+    nltk_resources = ['stopwords', 'averaged_perceptron_tagger', 'wordnet']
+
     def _load_synsets(self, synsets_path):
         """Returns a dictionary POS tag -> synset offset -> emotion (str -> int -> str)."""
         tree = ET.parse(synsets_path)
@@ -56,7 +73,6 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
 
     def activate(self, *args, **kwargs):
 
-        nltk.download(['stopwords', 'averaged_perceptron_tagger', 'wordnet'])
         self._stopwords = stopwords.words('english')
         self._wnlemma = wordnet.WordNetLemmatizer()
         self._syntactics = {'N': 'n', 'V': 'v', 'J': 'a', 'S': 's', 'R': 'r'}
@@ -87,16 +103,16 @@ class EmotionTextPlugin(EmotionPlugin, ShelfMixin):
             'sadness': 'sadness'
         }
 
-        self._load_emotions(local_path + self.hierarchy_path)
+        self._load_emotions(self.find_file(self.hierarchy_path))
 
         if 'total_synsets' not in self.sh:
-            total_synsets = self._load_synsets(local_path + self.synsets_path)
+            total_synsets = self._load_synsets(self.find_file(self.synsets_path))
             self.sh['total_synsets'] = total_synsets
 
         self._total_synsets = self.sh['total_synsets']
 
         self._wn16_path = self.wn16_path
-        self._wn16 = WordNetCorpusReader(os.path.abspath("{0}".format(local_path + self._wn16_path)), nltk.data.find(local_path + self._wn16_path))
+        self._wn16 = WordNetCorpusReader(self.find_file(self._wn16_path), nltk.data.find(self.find_file(self._wn16_path)))
 
 
     def deactivate(self, *args, **kwargs):

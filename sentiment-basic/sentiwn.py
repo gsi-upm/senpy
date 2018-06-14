@@ -46,7 +46,7 @@ class SentiWordNet(object):
                 pos,syn_set_id,pos_score,neg_score,syn_set_score,\
                 gloss = fields
             except:
-                print "Found data without all details"
+                print("Found data without all details")
                 pass
 
             if pos and syn_set_score:

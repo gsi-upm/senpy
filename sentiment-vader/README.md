@@ -1,10 +1,12 @@
 # Sentimet-vader plugin
 
-=========
-
 Vader is a plugin developed at GSI UPM for sentiment analysis.  
+The response of this plugin uses [Marl ontology](https://www.gsi.dit.upm.es/ontologies/marl/) developed at GSI UPM for semantic web.
 
-For developing this plugin, it has been used the module vaderSentiment, which is described in the paper:
+## Acknowledgements
+
+This plugin uses the vaderSentiment module underneath, which is described in the paper:
+
   VADER: A Parsimonious Rule-based Model for Sentiment Analysis of Social Media Text
   C.J. Hutto and Eric Gilbert
   Eighth International Conference on Weblogs and Social Media (ICWSM-14). Ann Arbor, MI, June 2014.
@@ -15,16 +17,16 @@ For more information about the functionality, check the official repository
 
 https://github.com/cjhutto/vaderSentiment
 
-The response of this plugin uses [Marl ontology](https://www.gsi.dit.upm.es/ontologies/marl/) developed at GSI UPM for semantic web.
-
 ## Usage
 
-Params accepted:
+Parameters:
+
 - Language: es (Spanish), en(English).
 - Input: Text to analyse.
 
 
 Example request: 
+
 ```
 http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiment-vader&language=en&input=I%20love%20Madrid
 ```

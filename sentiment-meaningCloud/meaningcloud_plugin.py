@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import time
-import logging
 import requests
 import json
 import string
@@ -9,20 +8,33 @@ import os
 from os import path
 import time
 from senpy.plugins import SentimentPlugin
-from senpy.models import Results, Entry, Sentiment, Error
+from senpy.models import Results, Entry, Entity, Topic, Sentiment, Error
+from senpy.utils import check_template
 
-import mocked_request
+from mocked_request import mocked_requests_post
 
 try:
     from unittest import mock
 except ImportError:
     import mock
 
-logger = logging.getLogger(__name__)
-
 
 class MeaningCloudPlugin(SentimentPlugin):
-    version = "0.1"
+    '''
+    Sentiment analysis with meaningCloud service.
+    To use this plugin, you need to obtain an API key from meaningCloud signing up here:
+    https://www.meaningcloud.com/developer/login
+
+    When you had obtained the meaningCloud API Key, you have to provide it to the plugin, using param apiKey.
+    Example request:
+
+    http://senpy.cluster.gsi.dit.upm.es/api/?algo=meaningCloud&language=en&apiKey=<API key>&input=I%20love%20Madrid.
+    '''
+    name = 'sentiment-meaningcloud'
+    author = 'GSI UPM'
+    version = "1.1"
+    maxPolarityValue = 1
+    minPolarityValue = -1
 
     extra_params = {
         "language": {
@@ -37,7 +49,6 @@ class MeaningCloudPlugin(SentimentPlugin):
         }
     }
 
-    """MeaningCloud plugin uses API from Meaning Cloud to perform sentiment analysis."""
     def _polarity(self, value):
 
         if 'NONE' in value:
@@ -81,7 +92,7 @@ class MeaningCloudPlugin(SentimentPlugin):
         if not api_response.get('score_tag'):
             raise Error(r.json())
         entry['language_detected'] = lang
-        logger.info(api_response)
+        self.log.debug(api_response)
         agg_polarity, agg_polarityValue = self._polarity(
             api_response.get('score_tag', None))
         agg_opinion = Sentiment(
@@ -89,13 +100,14 @@ class MeaningCloudPlugin(SentimentPlugin):
             marl__hasPolarity=agg_polarity,
             marl__polarityValue=agg_polarityValue,
             marl__opinionCount=len(api_response['sentence_list']))
+        agg_opinion.prov(self)
         entry.sentiments.append(agg_opinion)
-        logger.info(api_response['sentence_list'])
+        self.log.debug(api_response['sentence_list'])
         count = 1
 
         for sentence in api_response['sentence_list']:
             for nopinion in sentence['segment_list']:
-                logger.info(nopinion)
+                self.log.debug(nopinion)
                 polarity, polarityValue = self._polarity(
                     nopinion.get('score_tag', None))
                 opinion = Sentiment(
@@ -107,64 +119,63 @@ class MeaningCloudPlugin(SentimentPlugin):
                     nif__beginIndex=nopinion.get('inip', None),
                     nif__endIndex=nopinion.get('endp', None))
                 count += 1
+                opinion.prov(self)
                 entry.sentiments.append(opinion)
 
         mapper = {'es': 'es.', 'en': '', 'ca': 'es.', 'it':'it.', 'fr':'fr.', 'pt':'pt.'}
 
         for sent_entity in api_response_topics['entity_list']:
-            
             resource = "_".join(sent_entity.get('form', None).split())
-            entity = Sentiment(
+            entity = Entity(
                 id="Entity{}".format(sent_entity.get('id')),
-                marl__describesObject="http://{}dbpedia.org/resource/{}".format(
+                itsrdf__taIdentRef="http://{}dbpedia.org/resource/{}".format(
                     mapper[lang], resource),
                 nif__anchorOf=sent_entity.get('form', None),
                 nif__beginIndex=sent_entity['variant_list'][0].get('inip', None),
                 nif__endIndex=sent_entity['variant_list'][0].get('endp', None))
-            entity[
-                '@type'] = "ODENTITY_{}".format(
-                    sent_entity['sementity'].get('type', None).split(">")[-1])
+            sementity = sent_entity['sementity'].get('type', None).split(">")[-1]
+            entity['@type'] = "ODENTITY_{}".format(sementity)
+            entity.prov(self)
             entry.entities.append(entity)
 
         for topic in api_response_topics['concept_list']:
             if 'semtheme_list' in topic:
                 for theme in topic['semtheme_list']:
-                    concept = Sentiment(
-                        id="Topic{}".format(topic.get('id')),
-                        prov__wasDerivedFrom="http://dbpedia.org/resource/{}".
-                        format(theme['type'].split('>')[-1]))
-                    concept[
-                        '@type'] = "ODTHEME_{}".format(
-                            theme['type'].split(">")[-1])
+                    concept = Topic()
+                    concept.id = "Topic{}".format(topic.get('id'))
+                    concept['@type'] = "ODTHEME_{}".format(theme['type'].split(">")[-1])
+                    concept['fam:topic-reference'] = "http://dbpedia.org/resource/{}".format(theme['type'].split('>')[-1])
+                    entry.prov(self)
                     entry.topics.append(concept)
         yield entry
 
-    @mock.patch('requests.post', side_effect=mocked_request.mocked_requests_post)
+    @mock.patch('requests.post', side_effect=mocked_requests_post)
     def test(self, *args, **kwargs):
         results = list()
-        params = {'algo': 'sentiment-meaningCloud', 
-                  'intype': 'direct', 
-                  'expanded-jsonld': 0, 
-                  'informat': 'text', 
-                  'prefix': '', 
-                  'plugin_type': 'analysisPlugin', 
-                  'urischeme': 'RFC5147String', 
-                  'outformat': 'json-ld', 
-                  'i': 'Hello World', 
-                  'input': 'Hello World', 
-                  'conversion': 'full', 
+        params = {'algo': 'sentiment-meaningCloud',
+                  'intype': 'direct',
+                  'expanded-jsonld': 0,
+                  'informat': 'text',
+                  'prefix': '',
+                  'plugin_type': 'analysisPlugin',
+                  'urischeme': 'RFC5147String',
+                  'outformat': 'json-ld',
+                  'i': 'Hello World',
+                  'input': 'Hello World',
+                  'conversion': 'full',
                   'language': 'en',
-                  'apikey': '00000', 
+                  'apikey': '00000',
                   'algorithm': 'sentiment-meaningCloud'}
-        for i in range(100):
-            res = next(self.analyse_entry(Entry(nif__isString="Hello World Obama"), params))
-            results.append(res.sentiments[0]['marl:hasPolarity'])
-            results.append(res.topics[0]['prov:wasDerivedFrom'])
-            results.append(res.entities[0]['prov:wasDerivedFrom'])
+        res = next(self.analyse_entry(Entry(nif__isString="Hello World Obama"), params))
 
-        assert 'marl:Neutral' in results
-        assert 'http://dbpedia.org/resource/Astronomy' in results
-        assert 'http://dbpedia.org/resource/Obama' in results
+        check_template(res,
+                       {'sentiments': [
+                           {'marl:hasPolarity': 'marl:Neutral'}],
+                         'entities': [
+                             {'itsrdf:taIdentRef': 'http://dbpedia.org/resource/Obama'}],
+                         'topics': [
+                             {'fam:topic-reference': 'http://dbpedia.org/resource/Astronomy'}]
+                       })
 
 if __name__ == '__main__':
     from senpy import easy_test

@@ -17,7 +17,9 @@ from nltk.corpus import WordNetCorpusReader
 import xml.etree.ElementTree as ET
 
 class WNAffect:
-    """WordNet-Affect ressource."""
+    """WordNet-Affect resource."""
+
+    nltk_resources = ['averaged_perceptron_tagger']
     
     def __init__(self, wordnet16_dir, wn_domains_dir):
         """Initializes the WordNet-Affect object."""

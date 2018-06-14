@@ -5,15 +5,37 @@ from senpy.plugins import SentimentPlugin, SenpyPlugin
 from senpy.models import Results, Sentiment, Entry
 import logging
 
-logger = logging.getLogger(__name__)
 
-class vaderSentimentPlugin(SentimentPlugin):
+class VaderSentimentPlugin(SentimentPlugin):
+    '''
+    Sentiment classifier using vaderSentiment module. Params accepted: Language: {en, es}. The output uses Marl ontology developed at GSI UPM for semantic web.
+    '''
+    name = "sentiment-vader"
+    module = "sentiment-vader"
+    author = "@icorcuera"
+    version = "0.1.1"
+    extra_params = {
+        "language": {
+          "@id": "lang_rand",
+          "aliases": ["language", "l"],
+          "default": "auto",
+          "options": ["es", "en", "auto"]
+        },
 
-    def analyse_entry(self,entry,params):
+        "aggregate": {
+            "aliases": ["aggregate","agg"],
+            "options": ["true", "false"],
+            "default": False
+        }
 
-        logger.debug("Analysing with params {}".format(params))
+    }
+    requirements = {}
 
-        text_input = entry.get("text", None)
+    def analyse_entry(self, entry, params):
+
+        self.log.debug("Analysing with params {}".format(params))
+
+        text_input = entry.text
         aggregate = params['aggregate']
 
         score = sentiment(text_input)
@@ -22,15 +44,18 @@ class vaderSentimentPlugin(SentimentPlugin):
                              marl__hasPolarity= "marl:Positive",
                              marl__algorithmConfidence= score['pos']
             )
+        opinion0.prov(self)
         opinion1 = Sentiment(id= "Opinion_negative",
             marl__hasPolarity= "marl:Negative",
             marl__algorithmConfidence= score['neg']
             )
+        opinion1.prov(self)
         opinion2 = Sentiment(id= "Opinion_neutral",
             marl__hasPolarity = "marl:Neutral",
             marl__algorithmConfidence = score['neu']
             )
-        
+        opinion2.prov(self)
+
         if aggregate == 'true':
             res = None
             confident = max(score['neg'],score['neu'],score['pos'])
@@ -47,3 +72,25 @@ class vaderSentimentPlugin(SentimentPlugin):
             entry.sentiments.append(opinion2)
 
         yield entry
+
+    test_cases = []
+
+    test_cases = [
+        {
+            'input': 'I am tired :(',
+            'polarity': 'marl:Negative'
+        },
+        {
+            'input': 'I love pizza :(',
+            'polarity': 'marl:Positive'
+        },
+        {
+            'input': 'I enjoy going to the cinema :)',
+            'polarity': 'marl:Negative'
+        },
+        {
+            'input': 'This cake is disgusting',
+            'polarity': 'marl:Negative'
+        },
+        
+    ]

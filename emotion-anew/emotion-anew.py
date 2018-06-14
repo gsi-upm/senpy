@@ -23,12 +23,81 @@ from senpy.plugins import SentimentPlugin, SenpyPlugin
 from senpy.models import Results, EmotionSet, Entry, Emotion
 
 
-class EmotionTextPlugin(SentimentPlugin):
+class ANEW(SentimentPlugin):
+    description = "This plugin consists on an emotion classifier using ANEW lexicon dictionary to calculate VAD (valence-arousal-dominance) of the sentence and determinate which emotion is closer to this value. Each emotion has a centroid, calculated according to this article: http://www.aclweb.org/anthology/W10-0208. The plugin is going to look for the words in the sentence that appear in the ANEW dictionary and calculate the average VAD score for the sentence. Once this score is calculated, it is going to seek the emotion that is closest to this value."
+    author = "@icorcuera"
+    version = "0.5.1"
+    name = "emotion-anew"
+
+    extra_params = {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": True,
+            "options": ["es","en"],
+            "default": "en"
+        }
+    }
+
+    anew_path_es = "Dictionary/Redondo(2007).csv"
+    anew_path_en = "Dictionary/ANEW2010All.txt"
+    centroids = {
+        "anger": {
+            "A": 6.95,
+            "D": 5.1,
+            "V": 2.7
+        },
+        "disgust": {
+            "A": 5.3,
+            "D": 8.05,
+            "V": 2.7
+        },
+        "fear": {
+            "A": 6.5,
+            "D": 3.6,
+            "V": 3.2
+        },
+        "joy": {
+            "A": 7.22,
+            "D": 6.28,
+            "V": 8.6
+        },
+        "sadness": {
+            "A": 5.21,
+            "D": 2.82,
+            "V": 2.21
+        }
+    }
+    emotions_ontology = {
+        "anger": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#anger",
+        "disgust": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#disgust",
+        "fear": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#negative-fear",
+        "joy": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#joy",
+        "neutral": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#neutral-emotion",
+        "sadness": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#sadness"
+    }
+    onyx__usesEmotionModel = "emoml:big6"
+    nltk_resources = ['stopwords']
 
     def activate(self, *args, **kwargs):
-        nltk.download('stopwords')
         self._stopwords = stopwords.words('english')
-        self._local_path=os.path.dirname(os.path.abspath(__file__))
+        dictionary={}
+        dictionary['es'] = {}
+        with self.open(self.anew_path_es,'rb') as tabfile:
+            reader = csv.reader(tabfile, delimiter='\t')
+            for row in reader:
+                dictionary['es'][row[2]]={}
+                dictionary['es'][row[2]]['V']=row[3]
+                dictionary['es'][row[2]]['A']=row[5]
+                dictionary['es'][row[2]]['D']=row[7]
+        dictionary['en'] = {}
+        with self.open(self.anew_path_en,'rb') as tabfile:
+            reader = csv.reader(tabfile, delimiter='\t')
+            for row in reader:
+                dictionary['en'][row[0]]={}
+                dictionary['en'][row[0]]['V']=row[2]
+                dictionary['en'][row[0]]['A']=row[4]
+                dictionary['en'][row[0]]['D']=row[6]
+        self._dictionary = dictionary
 
     def _my_preprocessor(self, text):
 
@@ -63,8 +132,8 @@ class EmotionTextPlugin(SentimentPlugin):
             for token in sentence:
                 if token[0].lower() not in self._stopwords:
                     unigrams_words.append(token[0].lower())
-                    unigrams_lemmas.append(token[4])  
-                    pos_tagged.append(token[1])        
+                    unigrams_lemmas.append(token[4])
+                    pos_tagged.append(token[1])
 
         return unigrams_lemmas,unigrams_words,pos_tagged
 
@@ -83,7 +152,7 @@ class EmotionTextPlugin(SentimentPlugin):
                 value=new_value
                 emotion=state
         return emotion
-    
+
     def _extract_features(self, tweet,dictionary,lang):
         feature_set={}
         ngrams_lemmas,ngrams_words,pos_tagged = self._extract_ngrams(tweet,lang)
@@ -116,41 +185,76 @@ class EmotionTextPlugin(SentimentPlugin):
 
     def analyse_entry(self, entry, params):
 
-        text_input = entry.get("text", None)
+        text_input = entry.text
 
-        text= self._my_preprocessor(text_input)
-        dictionary={}
-        lang = params.get("language", "auto")
-        if lang == 'es':
-            with open(self._local_path + self.anew_path_es,'rb') as tabfile:
-                reader = csv.reader(tabfile, delimiter='\t')
-                for row in reader:
-                    dictionary[row[2]]={}
-                    dictionary[row[2]]['V']=row[3]
-                    dictionary[row[2]]['A']=row[5]
-                    dictionary[row[2]]['D']=row[7]
-        else:
-            with open(self._local_path + self.anew_path_en,'rb') as tabfile:
-                reader = csv.reader(tabfile, delimiter='\t')
-                for row in reader:
-                    dictionary[row[0]]={}
-                    dictionary[row[0]]['V']=row[2]
-                    dictionary[row[0]]['A']=row[4]
-                    dictionary[row[0]]['D']=row[6]
+        text = self._my_preprocessor(text_input)
+        dictionary = self._dictionary[params['language']]
 
-        feature_set=self._extract_features(text,dictionary,lang)
+        feature_set=self._extract_features(text, dictionary, params['language'])
 
         emotions = EmotionSet()
         emotions.id = "Emotions0"
 
         emotion1 = Emotion(id="Emotion0")
-        
         emotion1["onyx:hasEmotionCategory"] = self.emotions_ontology[feature_set['emotion']]
         emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence"] = feature_set['V']
         emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal"] = feature_set['A']
         emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance"] = feature_set['D']
 
+        emotion1.prov(self)
+        emotions.prov(self)
+
         emotions.onyx__hasEmotion.append(emotion1)
-        entry.emotions = [emotions,]
+        entry.emotions = [emotions, ]
 
         yield entry
+
+    ontology = "http://gsi.dit.upm.es/ontologies/wnaffect/ns#"
+    test_cases = [
+        {
+            'input': 'I hate you',
+            'expected': {
+                'emotions': [{
+                    'onyx:hasEmotion': [{
+                        'onyx:hasEmotionCategory': ontology + 'anger',
+                    }]
+                }]
+            }
+        }, {
+            'input': 'i am sad',
+            'expected': {
+                'emotions': [{
+                    'onyx:hasEmotion': [{
+                        'onyx:hasEmotionCategory': ontology + 'sadness',
+                    }]
+                }]
+            }
+        }, {
+            'input': 'i am happy with my marks',
+            'expected': {
+                'emotions': [{
+                    'onyx:hasEmotion': [{
+                        'onyx:hasEmotionCategory': ontology + 'joy',
+                    }]
+                }]
+            }
+        }, {
+            'input': 'This movie is scary',
+            'expected': {
+                'emotions': [{
+                    'onyx:hasEmotion': [{
+                        'onyx:hasEmotionCategory': ontology + 'negative-fear',
+                    }]
+                }]
+            }
+        }, {
+            'input': 'this cake is disgusting' ,
+            'expected': {
+                'emotions': [{
+                    'onyx:hasEmotion': [{
+                        'onyx:hasEmotionCategory': ontology + 'negative-fear',
+                    }]
+                }]
+            }
+        }
+    ]

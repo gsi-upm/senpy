@@ -1,15 +1,9 @@
-[submodule "sentiment-meaningCloud"]
-	path = sentiment-meaningCloud
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/sentiment-meaningCloud/
-[submodule "sentiment-vader"]
-	path = sentiment-vader
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/sentiment-vader/
-[submodule "emotion-wnaffect"]
-	path = emotion-wnaffect
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/emotion-wnaffect
-[submodule "emotion-anew"]
-	path = emotion-anew
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/emotion-anew
-[submodule "sentiment-basic"]
-	path = sentiment-basic
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/sentiment-basic
+[submodule "emotion-anew/data"]
+	path = emotion-anew/data
+	url = https://lab.cluster.gsi.dit.upm.es/senpy/data/emotion-anew.git
+[submodule "emotion-wnaffect/data"]
+	path = emotion-wnaffect/data
+	url = https://lab.cluster.gsi.dit.upm.es/senpy/data/emotion-wnaffect.git
+[submodule "sentiment-basic/data"]
+	path = sentiment-basic/data
+	url = https://lab.cluster.gsi.dit.upm.es/senpy/data/sentiment-basic.git

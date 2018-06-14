@@ -1,5 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import os
-import logging
 import string
 import nltk
 import pickle
@@ -13,24 +14,40 @@ from os import path
 from senpy.plugins import SentimentPlugin, SenpyPlugin
 from senpy.models import Results, Entry, Sentiment
 
-logger = logging.getLogger(__name__)
 
-
-class SentiTextPlugin(SentimentPlugin):
+class SentimentBasic(SentimentPlugin):
+    '''
+    Sentiment classifier using rule-based classification for Spanish. Based on english to spanish translation and SentiWordNet sentiment knowledge. This is a demo plugin that uses only some features from the TASS 2015 classifier. To use the entirely functional classifier you can use the service in: http://senpy.cluster.gsi.dit.upm.es.
+    '''
+    name = "sentiment-basic"
+    author = "github.com/nachtkatze"
+    version = "0.1.1"
+    extra_params = {
+        "language": {
+            "aliases": ["language", "l"],
+            "required": True,
+            "options": ["en","es", "it", "fr", "auto"],
+            "default": "auto"
+        }
+    }
+    sentiword_path = "SentiWordNet_3.0.txt"
+    pos_path = "unigram_spanish.pickle"
+    maxPolarityValue = 1
+    minPolarityValue = -1
+    nltk_resources = ['punkt','wordnet']
 
     def _load_swn(self):
-        self.swn_path = path.join(path.abspath(path.dirname(__file__)), self.sentiword_path)
+        self.swn_path = self.find_file(self.sentiword_path)
         swn = SentiWordNet(self.swn_path)
         return swn
 
     def _load_pos_tagger(self):
-        self.pos_path = path.join(path.abspath(path.dirname(__file__)), self.pos_path)
+        self.pos_path = self.find_file(self.pos_path)
         with open(self.pos_path, 'r') as f:
             tagger = pickle.load(f)
         return tagger
 
     def activate(self, *args, **kwargs):
-        nltk.download(['punkt','wordnet'])
         self._swn = self._load_swn()
         self._pos_tagger = self._load_pos_tagger()
 
@@ -54,11 +71,6 @@ class SentiTextPlugin(SentimentPlugin):
             tokens[i]['tokens'] = self._pos_tagger.tag(tokens[i]['tokens'])
         return tokens
 
-    # def _stopwords(sentences, lang='english'):
-    #     for i in sentences:
-    #         sentences[i]['tokens'] = [t for t in sentences[i]['tokens'] if t not in nltk.corpus.stopwords.words(lang)]
-    #     return sentences
-
     def _compare_synsets(self, synsets, tokens, i):
         for synset in synsets:
             for word in tokens[i]['lemmas']:
@@ -71,7 +83,7 @@ class SentiTextPlugin(SentimentPlugin):
 
     def analyse_entry(self, entry, params):
         language = params.get("language")
-        text = entry.get("text", None)
+        text = entry.text
         tokens = self._tokenize(text)
         tokens = self._pos(tokens)
         sufixes = {'es':'spa','en':'eng','it':'ita','fr':'fra'}
@@ -130,19 +142,41 @@ class SentiTextPlugin(SentimentPlugin):
             except:
                 if n_pos == 0 and n_neg == 0:
                     g_score = 0.5
-            polarity = 'marl:Neutral'
-            polarity_value = 0
-            if g_score > 0.5:
+            if g_score >= 0.5:
                 polarity = 'marl:Positive'
                 polarity_value = 1
             elif g_score < 0.5:
                 polarity = 'marl:Negative'
                 polarity_value = -1
+            else:
+                polarity = 'marl:Neutral'
+                polarity_value = 0
             opinion = Sentiment(id="Opinion0"+'_'+str(i),
                           marl__hasPolarity=polarity,
                           marl__polarityValue=polarity_value)
 
-
+            opinion.prov(self)
             entry.sentiments.append(opinion)
 
         yield entry
+
+    test_cases = [
+        {
+            'input': u'Odio ir al cine',
+            'params': {'language': 'es'},
+            'polarity': 'marl:Negative'
+
+        },
+        {
+            'input': u'El cielo está nublado',
+            'params': {'language': 'es'},
+            'polarity': 'marl:Positive'
+
+        },
+        {
+            'input': u'Esta tarta está muy buena',
+            'params': {'language': 'es'},
+            'polarity': 'marl:Negative'
+
+        }
+    ]

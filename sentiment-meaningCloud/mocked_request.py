@@ -7,7 +7,6 @@ def mocked_requests_post(*args, **kwargs):
         def json(self):
             return self.json_data
 
-    print("Mocking request")
     if args[0] == 'http://api.meaningcloud.com/sentiment-2.1':
         return MockResponse({
             'model': 'general_en',
