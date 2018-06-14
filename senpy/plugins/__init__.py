@@ -18,6 +18,7 @@ import subprocess
 import importlib
 import yaml
 import threading
+import nltk
 
 from .. import models, utils
 from .. import api
@@ -95,6 +96,16 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         self.is_activated = False
         self._lock = threading.Lock()
         self.data_folder = data_folder or os.getcwd()
+        self._directory = os.path.abspath(os.path.dirname(inspect.getfile(self.__class__)))
+        self._data_paths = ['',
+                            self._directory,
+                            os.path.join(self._directory, 'data'),
+                            self.data_folder]
+        self._log = logging.getLogger('{}.{}'.format(__name__, self.name))
+
+    @property
+    def log(self):
+        return self._log
 
     def validate(self):
         missing = []
@@ -123,9 +134,9 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         for case in test_cases:
             try:
                 self.test_case(case)
-                logger.debug('Test case passed:\n{}'.format(pprint.pformat(case)))
+                self.log.debug('Test case passed:\n{}'.format(pprint.pformat(case)))
             except Exception as ex:
-                logger.warn('Test case failed:\n{}'.format(pprint.pformat(case)))
+                self.log.warn('Test case failed:\n{}'.format(pprint.pformat(case)))
                 raise
 
     def test_case(self, case):
@@ -148,10 +159,22 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
             raise
         assert not should_fail
 
-    def open(self, fpath, *args, **kwargs):
-        if not os.path.isabs(fpath):
-            fpath = os.path.join(self.data_folder, fpath)
-        return open(fpath, *args, **kwargs)
+    def find_file(self, fname):
+        for p in self._data_paths:
+            alternative = os.path.join(p, fname)
+            if os.path.exists(alternative):
+                return alternative
+        raise IOError('File does not exist: {}'.format(fname))
+
+    def open(self, fpath, mode='r'):
+        if 'w' in mode:
+            # When writing, only use absolute paths or data_folder
+            if not os.path.isabs(fpath):
+                fpath = os.path.join(self.data_folder, fpath)
+        else:
+            fpath = self.find_file(fpath)
+
+        return open(fpath, mode=mode)
 
     def serve(self, debug=True, **kwargs):
         utils.easy(plugin_list=[self, ], plugin_folder=None, debug=debug, **kwargs)
@@ -186,7 +209,7 @@ class Analysis(Plugin):
 
     def analyse_entries(self, entries, parameters):
         for entry in entries:
-            logger.debug('Analysing entry with plugin {}: {}'.format(self, entry))
+            self.log.debug('Analysing entry with plugin {}: {}'.format(self, entry))
             results = self.analyse_entry(entry, parameters)
             if inspect.isgenerator(results):
                 for result in results:
@@ -375,7 +398,7 @@ class ShelfMixin(object):
                     with self.open(self.shelf_file, 'rb') as p:
                         self._sh = pickle.load(p)
                 except (IndexError, EOFError, pickle.UnpicklingError):
-                    logger.warning('{} has a corrupted shelf file!'.format(self.id))
+                    self.log.warning('Corrupted shelf file: {}'.format(self.shelf_file))
                     if not self.get('force_shelf', False):
                         raise
         return self._sh
@@ -402,32 +425,31 @@ class ShelfMixin(object):
         self._shelf_file = value
 
     def save(self):
-        logger.debug('saving pickle')
+        self.log.debug('Saving pickle')
         if hasattr(self, '_sh') and self._sh is not None:
             with self.open(self.shelf_file, 'wb') as f:
                 pickle.dump(self._sh, f)
 
 
-def pfilter(plugins, **kwargs):
+def pfilter(plugins, plugin_type=Analysis, **kwargs):
     """ Filter plugins by different criteria """
     if isinstance(plugins, models.Plugins):
         plugins = plugins.plugins
     elif isinstance(plugins, dict):
         plugins = plugins.values()
-    ptype = kwargs.pop('plugin_type', Plugin)
     logger.debug('#' * 100)
-    logger.debug('ptype {}'.format(ptype))
-    if ptype:
-        if isinstance(ptype, PluginMeta):
-            ptype = ptype.__name__
+    logger.debug('plugin_type {}'.format(plugin_type))
+    if plugin_type:
+        if isinstance(plugin_type, PluginMeta):
+            plugin_type = plugin_type.__name__
         try:
-            ptype = ptype[0].upper() + ptype[1:]
-            pclass = globals()[ptype]
+            plugin_type = plugin_type[0].upper() + plugin_type[1:]
+            pclass = globals()[plugin_type]
             logger.debug('Class: {}'.format(pclass))
             candidates = filter(lambda x: isinstance(x, pclass),
                                 plugins)
         except KeyError:
-            raise models.Error('{} is not a valid type'.format(ptype))
+            raise models.Error('{} is not a valid type'.format(plugin_type))
     else:
         candidates = plugins
 
@@ -462,6 +484,7 @@ def _log_subprocess_output(process):
 
 def install_deps(*plugins):
     installed = False
+    nltk_resources = set()
     for info in plugins:
         requirements = info.get('requirements', [])
         if requirements:
@@ -477,6 +500,9 @@ def install_deps(*plugins):
             installed = True
             if exitcode != 0:
                 raise models.Error("Dependencies not properly installed")
+        nltk_resources |= set(info.get('nltk_resources', []))
+
+    installed |= nltk.download(list(nltk_resources))
     return installed
 
 
@@ -573,12 +599,14 @@ def _instances_in_module(module):
 def _from_module_name(module, root, info=None, install=True, **kwargs):
     try:
         module = load_module(module, root)
-    except ImportError:
+    except (ImportError, LookupError):
         if not install or not info:
             raise
         install_deps(info)
         module = load_module(module, root)
     for plugin in _from_loaded_module(module=module, root=root, info=info, **kwargs):
+        if install:
+            install_deps(plugin)
         yield plugin
 
 

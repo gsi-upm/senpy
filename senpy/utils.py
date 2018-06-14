@@ -1,6 +1,7 @@
 from . import models, __version__
 from collections import MutableMapping
 import pprint
+import pdb
 
 import logging
 logger = logging.getLogger(__name__)
@@ -32,8 +33,8 @@ def check_template(indict, template):
         if indict != template:
             raise models.Error(('Differences found.\n'
                                 '\tExpected: {}\n'
-                                '\tFound: {}').format(pprint.pformat(indict),
-                                                      pprint.pformat(template)))
+                                '\tFound: {}').format(pprint.pformat(template),
+                                                      pprint.pformat(indict)))
 
 
 def convert_dictionary(original, mappings):
@@ -67,18 +68,23 @@ def easy_load(app=None, plugin_list=None, plugin_folder=None, **kwargs):
     return sp, app
 
 
-def easy_test(plugin_list=None):
+def easy_test(plugin_list=None, debug=True):
     logger.setLevel(logging.DEBUG)
     logging.getLogger().setLevel(logging.INFO)
-    if not plugin_list:
-        import __main__
-        logger.info('Loading classes from {}'.format(__main__))
-        from . import plugins
-        plugin_list = plugins.from_module(__main__)
-    for plug in plugin_list:
-        plug.test()
-        logger.info('The tests for {} passed!'.format(plug.name))
-    logger.info('All tests passed!')
+    try:
+        if not plugin_list:
+            import __main__
+            logger.info('Loading classes from {}'.format(__main__))
+            from . import plugins
+            plugin_list = plugins.from_module(__main__)
+        for plug in plugin_list:
+            plug.test()
+            plug.log.info('My tests passed!')
+            logger.info('All tests passed!')
+    except Exception:
+        if not debug:
+            raise
+        pdb.post_mortem()
 
 
 def easy(host='0.0.0.0', port=5000, debug=True, **kwargs):

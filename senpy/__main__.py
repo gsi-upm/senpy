@@ -130,7 +130,7 @@ def main():
         return
     sp.activate_all()
     if args.only_test:
-        easy_test(sp.plugins())
+        easy_test(sp.plugins(), debug=args.debug)
         return
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,

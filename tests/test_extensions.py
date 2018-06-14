@@ -47,7 +47,7 @@ class ExtensionsTest(TestCase):
 
     def test_add_delete(self):
         '''Should be able to add and delete new plugins. '''
-        new = plugins.Plugin(name='new', description='new', version=0)
+        new = plugins.Analysis(name='new', description='new', version=0)
         self.senpy.add_plugin(new)
         assert new in self.senpy.plugins()
         self.senpy.delete_plugin(new)

@@ -10,8 +10,10 @@
     "wna": "http://www.gsi.dit.upm.es/ontologies/wnaffect/ns#",
     "emoml": "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "fam": "http://vocab.fusepool.info/fam#",
     "topics": {
-      "@id": "dc:subject"
+      "@id": "nif:topic",
+      "@container": "@set"
     },
     "entities": {
       "@id": "me:hasEntities"

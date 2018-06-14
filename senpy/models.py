@@ -203,24 +203,27 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
                context_uri=None,
                prefix=None,
                expanded=False):
-        ser = self.serializable()
 
-        result = jsonld.compact(
-            ser,
-            self._context,
-            options={
-                'base': prefix,
-                'expandContext': self._context,
-                'senpy': prefix
-            })
-        if context_uri:
-            result['@context'] = context_uri
+        result = self.serializable()
+        if context_uri or with_context:
+            result['@context'] = context_uri or self._context
+
+        # result = jsonld.compact(result,
+        #                         self._context,
+        #                         options={
+        #                             'base': prefix,
+        #                             'expandContext': self._context,
+        #                             'senpy': prefix
+        #                         })
         if expanded:
             result = jsonld.expand(
                 result, options={'base': prefix,
                                  'expandContext': self._context})
         if not with_context:
-            del result['@context']
+            try:
+                del result['@context']
+            except KeyError:
+                pass
         return result
 
     def validate(self, obj=None):
@@ -323,7 +326,10 @@ def _add_class_from_schema(*args, **kwargs):
 
 
 for i in [
+        'aggregatedEvaluation',
         'analysis',
+        'dataset',
+        'datasets',
         'emotion',
         'emotionConversion',
         'emotionConversionPlugin',
@@ -331,19 +337,17 @@ for i in [
         'emotionModel',
         'emotionPlugin',
         'emotionSet',
+        'evaluation',
         'entity',
         'help',
+        'metric',
         'plugin',
         'plugins',
         'response',
         'results',
         'sentimentPlugin',
         'suggestion',
-        'aggregatedEvaluation',
-        'evaluation',
-        'metric',
-        'dataset',
-        'datasets',
+        'topic',
 
 ]:
     _add_class_from_schema(i)
