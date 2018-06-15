@@ -6,19 +6,14 @@
 # improved performance.
 
 stages:
-  - test
   - build
+  - test
   - push
   - deploy
   - clean
 
 before_script:
   - make -e login
-
-test:
-  stage: test
-  script:
-    - make -e test
 
 build:
   stage: build
@@ -27,6 +22,11 @@ build:
   only:
     - master
     - fix-makefiles
+
+test:
+  stage: test
+  script:
+    - make -e test
 
 push:
   stage: push
