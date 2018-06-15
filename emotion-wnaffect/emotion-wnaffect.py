@@ -219,7 +219,7 @@ class WNAffect(EmotionPlugin, ShelfMixin):
             matches = 1
 
         for i in feature_set:
-            feature_set[i] = (feature_set[i] / matches) * 100
+            feature_set[i] = (feature_set[i] / matches)
 
         return feature_set
 

@@ -1,9 +1,3 @@
-[submodule "emotion-anew/data"]
-	path = emotion-anew/data
-	url = ../data/emotion-anew.git
-[submodule "emotion-wnaffect/data"]
-	path = emotion-wnaffect/data
-	url = ../data/emotion-wnaffect.git
-[submodule "sentiment-basic/data"]
-	path = sentiment-basic/data
-	url = ../data/sentiment-basic.git
+[submodule "data"]
+	path = data
+	url = ../data

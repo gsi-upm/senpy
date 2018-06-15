@@ -22,3 +22,15 @@ spec:
         ports:
           - name: web
             containerPort: 5000
+        volumeMounts:
+          # name must match the volume name below
+          - name: senpy-data
+            mountPath: "/data"
+            subPath: data
+        env:
+          - name: SENPY_DATA
+            value: '/data'
+      volumes:
+      - name: senpy-data
+        persistentVolumeClaim:
+          claimName: senpy-pvc
