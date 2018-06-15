@@ -5,6 +5,9 @@
 # When using dind, it's wise to use the overlayfs driver for
 # improved performance.
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 stages:
   - build
   - test

@@ -1,9 +1,9 @@
 [submodule "emotion-anew/data"]
 	path = emotion-anew/data
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/data/emotion-anew.git
+	url = ../data/emotion-anew.git
 [submodule "emotion-wnaffect/data"]
 	path = emotion-wnaffect/data
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/data/emotion-wnaffect.git
+	url = ../data/emotion-wnaffect.git
 [submodule "sentiment-basic/data"]
 	path = sentiment-basic/data
-	url = https://lab.cluster.gsi.dit.upm.es/senpy/data/sentiment-basic.git
+	url = ../data/sentiment-basic.git
