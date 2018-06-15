@@ -10,6 +10,7 @@ stages:
   - build
   - push
   - deploy
+  - clean
 
 before_script:
   - make -e login
