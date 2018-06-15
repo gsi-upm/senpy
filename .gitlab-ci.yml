@@ -1,0 +1,50 @@
+# Uncomment if you want to use docker-in-docker
+# image: gsiupm/dockermake:latest
+# services:
+# - docker:dind
+# When using dind, it's wise to use the overlayfs driver for
+# improved performance.
+
+stages:
+  - test
+  - build
+  - push
+  - deploy
+
+before_script:
+  - make -e login
+
+test:
+  stage: test
+  script:
+    - make -e test
+
+build:
+  stage: build
+  script:
+    - make -e docker-build
+  only:
+    - master
+    - fix-makefiles
+
+push:
+  stage: push
+  script:
+    - make -e docker-push
+  only:
+    - master
+    - fix-makefiles
+
+deploy:
+  stage: deploy
+  script:
+    - make -e deploy
+  only:
+    - master
+    - fix-makefiles
+
+clean :
+  stage: clean
+  script:
+    - make -e clean
+  when: manual

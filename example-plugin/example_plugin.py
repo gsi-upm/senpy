@@ -1,9 +1,6 @@
 from senpy.plugins import Analysis
 from senpy.models import Response, Entry
 
-import logging
-
-logger = logging.getLogger(__name__)
 
 class ExamplePlugin(Analysis):
     '''A *VERY* simple plugin that exemplifies the development of Senpy Plugins'''
@@ -21,8 +18,8 @@ class ExamplePlugin(Analysis):
     custom_attribute = "42"
 
     def analyse_entry(self, entry, params):
-        logger.debug('Analysing with the example.')
-        logger.debug('The answer to this response is: %s.' % params['parameter'])
+        self.log.debug('Analysing with the example.')
+        self.log.debug('The answer to this response is: %s.' % params['parameter'])
         resp = Response()
         entry['example:reversed'] = entry.text[::-1]
         entry['example:the_answer'] = params['parameter']

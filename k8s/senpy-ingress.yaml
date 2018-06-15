@@ -1,0 +1,14 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: senpy-$NAME-ingress
+spec:
+  rules:
+  - host: senpy.cluster.gsi.dit.upm.es
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: senpy-$NAME-latest
+          servicePort: 5000

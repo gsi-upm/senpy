@@ -1,0 +1,24 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: senpy-$NAME-latest
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: $NAME-latest
+        app: test
+    spec:
+      containers:
+      - name: senpy-latest
+        image: $IMAGEWTAG
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        ports:
+          - name: web
+            containerPort: 5000
