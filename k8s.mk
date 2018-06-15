@@ -13,7 +13,7 @@
 KUBE_CA_TEMP=false
 ifndef KUBE_CA_PEM_FILE
 KUBE_CA_PEM_FILE:=$$PWD/.ca.crt
-CREATED:=$(shell echo -e "$(KUBE_CA_BUNDLE)" > $(KUBE_CA_PEM_FILE))
+CREATED:=$(shell printf '%b\n' '$(KUBE_CA_BUNDLE)' > $(KUBE_CA_PEM_FILE))
 endif 
 KUBE_TOKEN?=""
 KUBE_NAMESPACE?=$(NAME)

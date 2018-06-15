@@ -1,5 +1,14 @@
-IMAGENAME?=$(NAME)
+ifndef IMAGENAME
+	ifdef CI_REGISTRY_IMAGE
+		IMAGENAME=$(CI_REGISTRY_IMAGE)
+	else
+		IMAGENAME=$(NAME)
+	endif
+endif
+
 IMAGEWTAG?=$(IMAGENAME):$(VERSION)
+DOCKER_FLAGS?=$(-ti)
+DOCKER_CMD?=
 
 docker-login: ## Log in to the registry. It will only be used in the server, or when running a CI task locally (if CI_BUILD_TOKEN is set).
 ifeq ($(CI_BUILD_TOKEN),)
@@ -18,6 +27,19 @@ ifeq ($(HUB_USER),)
 else
 	@docker logout
 endif
+
+docker-run: ## Build a generic docker image
+	docker run $(DOCKER_FLAGS) $(IMAGEWTAG) $(DOCKER_CMD)
+
+docker-build: ## Build a generic docker image
+	docker build . -t $(IMAGEWTAG)
+
+docker-push: docker-login ## Push a generic docker image
+	docker push $(IMAGEWTAG)
+
+docker-latest-push: docker-login ## Push the latest image
+	docker tag $(IMAGEWTAG) $(IMAGENAME)
+	docker push $(IMAGENAME)
 
 login:: docker-login
 

@@ -26,9 +26,10 @@ Dockerfile-%: Dockerfile.template  ## Generate a specific dockerfile (e.g. Docke
 quick_build: $(addprefix build-, $(PYMAIN))
 
 build: $(addprefix build-, $(PYVERSIONS)) ## Build all images / python versions
+	docker tag $(IMAGEWTAG)-python$(PYMAIN) $(IMAGEWTAG)
 
 build-%: version Dockerfile-%  ## Build a specific version (e.g. build-2.7)
-	docker build -t '$(IMAGEWTAG)-python$*' --cache-from $(IMAGENAME):python$* -f Dockerfile-$* .;
+	docker build -t '$(IMAGEWTAG)-python$*' -f Dockerfile-$* .;
 
 dev-%: ## Launch a specific development environment using docker (e.g. dev-2.7)
 	@docker start $(NAME)-dev$* || (\
@@ -42,10 +43,10 @@ dev: dev-$(PYMAIN) ## Launch a development environment using docker, using the d
 
 quick_test: test-$(PYMAIN)
 
-test-%: ## Run setup.py from in an isolated container, built from the base image. (e.g. test-2.7)
+test-%: build-% ## Run setup.py from in an isolated container, built from the base image. (e.g. test-2.7)
 # This speeds tests up because the image has most (if not all) of the dependencies already.
 	docker rm $(NAME)-test-$* || true
-	docker create -ti --name $(NAME)-test-$* --entrypoint="" -w /usr/src/app/ $(IMAGENAME):python$* python setup.py test
+	docker create -ti --name $(NAME)-test-$* --entrypoint="" -w /usr/src/app/ $(IMAGEWTAG)-python$* python setup.py test
 	docker cp . $(NAME)-test-$*:/usr/src/app
 	docker start -a $(NAME)-test-$*
 
@@ -77,7 +78,6 @@ push-latest: $(addprefix push-latest-,$(PYVERSIONS)) ## Push the "latest" tag to
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGENAME)'
 	docker push '$(IMAGENAME):latest'
-	docker push '$(IMAGEWTAG)'
 
 push-latest-%: build-%  ## Push the latest image for a specific python version
 	docker tag $(IMAGENAME):$(VERSION)-python$* $(IMAGENAME):python$*
