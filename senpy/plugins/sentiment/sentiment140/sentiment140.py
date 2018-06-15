@@ -41,7 +41,7 @@ class Sentiment140Plugin(SentimentPlugin):
         To avoid calling the sentiment140 API, we will mock the results
         from requests.
         '''
-        from senpy.test import patch_requests
+        from senpy.testing import patch_requests
         expected = {"data": [{"polarity": 4}]}
         with patch_requests(expected) as (request, response):
             super(Sentiment140Plugin, self).test(*args, **kwargs)

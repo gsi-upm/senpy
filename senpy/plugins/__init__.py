@@ -95,12 +95,22 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         self.id = 'plugins/{}_{}'.format(self['name'], self['version'])
         self.is_activated = False
         self._lock = threading.Lock()
-        self.data_folder = data_folder or os.getcwd()
         self._directory = os.path.abspath(os.path.dirname(inspect.getfile(self.__class__)))
-        self._data_paths = ['',
-                            self._directory,
-                            os.path.join(self._directory, 'data'),
-                            self.data_folder]
+
+        data_folder = data_folder or os.getcwd()
+        subdir = os.path.join(data_folder, self.name)
+
+        self._data_paths = [
+            data_folder,
+            subdir,
+            self._directory,
+            os.path.join(self._directory, 'data'),
+        ]
+
+        if os.path.exists(subdir):
+            data_folder = subdir
+        self.data_folder = data_folder
+
         self._log = logging.getLogger('{}.{}'.format(__name__, self.name))
 
     @property

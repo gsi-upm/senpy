@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import requests
 import json
-from senpy.test import patch_requests
+from senpy.testing import patch_requests
 from senpy.models import Results
 
 
