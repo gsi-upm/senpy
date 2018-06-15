@@ -13,7 +13,7 @@ ifdef SENPY_FOLDER
 all: build run
 
 test-%:
-	docker run $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ --rm '$(REPO)/$(NAME):$(VERSION)-python$(PYVERSION)' --only-test $(TEST_FLAGS)
+	docker run $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ --rm $(IMAGEWTAG) --only-test $(TEST_FLAGS)
 
 test: test-.
 
