@@ -18,6 +18,8 @@ before_script:
   stage: test
   script:
     - make -e test-$PYTHON_VERSION
+  except:
+    - tags # Avoid unnecessary double testing
     
 test-3.5:
   <<: *test_definition
