@@ -26,6 +26,7 @@ Dockerfile-%: Dockerfile.template  ## Generate a specific dockerfile (e.g. Docke
 quick_build: $(addprefix build-, $(PYMAIN))
 
 build: $(addprefix build-, $(PYVERSIONS)) ## Build all images / python versions
+	docker tag $(IMAGEWTAG)-python$(PYMAIN) $(IMAGEWTAG)
 
 build-%: version Dockerfile-%  ## Build a specific version (e.g. build-2.7)
 	docker build -t '$(IMAGEWTAG)-python$*' -f Dockerfile-$* .;
