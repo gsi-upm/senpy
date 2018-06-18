@@ -76,8 +76,9 @@ pip_upload: pip_test  ## Upload package to pip
 
 push-latest: $(addprefix push-latest-,$(PYVERSIONS)) ## Push the "latest" tag to dockerhub
 	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGEWTAG)'
-	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGENAME)'
+	docker tag '$(IMAGEWTAG)-python$(PYMAIN)' '$(IMAGENAME):latest'
 	docker push '$(IMAGENAME):latest'
+	docker push '$(IMAGEWTAG)'
 
 push-latest-%: build-%  ## Push the latest image for a specific python version
 	docker tag $(IMAGENAME):$(VERSION)-python$* $(IMAGENAME):python$*
