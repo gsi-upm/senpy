@@ -34,10 +34,10 @@ docker-run: ## Build a generic docker image
 docker-build: ## Build a generic docker image
 	docker build . -t $(IMAGEWTAG)
 
-docker-push: docker-login ## Push a generic docker image
+docker-push: docker-build docker-login ## Push a generic docker image
 	docker push $(IMAGEWTAG)
 
-docker-latest-push: docker-login ## Push the latest image
+docker-latest-push: docker-build ## Push the latest image
 	docker tag $(IMAGEWTAG) $(IMAGENAME)
 	docker push $(IMAGENAME)
 
