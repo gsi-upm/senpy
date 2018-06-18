@@ -47,7 +47,12 @@ def get_params(req):
 
 @demo_blueprint.route('/')
 def index():
-    return render_template("index.html", version=__version__)
+    ev = str(get_params(request).get('evaluation', False))
+    evaluation_enabled = ev.lower() not in ['false', 'no', 'none']
+
+    return render_template("index.html",
+                           evaluation=evaluation_enabled,
+                           version=__version__)
 
 
 @api_blueprint.route('/contexts/<entity>.jsonld')

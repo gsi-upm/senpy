@@ -5,8 +5,25 @@ from senpy.plugins import SentimentPlugin
 from senpy.models import Sentiment
 
 
-class Sentiment140Plugin(SentimentPlugin):
+class Sentiment140(SentimentPlugin):
     '''Connects to the sentiment140 free API: http://sentiment140.com'''
+
+    author = "@balkian"
+    version = '0.2'
+    url = "https://github.com/gsi-upm/senpy-plugins-community"
+    extra_params = {
+        'language': {
+            "@id": 'lang_sentiment140',
+            'aliases': ['language', 'l'],
+            'required': False,
+            'default': 'auto',
+            'options': ['es', 'en', 'auto']
+        }
+    }
+
+    maxPolarityValue = 1
+    minPolarityValue = 0
+
     def analyse_entry(self, entry, params):
         lang = params["language"]
         res = requests.post("http://www.sentiment140.com/api/bulkClassifyJson",
@@ -44,7 +61,7 @@ class Sentiment140Plugin(SentimentPlugin):
         from senpy.testing import patch_requests
         expected = {"data": [{"polarity": 4}]}
         with patch_requests(expected) as (request, response):
-            super(Sentiment140Plugin, self).test(*args, **kwargs)
+            super(Sentiment140, self).test(*args, **kwargs)
             assert request.called
             assert response.json.called
 

@@ -36,7 +36,7 @@ class BlueprintsTest(TestCase):
 
     def test_playground(self):
         resp = self.client.get("/")
-        assert "main.js" in resp.data.decode()
+        assert "main.js" in resp.get_data(as_text=True)
 
     def test_home(self):
         """

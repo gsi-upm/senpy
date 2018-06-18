@@ -509,7 +509,7 @@ def install_deps(*plugins):
             exitcode = process.wait()
             installed = True
             if exitcode != 0:
-                raise models.Error("Dependencies not properly installed")
+                raise models.Error("Dependencies not properly installed: {}".format(pip_args))
         nltk_resources |= set(info.get('nltk_resources', []))
 
     installed |= nltk.download(list(nltk_resources))

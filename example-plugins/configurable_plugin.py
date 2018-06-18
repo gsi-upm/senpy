@@ -43,7 +43,6 @@ class Dictionary(plugins.SentimentPlugin):
 
 class EmojiOnly(Dictionary):
     '''Sentiment annotation with a basic lexicon of emojis'''
-    description = 'A plugin'
     dictionaries = [basic.emojis]
 
     test_cases = [{

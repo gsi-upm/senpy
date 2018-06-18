@@ -5,13 +5,27 @@ from nltk.tokenize.simple import LineTokenizer
 import nltk
 
 
-class SplitPlugin(AnalysisPlugin):
+class Split(AnalysisPlugin):
     '''description: A sample plugin that chunks input text'''
+
+    author = ["@militarpancho", '@balkian']
+    version = '0.2'
+    url = "https://github.com/gsi-upm/senpy"
+
+    extra_params = {
+        'delimiter': {
+            'aliases': ['type', 't'],
+            'required': False,
+            'default': 'sentence',
+            'options': ['sentence', 'paragraph']
+        },
+    }
 
     def activate(self):
         nltk.download('punkt')
 
     def analyse_entry(self, entry, params):
+        yield entry
         chunker_type = params["delimiter"]
         original_text = entry['nif:isString']
         if chunker_type == "sentence":
