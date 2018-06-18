@@ -48,7 +48,6 @@ class Sentiment140(SentimentPlugin):
             marl__hasPolarity=polarity,
             marl__polarityValue=polarity_value)
         sentiment.prov__wasGeneratedBy = self.id
-        entry.sentiments = []
         entry.sentiments.append(sentiment)
         entry.language = lang
         yield entry
