@@ -1,4 +1,4 @@
-from gsiupm/senpy:0.10.6-python2.7
+from gsiupm/senpy:0.10.7-python2.7
 
 RUN python -m nltk.downloader stopwords
 RUN python -m nltk.downloader punkt
