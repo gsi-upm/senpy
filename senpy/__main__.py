@@ -105,6 +105,12 @@ def main():
         action='store_true',
         default=False,
         help='Output the senpy version and exit')
+    parser.add_argument(
+        '--allow-fail',
+        '--fail',
+        action='store_true',
+        default=False,
+        help='Do not exit if some plugins fail to activate')
     args = parser.parse_args()
     if args.version:
         print('Senpy version {}'.format(senpy.__version__))
@@ -128,7 +134,7 @@ def main():
     sp.install_deps()
     if args.only_install:
         return
-    sp.activate_all()
+    sp.activate_all(allow_fail=args.allow_fail)
     if args.only_test:
         easy_test(sp.plugins(), debug=args.debug)
         return

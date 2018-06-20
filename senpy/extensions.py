@@ -318,10 +318,15 @@ class Senpy(object):
         else:
             self._default = self._plugins[value.lower()]
 
-    def activate_all(self, sync=True):
+    def activate_all(self, sync=True, allow_fail=False):
         ps = []
         for plug in self._plugins.keys():
-            ps.append(self.activate_plugin(plug, sync=sync))
+            try:
+                self.activate_plugin(plug, sync=sync)
+            except Exception as ex:
+                if not allow_fail:
+                    raise
+                logger.error('Could not activate {}: {}'.format(plug, ex))
         return ps
 
     def deactivate_all(self, sync=True):

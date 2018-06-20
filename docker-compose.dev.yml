@@ -1,0 +1,10 @@
+version: '3'
+services:
+    senpy:
+        image: "${IMAGENAME-gsiupm/senpy}:${VERSION-latest}"
+        entrypoint: ["/bin/bash"]
+        working_dir: "/senpy-plugins"
+        ports:
+            - 5000:5000
+        volumes:
+            - ".:/usr/src/app/"

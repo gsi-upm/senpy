@@ -1,0 +1,11 @@
+version: '3'
+services:
+    senpy:
+        image: "${IMAGENAME-gsiupm/senpy}:${VERSION-dev}"
+        build:
+          context: .
+          dockerfile: Dockerfile${PYVERSION--2.7}
+        ports:
+            - 5001:5000
+        volumes:
+            - "./data:/data"
