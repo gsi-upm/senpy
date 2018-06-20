@@ -35,9 +35,6 @@ push:
   stage: push
   script:
     - make -e docker-push
-  only:
-    - master
-    - fix-makefiles
 
 deploy:
   stage: deploy

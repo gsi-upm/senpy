@@ -34,7 +34,7 @@ class SentimentBasic(SentimentPlugin):
     pos_path = "unigram_spanish.pickle"
     maxPolarityValue = 1
     minPolarityValue = -1
-    nltk_resources = ['punkt','wordnet']
+    nltk_resources = ['punkt','wordnet', 'omw']
 
     def _load_swn(self):
         self.swn_path = self.find_file(self.sentiword_path)
