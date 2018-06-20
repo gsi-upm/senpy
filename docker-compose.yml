@@ -1,0 +1,12 @@
+version: '3'
+services:
+  community:
+    build: .
+    image: "${IMAGEWTAG:-gsi-upm/senpy-community:dev}"
+    volumes:
+      - ".:/senpy-plugins/"
+      # - "./data:/data"
+    ports:
+      - '5000:5000'
+    command:
+      - "--allow-fail"
