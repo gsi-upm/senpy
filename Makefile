@@ -3,7 +3,7 @@ NAME=senpycommunity
 REPO=gsiupm
 PLUGINS= $(filter %/, $(wildcard */))
 IMAGENAME=gsiupm/senpy-plugins-community
-DOCKER_FLAGS=-p 5000:5000
+DOCKER_FLAGS=
 
 ifdef SENPY_FOLDER
 	DOCKER_FLAGS+= -v $(realpath $(SENPY_FOLDER)):/usr/src/app/
