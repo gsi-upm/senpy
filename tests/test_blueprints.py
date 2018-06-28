@@ -139,7 +139,7 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         logging.debug(js)
         assert "@id" in js
-        assert js["@id"] == "plugins/Dummy_0.1"
+        assert js["@id"] == "endpoint:plugins/Dummy_0.1"
 
     def test_default(self):
         """ Show only one plugin"""
@@ -148,7 +148,7 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         logging.debug(js)
         assert "@id" in js
-        assert js["@id"] == "plugins/Dummy_0.1"
+        assert js["@id"] == "endpoint:plugins/Dummy_0.1"
 
     def test_context(self):
         resp = self.client.get("/api/contexts/context.jsonld")

@@ -138,7 +138,7 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
     @property
     def id(self):
         if '@id' not in self:
-            self['@id'] = ':{}_{}'.format(type(self).__name__, time.time())
+            self['@id'] = '_:{}_{}'.format(type(self).__name__, time.time())
         return self['@id']
 
     @id.setter
@@ -146,7 +146,7 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
         self['@id'] = value
 
     def flask(self,
-              in_headers=True,
+              in_headers=False,
               headers=None,
               outformat='json-ld',
               **kwargs):
@@ -176,20 +176,21 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
 
     def serialize(self, format='json-ld', with_mime=False, **kwargs):
         js = self.jsonld(**kwargs)
+        content = json.dumps(js, indent=2, sort_keys=True)
         if format == 'json-ld':
-            content = json.dumps(js, indent=2, sort_keys=True)
             mimetype = "application/json"
         elif format in ['turtle', ]:
             logger.debug(js)
-            content = json.dumps(js, indent=2, sort_keys=True)
+            base = kwargs.get('prefix')
             g = Graph().parse(
                 data=content,
                 format='json-ld',
-                base=kwargs.get('prefix'),
+                base=base,
                 context=self._context)
             logger.debug(
                 'Parsing with prefix: {}'.format(kwargs.get('prefix')))
-            content = g.serialize(format='turtle').decode('utf-8')
+            content = g.serialize(format='turtle',
+                                  base=base).decode('utf-8')
             mimetype = 'text/{}'.format(format)
         else:
             raise Error('Unknown outformat: {}'.format(format))
@@ -205,20 +206,22 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
                expanded=False):
 
         result = self.serializable()
-        if context_uri or with_context:
-            result['@context'] = context_uri or self._context
 
+        ctx = context_uri or self._context
+
+        result['@context'] = ctx
         # result = jsonld.compact(result,
-        #                         self._context,
+        #                         ctx,
         #                         options={
         #                             'base': prefix,
         #                             'expandContext': self._context,
         #                             'senpy': prefix
         #                         })
+
         if expanded:
             result = jsonld.expand(
                 result, options={'base': prefix,
-                                 'expandContext': self._context})
+                                 'expandContext': ctx})
         if not with_context:
             try:
                 del result['@context']

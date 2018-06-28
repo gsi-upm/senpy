@@ -95,7 +95,7 @@ class Senpy(object):
         if plugin in self._plugins:
             return self._plugins[plugin]
 
-        results = self.plugins(id='plugins/{}'.format(name))
+        results = self.plugins(id='endpoint:plugins/{}'.format(name))
 
         if not results:
             return Error(message="Plugin not found", status=404)

@@ -3,6 +3,10 @@ from .models import Error, Results, Entry, from_string
 import logging
 logger = logging.getLogger(__name__)
 
+
+boolean = (True, False)
+
+
 API_PARAMS = {
     "algorithm": {
         "aliases": ["algorithms", "a", "algo"],
@@ -13,14 +17,14 @@ API_PARAMS = {
     "expanded-jsonld": {
         "@id": "expanded-jsonld",
         "aliases": ["expanded"],
-        "options": "boolean",
+        "options": boolean,
         "required": True,
         "default": False
     },
     "with_parameters": {
         "aliases": ['withparameters',
                     'with-parameters'],
-        "options": "boolean",
+        "options": boolean,
         "default": False,
         "required": True
     },
@@ -36,7 +40,7 @@ API_PARAMS = {
         "description": "Show additional help to know more about the possible parameters",
         "aliases": ["h"],
         "required": True,
-        "options": "boolean",
+        "options": boolean,
         "default": False
     },
     "emotionModel": {
@@ -83,7 +87,7 @@ WEB_PARAMS = {
         "aliases": ["headers"],
         "required": True,
         "default": False,
-        "options": "boolean"
+        "options": boolean
     },
 }
 
@@ -132,7 +136,7 @@ NIF_PARAMS = {
         "aliases": ["u"],
         "required": False,
         "default": "RFC5147String",
-        "options": "RFC5147String"
+        "options": ["RFC5147String", ]
     }
 }
 
@@ -159,7 +163,7 @@ def parse_params(indict, *specs):
                     wrong_params[param] = spec[param]
                 continue
             if "options" in options:
-                if options["options"] == "boolean":
+                if options["options"] == boolean:
                     outdict[param] = outdict[param] in [None, True, 'true', '1']
                 elif outdict[param] not in options["options"]:
                     wrong_params[param] = spec[param]
@@ -171,8 +175,8 @@ def parse_params(indict, *specs):
             parameters=outdict,
             errors=wrong_params)
         raise message
-    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], list):
-        outdict['algorithm'] = outdict['algorithm'].split(',')
+    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], tuple):
+        outdict['algorithm'] = tuple(outdict['algorithm'].split(','))
     return outdict
 
 
