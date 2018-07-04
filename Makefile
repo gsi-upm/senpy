@@ -4,6 +4,7 @@ REPO=gsiupm
 PLUGINS= $(filter %/, $(wildcard */))
 IMAGENAME=gsiupm/senpy-plugins-community
 DOCKER_FLAGS=
+DEV_PORT?=5000
 
 ifdef SENPY_FOLDER
 	DOCKER_FLAGS+= -v $(realpath $(SENPY_FOLDER)):/usr/src/app/
@@ -16,6 +17,9 @@ test-%:
 	docker run $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ -v $$PWD/data:/data/ --rm $(IMAGEWTAG) --only-test $(TEST_FLAGS)
 
 test: test-.
+
+dev:
+	docker run -p $(DEV_PORT):5000 $(DOCKER_FLAGS) -ti $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ --entrypoint /bin/bash -v $$PWD/data:/data/ --rm $(IMAGEWTAG)
 
 clean-docker:
 	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1;}}' | xargs docker rm 2>/dev/null|| true
