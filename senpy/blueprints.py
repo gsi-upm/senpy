@@ -18,21 +18,39 @@
 Blueprints for Senpy
 """
 from flask import (Blueprint, request, current_app, render_template, url_for,
-                   jsonify)
+                   jsonify, redirect)
 from .models import Error, Response, Help, Plugins, read_schema, dump_schema, Datasets
 from . import api
 from .version import __version__
 from functools import wraps
 
 import logging
-import traceback
 import json
+import base64
 
 logger = logging.getLogger(__name__)
 
 api_blueprint = Blueprint("api", __name__)
 demo_blueprint = Blueprint("demo", __name__, template_folder='templates')
 ns_blueprint = Blueprint("ns", __name__)
+
+_mimetypes_r = {'json-ld': ['application/ld+json'],
+                'turtle': ['text/turtle'],
+                'ntriples': ['application/n-triples'],
+                'text': ['text/plain']}
+
+MIMETYPES = {}
+
+for k, vs in _mimetypes_r.items():
+    for v in vs:
+        if v in MIMETYPES:
+            raise Exception('MIMETYPE {} specified for two formats: {} and {}'.format(v,
+                                                                                      v,
+                                                                                      MIMETYPES[v]))
+        MIMETYPES[v] = k
+
+DEFAULT_MIMETYPE = 'application/ld+json'
+DEFAULT_FORMAT = 'json-ld'
 
 
 def get_params(req):
@@ -43,6 +61,30 @@ def get_params(req):
     else:
         raise Error(message="Invalid data")
     return indict
+
+
+def encoded_url(url=None, base=None):
+    code = ''
+    if not url:
+        if request.method == 'GET':
+            url = request.full_path[1:]  # Remove the first slash
+        else:
+            hash(frozenset(request.form.params().items()))
+            code = 'hash:{}'.format(hash)
+
+    code = code or base64.urlsafe_b64encode(url.encode()).decode()
+
+    if base:
+        return base + code
+    return url_for('api.decode', code=code, _external=True)
+
+
+def decoded_url(code, base=None):
+    if code.startswith('hash:'):
+        raise Exception('Can not decode a URL for a POST request')
+    base = base or request.url_root
+    path = base64.urlsafe_b64decode(code.encode()).decode()
+    return base + path
 
 
 @demo_blueprint.route('/')
@@ -59,13 +101,22 @@ def index():
 def context(entity="context"):
     context = Response._context
     context['@vocab'] = url_for('ns.index', _external=True)
+    context['endpoint'] = url_for('api.api_root', _external=True)
     return jsonify({"@context": context})
+
+
+@api_blueprint.route('/d/<code>')
+def decode(code):
+    try:
+        return redirect(decoded_url(code))
+    except Exception:
+        return Error('invalid URL').flask()
 
 
 @ns_blueprint.route('/')  # noqa: F811
 def index():
-    context = Response._context
-    context['@vocab'] = url_for('.ns', _external=True)
+    context = Response._context.copy()
+    context['endpoint'] = url_for('api.api_root', _external=True)
     return jsonify({"@context": context})
 
 
@@ -81,7 +132,7 @@ def basic_api(f):
     default_params = {
         'inHeaders': False,
         'expanded-jsonld': False,
-        'outformat': 'json-ld',
+        'outformat': None,
         'with_parameters': True,
     }
 
@@ -100,29 +151,34 @@ def basic_api(f):
                 request.parameters = params
             response = f(*args, **kwargs)
         except (Exception) as ex:
-            if current_app.debug:
+            if current_app.debug or current_app.config['TESTING']:
                 raise
             if not isinstance(ex, Error):
-                msg = "{}:\n\t{}".format(ex,
-                                         traceback.format_exc())
+                msg = "{}".format(ex)
                 ex = Error(message=msg, status=500)
-            logger.exception('Error returning analysis result')
             response = ex
             response.parameters = raw_params
-            logger.error(ex)
+            logger.exception(ex)
 
         if 'parameters' in response and not params['with_parameters']:
             del response.parameters
 
         logger.info('Response: {}'.format(response))
+        mime = request.accept_mimetypes\
+                      .best_match(MIMETYPES.keys(),
+                                  DEFAULT_MIMETYPE)
+
+        mimeformat = MIMETYPES.get(mime, DEFAULT_FORMAT)
+        outformat = params['outformat'] or mimeformat
+
         return response.flask(
             in_headers=params['inHeaders'],
             headers=headers,
-            prefix=url_for('.api_root', _external=True),
+            prefix=params.get('prefix', encoded_url()),
             context_uri=url_for('api.context',
                                 entity=type(response).__name__,
                                 _external=True),
-            outformat=params['outformat'],
+            outformat=outformat,
             expanded=params['expanded-jsonld'])
 
     return decorated_function

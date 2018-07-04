@@ -1,0 +1,9 @@
+version: '3'
+services:
+    test:
+        image: "${IMAGENAME-gsiupm/senpy}:${VERSION-dev}"
+        entrypoint: ["py.test"]
+        volumes:
+            - ".:/usr/src/app/"
+        command:
+          []

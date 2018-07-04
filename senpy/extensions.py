@@ -18,14 +18,9 @@ import errno
 import logging
 
 
-logger = logging.getLogger(__name__)
+from . import gsitk_compat
 
-try:
-    from gsitk.datasets.datasets import DatasetManager
-    GSITK_AVAILABLE = True
-except ImportError:
-    logger.warn('GSITK is not installed. Some functions will be unavailable.')
-    GSITK_AVAILABLE = False
+logger = logging.getLogger(__name__)
 
 
 class Senpy(object):
@@ -95,7 +90,7 @@ class Senpy(object):
         if plugin in self._plugins:
             return self._plugins[plugin]
 
-        results = self.plugins(id='plugins/{}'.format(name))
+        results = self.plugins(id='endpoint:plugins/{}'.format(name))
 
         if not results:
             return Error(message="Plugin not found", status=404)
@@ -167,8 +162,7 @@ class Senpy(object):
             yield i
 
     def install_deps(self):
-        for plugin in self.plugins(is_activated=True):
-            plugins.install_deps(plugin)
+        plugins.install_deps(*self.plugins())
 
     def analyse(self, request):
         """
@@ -203,16 +197,14 @@ class Senpy(object):
                 raise Error(
                     status=404,
                     message="The dataset '{}' is not valid".format(dataset))
-        dm = DatasetManager()
+        dm = gsitk_compat.DatasetManager()
         datasets = dm.prepare_datasets(datasets_name)
         return datasets
 
     @property
     def datasets(self):
-        if not GSITK_AVAILABLE:
-            raise Exception('GSITK is not available. Install it to use this function.')
         self._dataset_list = {}
-        dm = DatasetManager()
+        dm = gsitk_compat.DatasetManager()
         for item in dm.get_datasets():
             for key in item:
                 if key in self._dataset_list:
@@ -223,8 +215,6 @@ class Senpy(object):
         return self._dataset_list
 
     def evaluate(self, params):
-        if not GSITK_AVAILABLE:
-            raise Exception('GSITK is not available. Install it to use this function.')
         logger.debug("evaluating request: {}".format(params))
         results = AggregatedEvaluation()
         results.parameters = params
@@ -318,10 +308,15 @@ class Senpy(object):
         else:
             self._default = self._plugins[value.lower()]
 
-    def activate_all(self, sync=True):
+    def activate_all(self, sync=True, allow_fail=False):
         ps = []
         for plug in self._plugins.keys():
-            ps.append(self.activate_plugin(plug, sync=sync))
+            try:
+                self.activate_plugin(plug, sync=sync)
+            except Exception as ex:
+                if not allow_fail:
+                    raise
+                logger.error('Could not activate {}: {}'.format(plug, ex))
         return ps
 
     def deactivate_all(self, sync=True):
@@ -346,6 +341,7 @@ class Senpy(object):
             logger.info(msg)
             success = True
             self._set_active(plugin, success)
+        return success
 
     def activate_plugin(self, plugin_name, sync=True):
         plugin_name = plugin_name.lower()
@@ -357,7 +353,7 @@ class Senpy(object):
         logger.info("Activating plugin: {}".format(plugin.name))
 
         if sync or 'async' in plugin and not plugin.async:
-            self._activate(plugin)
+            return self._activate(plugin)
         else:
             th = Thread(target=partial(self._activate, plugin))
             th.start()

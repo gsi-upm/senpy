@@ -3,6 +3,7 @@ standard_library.install_aliases()
 
 
 from future.utils import with_metaclass
+from functools import partial
 
 import os.path
 import os
@@ -22,17 +23,10 @@ import nltk
 
 from .. import models, utils
 from .. import api
+from .. import gsitk_compat
 
 
 logger = logging.getLogger(__name__)
-
-try:
-    from gsitk.evaluation.evaluation import Evaluation as Eval
-    from sklearn.pipeline import Pipeline
-    GSITK_AVAILABLE = True
-except ImportError:
-    logger.warn('GSITK is not installed. Some functions will be unavailable.')
-    GSITK_AVAILABLE = False
 
 
 class PluginMeta(models.BaseMeta):
@@ -92,7 +86,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         if info:
             self.update(info)
         self.validate()
-        self.id = 'plugins/{}_{}'.format(self['name'], self['version'])
+        self.id = 'endpoint:plugins/{}_{}'.format(self['name'], self['version'])
         self.is_activated = False
         self._lock = threading.Lock()
         self._directory = os.path.abspath(os.path.dirname(inspect.getfile(self.__class__)))
@@ -332,7 +326,7 @@ class Box(AnalysisPlugin):
         return self.transform(X)
 
     def as_pipe(self):
-        pipe = Pipeline([('plugin', self)])
+        pipe = gsitk_compat.Pipeline([('plugin', self)])
         pipe.name = self.name
         return pipe
 
@@ -530,7 +524,7 @@ def find_plugins(folders):
                 yield fpath
 
 
-def from_path(fpath, **kwargs):
+def from_path(fpath, install_on_fail=False, **kwargs):
     logger.debug("Loading plugin from {}".format(fpath))
     if fpath.endswith('.py'):
         # We asume root is the dir of the file, and module is the name of the file
@@ -540,7 +534,7 @@ def from_path(fpath, **kwargs):
             yield instance
     else:
         info = parse_plugin_info(fpath)
-        yield from_info(info, **kwargs)
+        yield from_info(info, install_on_fail=install_on_fail, **kwargs)
 
 
 def from_folder(folders, loader=from_path, **kwargs):
@@ -551,7 +545,7 @@ def from_folder(folders, loader=from_path, **kwargs):
     return plugins
 
 
-def from_info(info, root=None, **kwargs):
+def from_info(info, root=None, install_on_fail=True, **kwargs):
     if any(x not in info for x in ('module',)):
         raise ValueError('Plugin info is not valid: {}'.format(info))
     module = info["module"]
@@ -559,7 +553,12 @@ def from_info(info, root=None, **kwargs):
     if not root and '_path' in info:
         root = os.path.dirname(info['_path'])
 
-    return one_from_module(module, root=root, info=info, **kwargs)
+    fun = partial(one_from_module, module, root=root, info=info, **kwargs)
+    try:
+        return fun()
+    except (ImportError, LookupError):
+        install_deps(info)
+        return fun()
 
 
 def parse_plugin_info(fpath):
@@ -606,17 +605,9 @@ def _instances_in_module(module):
             yield obj
 
 
-def _from_module_name(module, root, info=None, install=True, **kwargs):
-    try:
-        module = load_module(module, root)
-    except (ImportError, LookupError):
-        if not install or not info:
-            raise
-        install_deps(info)
-        module = load_module(module, root)
+def _from_module_name(module, root, info=None, **kwargs):
+    module = load_module(module, root)
     for plugin in _from_loaded_module(module=module, root=root, info=info, **kwargs):
-        if install:
-            install_deps(plugin)
         yield plugin
 
 
@@ -628,12 +619,9 @@ def _from_loaded_module(module, info=None, **kwargs):
 
 
 def evaluate(plugins, datasets, **kwargs):
-    if not GSITK_AVAILABLE:
-        raise Exception('GSITK is not available. Install it to use this function.')
-
-    ev = Eval(tuples=None,
-              datasets=datasets,
-              pipelines=[plugin.as_pipe() for plugin in plugins])
+    ev = gsitk_compat.Eval(tuples=None,
+                           datasets=datasets,
+                           pipelines=[plugin.as_pipe() for plugin in plugins])
     ev.evaluate()
     results = ev.results
     evaluations = evaluations_to_JSONLD(results, **kwargs)

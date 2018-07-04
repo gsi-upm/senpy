@@ -121,8 +121,8 @@ class ExtensionsTest(TestCase):
         # Leaf (defaultdict with  __setattr__ and __getattr__.
         r1 = analyse(self.senpy, algorithm="Dummy", input="tupni", output="tuptuo")
         r2 = analyse(self.senpy, input="tupni", output="tuptuo")
-        assert r1.analysis[0] == "plugins/Dummy_0.1"
-        assert r2.analysis[0] == "plugins/Dummy_0.1"
+        assert r1.analysis[0] == "endpoint:plugins/Dummy_0.1"
+        assert r2.analysis[0] == "endpoint:plugins/Dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_empty(self):
@@ -156,8 +156,8 @@ class ExtensionsTest(TestCase):
         r2 = analyse(self.senpy,
                      input="tupni",
                      output="tuptuo")
-        assert r1.analysis[0] == "plugins/Dummy_0.1"
-        assert r2.analysis[0] == "plugins/Dummy_0.1"
+        assert r1.analysis[0] == "endpoint:plugins/Dummy_0.1"
+        assert r2.analysis[0] == "endpoint:plugins/Dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_error(self):

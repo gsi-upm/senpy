@@ -78,10 +78,15 @@ def main():
         help='Do not run a server, only install plugin dependencies')
     parser.add_argument(
         '--only-test',
-        '-t',
         action='store_true',
         default=False,
         help='Do not run a server, just test all plugins')
+    parser.add_argument(
+        '--test',
+        '-t',
+        action='store_true',
+        default=False,
+        help='Test all plugins before launching the server')
     parser.add_argument(
         '--only-list',
         '--list',
@@ -100,11 +105,23 @@ def main():
         default=True,
         help='Run a threaded server')
     parser.add_argument(
+        '--no-deps',
+        '-n',
+        action='store_true',
+        default=False,
+        help='Skip installing dependencies')
+    parser.add_argument(
         '--version',
         '-v',
         action='store_true',
         default=False,
         help='Output the senpy version and exit')
+    parser.add_argument(
+        '--allow-fail',
+        '--fail',
+        action='store_true',
+        default=False,
+        help='Do not exit if some plugins fail to activate')
     args = parser.parse_args()
     if args.version:
         print('Senpy version {}'.format(senpy.__version__))
@@ -119,19 +136,27 @@ def main():
                data_folder=args.data_folder)
     if args.only_list:
         plugins = sp.plugins()
-        maxwidth = max(len(x.id) for x in plugins)
+        maxname = max(len(x.name) for x in plugins)
+        maxversion = max(len(x.version) for x in plugins)
+        print('Found {} plugins:'.format(len(plugins)))
         for plugin in plugins:
             import inspect
             fpath = inspect.getfile(plugin.__class__)
-            print('{: <{width}} @ {}'.format(plugin.id, fpath, width=maxwidth))
+            print('\t{: <{maxname}} @ {: <{maxversion}} -> {}'.format(plugin.name,
+                                                                      plugin.version,
+                                                                      fpath,
+                                                                      maxname=maxname,
+                                                                      maxversion=maxversion))
         return
-    sp.install_deps()
+    if not args.no_deps:
+        sp.install_deps()
     if args.only_install:
         return
-    sp.activate_all()
-    if args.only_test:
+    sp.activate_all(allow_fail=args.allow_fail)
+    if args.test or args.only_test:
         easy_test(sp.plugins(), debug=args.debug)
-        return
+        if args.only_test:
+            return
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                             args.port))

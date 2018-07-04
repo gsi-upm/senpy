@@ -6,7 +6,7 @@ import pickle
 import shutil
 import tempfile
 
-from unittest import TestCase, skipIf
+from unittest import TestCase
 from senpy.models import Results, Entry, EmotionSet, Emotion, Plugins
 from senpy import plugins
 from senpy.plugins.conversion.emotion.centroids import CentroidConversion
@@ -312,9 +312,7 @@ class PluginsTest(TestCase):
         res = c._backwards_conversion(e)
         assert res["onyx:hasEmotionCategory"] == "c2"
 
-    @skipIf(sys.version_info < (3, 0),
-            reason="requires Python3")
-    def test_evaluation(self):
+    def _test_evaluation(self):
         testdata = []
         for i in range(50):
             testdata.append(["good", 1])
@@ -347,6 +345,14 @@ class PluginsTest(TestCase):
         results = plugins.evaluate(datasets={'testdata': dataset}, plugins=[spipe], flatten=True)
         smart_metrics = results[0].metrics[0]
         assert abs(smart_metrics['accuracy'] - 1) < 0.01
+
+    def test_evaluation(self):
+        if sys.version_info < (3, 0):
+            with self.assertRaises(Exception) as context:
+                self._test_evaluation()
+            self.assertTrue('GSITK ' in str(context.exception))
+        else:
+            self._test_evaluation()
 
 
 def make_mini_test(fpath):
