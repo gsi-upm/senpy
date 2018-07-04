@@ -25,7 +25,6 @@ from .version import __version__
 from functools import wraps
 
 import logging
-import traceback
 import json
 import base64
 
@@ -37,12 +36,17 @@ ns_blueprint = Blueprint("ns", __name__)
 
 _mimetypes_r = {'json-ld': ['application/ld+json'],
                 'turtle': ['text/turtle'],
+                'ntriples': ['application/n-triples'],
                 'text': ['text/plain']}
 
 MIMETYPES = {}
 
 for k, vs in _mimetypes_r.items():
     for v in vs:
+        if v in MIMETYPES:
+            raise Exception('MIMETYPE {} specified for two formats: {} and {}'.format(v,
+                                                                                      v,
+                                                                                      MIMETYPES[v]))
         MIMETYPES[v] = k
 
 DEFAULT_MIMETYPE = 'application/ld+json'
@@ -147,16 +151,14 @@ def basic_api(f):
                 request.parameters = params
             response = f(*args, **kwargs)
         except (Exception) as ex:
-            if current_app.debug:
+            if current_app.debug or current_app.config['TESTING']:
                 raise
             if not isinstance(ex, Error):
-                msg = "{}:\n\t{}".format(ex,
-                                         traceback.format_exc())
+                msg = "{}".format(ex)
                 ex = Error(message=msg, status=500)
-            logger.exception('Error returning analysis result')
             response = ex
             response.parameters = raw_params
-            logger.error(ex)
+            logger.exception(ex)
 
         if 'parameters' in response and not params['with_parameters']:
             del response.parameters

@@ -179,17 +179,18 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
         content = json.dumps(js, indent=2, sort_keys=True)
         if format == 'json-ld':
             mimetype = "application/json"
-        elif format in ['turtle', ]:
+        elif format in ['turtle', 'ntriples']:
             logger.debug(js)
             base = kwargs.get('prefix')
             g = Graph().parse(
                 data=content,
                 format='json-ld',
                 base=base,
-                context=self._context)
+                context=[self._context,
+                         {'@base': base}])
             logger.debug(
                 'Parsing with prefix: {}'.format(kwargs.get('prefix')))
-            content = g.serialize(format='turtle',
+            content = g.serialize(format=format,
                                   base=base).decode('utf-8')
             mimetype = 'text/{}'.format(format)
         else:
@@ -207,26 +208,20 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
 
         result = self.serializable()
 
-        ctx = context_uri or self._context
-
-        result['@context'] = ctx
-        # result = jsonld.compact(result,
-        #                         ctx,
-        #                         options={
-        #                             'base': prefix,
-        #                             'expandContext': self._context,
-        #                             'senpy': prefix
-        #                         })
-
         if expanded:
             result = jsonld.expand(
                 result, options={'base': prefix,
-                                 'expandContext': ctx})
+                                 'expandContext': self._context})[0]
         if not with_context:
             try:
                 del result['@context']
             except KeyError:
                 pass
+        elif context_uri:
+            result['@context'] = context_uri
+        else:
+            result['@context'] = self._context
+
         return result
 
     def validate(self, obj=None):

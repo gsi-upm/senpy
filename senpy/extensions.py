@@ -18,14 +18,9 @@ import errno
 import logging
 
 
-logger = logging.getLogger(__name__)
+from . import gsitk_compat
 
-try:
-    from gsitk.datasets.datasets import DatasetManager
-    GSITK_AVAILABLE = True
-except ImportError:
-    logger.warn('GSITK is not installed. Some functions will be unavailable.')
-    GSITK_AVAILABLE = False
+logger = logging.getLogger(__name__)
 
 
 class Senpy(object):
@@ -167,8 +162,7 @@ class Senpy(object):
             yield i
 
     def install_deps(self):
-        for plugin in self.plugins(is_activated=True):
-            plugins.install_deps(plugin)
+        plugins.install_deps(*self.plugins())
 
     def analyse(self, request):
         """
@@ -203,16 +197,14 @@ class Senpy(object):
                 raise Error(
                     status=404,
                     message="The dataset '{}' is not valid".format(dataset))
-        dm = DatasetManager()
+        dm = gsitk_compat.DatasetManager()
         datasets = dm.prepare_datasets(datasets_name)
         return datasets
 
     @property
     def datasets(self):
-        if not GSITK_AVAILABLE:
-            raise Exception('GSITK is not available. Install it to use this function.')
         self._dataset_list = {}
-        dm = DatasetManager()
+        dm = gsitk_compat.DatasetManager()
         for item in dm.get_datasets():
             for key in item:
                 if key in self._dataset_list:
@@ -223,8 +215,6 @@ class Senpy(object):
         return self._dataset_list
 
     def evaluate(self, params):
-        if not GSITK_AVAILABLE:
-            raise Exception('GSITK is not available. Install it to use this function.')
         logger.debug("evaluating request: {}".format(params))
         results = AggregatedEvaluation()
         results.parameters = params
@@ -351,6 +341,7 @@ class Senpy(object):
             logger.info(msg)
             success = True
             self._set_active(plugin, success)
+        return success
 
     def activate_plugin(self, plugin_name, sync=True):
         plugin_name = plugin_name.lower()
@@ -362,7 +353,7 @@ class Senpy(object):
         logger.info("Activating plugin: {}".format(plugin.name))
 
         if sync or 'async' in plugin and not plugin.async:
-            self._activate(plugin)
+            return self._activate(plugin)
         else:
             th = Thread(target=partial(self._activate, plugin))
             th.start()

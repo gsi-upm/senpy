@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-boolean = (True, False)
+boolean = [True, False]
 
 
 API_PARAMS = {
@@ -33,7 +33,7 @@ API_PARAMS = {
         "aliases": ["o"],
         "default": "json-ld",
         "required": True,
-        "options": ["json-ld", "turtle"],
+        "options": ["json-ld", "turtle", "ntriples"],
     },
     "help": {
         "@id": "help",
@@ -175,8 +175,8 @@ def parse_params(indict, *specs):
             parameters=outdict,
             errors=wrong_params)
         raise message
-    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], tuple):
-        outdict['algorithm'] = tuple(outdict['algorithm'].split(','))
+    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], list):
+        outdict['algorithm'] = list(outdict['algorithm'].split(','))
     return outdict
 
 
@@ -194,7 +194,8 @@ def parse_call(params):
     params = parse_params(params, NIF_PARAMS)
     if params['informat'] == 'text':
         results = Results()
-        entry = Entry(nif__isString=params['input'])
+        entry = Entry(nif__isString=params['input'],
+                      id='#')  # Use @base
         results.entries.append(entry)
     elif params['informat'] == 'json-ld':
         results = from_string(params['input'], cls=Results)

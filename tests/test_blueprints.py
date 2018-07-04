@@ -21,7 +21,6 @@ class BlueprintsTest(TestCase):
     def setUpClass(cls):
         """Set up only once, and re-use in every individual test"""
         cls.app = Flask("test_extensions")
-        cls.app.debug = False
         cls.client = cls.app.test_client()
         cls.senpy = Senpy(default_plugins=True)
         cls.senpy.init_app(cls.app)
@@ -30,6 +29,9 @@ class BlueprintsTest(TestCase):
         cls.senpy.activate_plugin("Dummy", sync=True)
         cls.senpy.activate_plugin("DummyRequired", sync=True)
         cls.senpy.default_plugin = 'Dummy'
+
+    def setUp(self):
+        self.app.config['TESTING'] = True  # Tell Flask not to catch Exceptions
 
     def assertCode(self, resp, code):
         self.assertEqual(resp.status_code, code)
@@ -42,6 +44,7 @@ class BlueprintsTest(TestCase):
         """
         Calling with no arguments should ask the user for more arguments
         """
+        self.app.config['TESTING'] = False  # Errors are expected in this case
         resp = self.client.get("/api/")
         self.assertCode(resp, 400)
         js = parse_resp(resp)
@@ -81,7 +84,7 @@ class BlueprintsTest(TestCase):
         Extra params that have a required argument that does not
         have a default should raise an error.
         """
-        self.app.debug = False
+        self.app.config['TESTING'] = False  # Errors are expected in this case
         resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired")
         self.assertCode(resp, 400)
         js = parse_resp(resp)
@@ -97,7 +100,7 @@ class BlueprintsTest(TestCase):
         The dummy plugin returns an empty response,\
         it should contain the context
         """
-        self.app.debug = False
+        self.app.config['TESTING'] = False  # Errors are expected in this case
         resp = self.client.get("/api/?i=My aloha mohame&algo=DOESNOTEXIST")
         self.assertCode(resp, 404)
         js = parse_resp(resp)
@@ -172,5 +175,6 @@ class BlueprintsTest(TestCase):
         assert "help" in js["valid_parameters"]
 
     def test_conversion(self):
+        self.app.config['TESTING'] = False  # Errors are expected in this case
         resp = self.client.get("/api/?input=hello&algo=emoRand&emotionModel=DOES NOT EXIST")
         self.assertCode(resp, 404)

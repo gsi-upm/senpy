@@ -23,17 +23,10 @@ import nltk
 
 from .. import models, utils
 from .. import api
+from .. import gsitk_compat
 
 
 logger = logging.getLogger(__name__)
-
-try:
-    from gsitk.evaluation.evaluation import Evaluation as Eval
-    from sklearn.pipeline import Pipeline
-    GSITK_AVAILABLE = True
-except ImportError:
-    logger.warn('GSITK is not installed. Some functions will be unavailable.')
-    GSITK_AVAILABLE = False
 
 
 class PluginMeta(models.BaseMeta):
@@ -333,7 +326,7 @@ class Box(AnalysisPlugin):
         return self.transform(X)
 
     def as_pipe(self):
-        pipe = Pipeline([('plugin', self)])
+        pipe = gsitk_compat.Pipeline([('plugin', self)])
         pipe.name = self.name
         return pipe
 
@@ -626,12 +619,9 @@ def _from_loaded_module(module, info=None, **kwargs):
 
 
 def evaluate(plugins, datasets, **kwargs):
-    if not GSITK_AVAILABLE:
-        raise Exception('GSITK is not available. Install it to use this function.')
-
-    ev = Eval(tuples=None,
-              datasets=datasets,
-              pipelines=[plugin.as_pipe() for plugin in plugins])
+    ev = gsitk_compat.Eval(tuples=None,
+                           datasets=datasets,
+                           pipelines=[plugin.as_pipe() for plugin in plugins])
     ev.evaluate()
     results = ev.results
     evaluations = evaluations_to_JSONLD(results, **kwargs)

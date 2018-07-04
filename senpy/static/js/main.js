@@ -413,7 +413,7 @@ function evaluate_JSON(){
     url += "?algo="+plugin+"&dataset="+datasets
 
     $('#doevaluate').attr("disabled", true);
-    $.ajax({type: "GET", url: url, dataType: 'json'}).done(function(resp) {
+    $.ajax({type: "GET", url: url, dataType: 'json'}).always(function(resp) {
         $('#doevaluate').attr("disabled", false);
         response = resp.responseText;  
 

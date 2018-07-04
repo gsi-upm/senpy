@@ -80,7 +80,7 @@ def easy_test(plugin_list=None, debug=True):
         for plug in plugin_list:
             plug.test()
             plug.log.info('My tests passed!')
-            logger.info('All tests passed!')
+        logger.info('All tests passed for {} plugins!'.format(len(plugin_list)))
     except Exception:
         if not debug:
             raise
