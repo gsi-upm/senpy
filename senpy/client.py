@@ -13,7 +13,7 @@ class Client(object):
         return self.request('/', method=method, input=input, **kwargs)
 
     def evaluate(self, input, method='GET', **kwargs):
-        return self.request('/evaluate', method = method, input=input, **kwargs)
+        return self.request('/evaluate', method=method, input=input, **kwargs)
 
     def plugins(self, *args, **kwargs):
         resp = self.request(path='/plugins').plugins
@@ -24,7 +24,7 @@ class Client(object):
         return {d.name: d for d in resp}
 
     def request(self, path=None, method='GET', **params):
-        url = '{}{}'.format(self.endpoint, path)
+        url = '{}{}'.format(self.endpoint.rstrip('/'), path)
         response = requests.request(method=method, url=url, params=params)
         try:
             resp = models.from_dict(response.json())

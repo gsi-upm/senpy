@@ -24,6 +24,7 @@ import nltk
 from .. import models, utils
 from .. import api
 from .. import gsitk_compat
+from .. import testing
 
 
 logger = logging.getLogger(__name__)
@@ -143,14 +144,23 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
                 self.log.warn('Test case failed:\n{}'.format(pprint.pformat(case)))
                 raise
 
-    def test_case(self, case):
+    def test_case(self, case, mock=testing.MOCK_REQUESTS):
         entry = models.Entry(case['entry'])
         given_parameters = case.get('params', case.get('parameters', {}))
         expected = case.get('expected', None)
         should_fail = case.get('should_fail', False)
+        responses = case.get('responses', [])
+
         try:
             params = api.parse_params(given_parameters, self.extra_params)
-            res = list(self.analyse_entries([entry, ], params))
+
+            method = partial(self.analyse_entries, [entry, ], params)
+
+            if mock:
+                res = list(method())
+            else:
+                with testing.patch_all_requests(responses):
+                    res = list(method())
 
             if not isinstance(expected, list):
                 expected = [expected]

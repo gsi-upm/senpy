@@ -4,6 +4,8 @@ import json
 from senpy.plugins import SentimentPlugin
 from senpy.models import Sentiment
 
+ENDPOINT = 'http://www.sentiment140.com/api/bulkClassifyJson'
+
 
 class Sentiment140(SentimentPlugin):
     '''Connects to the sentiment140 free API: http://sentiment140.com'''
@@ -26,7 +28,7 @@ class Sentiment140(SentimentPlugin):
 
     def analyse_entry(self, entry, params):
         lang = params["language"]
-        res = requests.post("http://www.sentiment140.com/api/bulkClassifyJson",
+        res = requests.post(ENDPOINT,
                             json.dumps({
                                 "language": lang,
                                 "data": [{
@@ -52,18 +54,6 @@ class Sentiment140(SentimentPlugin):
         entry.language = lang
         yield entry
 
-    def test(self, *args, **kwargs):
-        '''
-        To avoid calling the sentiment140 API, we will mock the results
-        from requests.
-        '''
-        from senpy.testing import patch_requests
-        expected = {"data": [{"polarity": 4}]}
-        with patch_requests(expected) as (request, response):
-            super(Sentiment140, self).test(*args, **kwargs)
-            assert request.called
-            assert response.json.called
-
     test_cases = [
         {
             'entry': {
@@ -77,6 +67,9 @@ class Sentiment140(SentimentPlugin):
                         'marl:hasPolarity': 'marl:Positive',
                     }
                 ]
-            }
+            },
+            'responses': [{'url': ENDPOINT,
+                           'method': 'POST',
+                           'json': {'data': [{'polarity': 4}]}}]
         }
     ]

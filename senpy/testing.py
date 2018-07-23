@@ -1,36 +1,31 @@
-try:
-    from unittest.mock import patch, MagicMock
-except ImportError:
-    from mock import patch, MagicMock
-
 from past.builtins import basestring
 
-
-import json
-from contextlib import contextmanager
+import os
+import responses as requestmock
 
 from .models import BaseModel
 
 
-@contextmanager
-def patch_requests(value, code=200):
-    success = MagicMock()
-    if isinstance(value, BaseModel):
-        value = value.jsonld()
-    if not isinstance(value, basestring):
-        data = json.dumps(value)
+MOCK_REQUESTS = os.environ.get('MOCK_REQUESTS', '').lower() in ['no', 'false']
+
+
+def patch_all_requests(responses):
+
+    patched = requestmock.RequestsMock()
+
+    for response in responses or []:
+        args = response.copy()
+        if 'json' in args and isinstance(args['json'], BaseModel):
+            args['json'] = args['json'].jsonld()
+        args['method'] = getattr(requestmock, args.get('method', 'GET'))
+        patched.add(**args)
+    return patched
+
+
+def patch_requests(url, response, method='GET', status=200):
+    args = {'url': url, 'method': method, 'status': status}
+    if isinstance(response, basestring):
+        args['body'] = response
     else:
-        data = value
-
-    success.json.return_value = value
-
-    success.status_code = code
-    success.content = data
-    success.text = data
-
-    method_mocker = MagicMock()
-    method_mocker.return_value = success
-    with patch.multiple('requests', request=method_mocker,
-                        get=method_mocker, post=method_mocker):
-        yield method_mocker, success
-        assert method_mocker.called
+        args['json'] = response
+    return patch_all_requests([args])
