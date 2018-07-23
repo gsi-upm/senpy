@@ -10,6 +10,6 @@ PyYAML
 rdflib
 rdflib-jsonld
 numpy
-scip
+scipy
 scikit-learn
 responses
