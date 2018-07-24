@@ -13,19 +13,15 @@ ifdef SENPY_FOLDER
 
 all: build run
 
-test-%:
+test-fast:
 	docker run $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ -v $$PWD/data:/data/ --rm $(IMAGEWTAG) --only-test $(TEST_FLAGS)
 
-test: test-.
+test: docker-build test-fast
 
 dev:
 	docker run -p $(DEV_PORT):5000 $(DOCKER_FLAGS) -ti $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ --entrypoint /bin/bash -v $$PWD/data:/data/ --rm $(IMAGEWTAG)
 
-clean-docker:
-	@docker ps -a | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1;}}' | xargs docker rm 2>/dev/null|| true
-	@docker images | awk '/$(REPO)\/$(NAME)/{ split($$2, vers, "-"); if(vers[1] != "${VERSION}"){ print $$1":"$$2;}}' | xargs docker rmi 2>/dev/null|| true
-
-.PHONY:: test test-% build-% build test test_pip run clean
+.PHONY:: test test-fast  dev
 
 include .makefiles/base.mk
 include .makefiles/k8s.mk
