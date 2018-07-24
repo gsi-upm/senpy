@@ -11,13 +11,6 @@ from senpy.plugins import SentimentPlugin
 from senpy.models import Results, Entry, Entity, Topic, Sentiment, Error
 from senpy.utils import check_template
 
-from mocked_request import mocked_requests_post
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
 
 class MeaningCloudPlugin(SentimentPlugin):
     '''
@@ -116,8 +109,8 @@ class MeaningCloudPlugin(SentimentPlugin):
                     marl__polarityValue=polarityValue,
                     marl__aggregatesOpinion=agg_opinion.get('id'),
                     nif__anchorOf=nopinion.get('text', None),
-                    nif__beginIndex=nopinion.get('inip', None),
-                    nif__endIndex=nopinion.get('endp', None))
+                    nif__beginIndex=int(nopinion.get('inip', None)),
+                    nif__endIndex=int(nopinion.get('endp', None)))
                 count += 1
                 opinion.prov(self)
                 entry.sentiments.append(opinion)
@@ -131,8 +124,8 @@ class MeaningCloudPlugin(SentimentPlugin):
                 itsrdf__taIdentRef="http://{}dbpedia.org/resource/{}".format(
                     mapper[lang], resource),
                 nif__anchorOf=sent_entity.get('form', None),
-                nif__beginIndex=sent_entity['variant_list'][0].get('inip', None),
-                nif__endIndex=sent_entity['variant_list'][0].get('endp', None))
+                nif__beginIndex=int(sent_entity['variant_list'][0].get('inip', None)),
+                nif__endIndex=int(sent_entity['variant_list'][0].get('endp', None)))
             sementity = sent_entity['sementity'].get('type', None).split(">")[-1]
             entity['@type'] = "ODENTITY_{}".format(sementity)
             entity.prov(self)
@@ -149,33 +142,105 @@ class MeaningCloudPlugin(SentimentPlugin):
                     entry.topics.append(concept)
         yield entry
 
-    @mock.patch('requests.post', side_effect=mocked_requests_post)
-    def test(self, *args, **kwargs):
-        results = list()
-        params = {'algo': 'sentiment-meaningCloud',
-                  'intype': 'direct',
-                  'expanded-jsonld': 0,
-                  'informat': 'text',
-                  'prefix': '',
-                  'plugin_type': 'analysisPlugin',
-                  'urischeme': 'RFC5147String',
-                  'outformat': 'json-ld',
-                  'i': 'Hello World',
-                  'input': 'Hello World',
-                  'conversion': 'full',
-                  'language': 'en',
-                  'apikey': '00000',
-                  'algorithm': 'sentiment-meaningCloud'}
-        res = next(self.analyse_entry(Entry(nif__isString="Hello World Obama"), params))
+    test_cases = [
+        {
+            'params': {
+                'algo': 'sentiment-meaningCloud',
+                'intype': 'direct',
+                'expanded-jsonld': 0,
+                'informat': 'text',
+                'prefix': '',
+                'plugin_type': 'analysisPlugin',
+                'urischeme': 'RFC5147String',
+                'outformat': 'json-ld',
+                'conversion': 'full',
+                'language': 'en',
+                'apikey': '00000',
+                'algorithm': 'sentiment-meaningCloud'
+            },
+            'input': 'Hello World Obama',
+            'expected': {
+                'sentiments': [
+                    {'marl:hasPolarity': 'marl:Neutral'}],
+                'entities': [
+                    {'itsrdf:taIdentRef': 'http://dbpedia.org/resource/Obama'}],
+                'topics': [
+                    {'fam:topic-reference': 'http://dbpedia.org/resource/Astronomy'}]
+            },
+            'responses': [
+                {
+                    'url':  'http://api.meaningcloud.com/sentiment-2.1',
+                    'method': 'POST',
+                    'json': {
+                        'model': 'general_en',
+                        'sentence_list': [{
+                            'text':
+                            'Hello World',
+                            'endp':
+                            '10',
+                            'inip':
+                            '0',
+                            'segment_list': [{
+                                'text':
+                                'Hello World',
+                                'segment_type':
+                                'secondary',
+                                'confidence':
+                                '100',
+                                'inip':
+                                '0',
+                                'agreement':
+                                'AGREEMENT',
+                                'endp':
+                                '10',
+                                'polarity_term_list': [],
+                                'score_tag':
+                                'NONE'
+                            }],
+                            'score_tag':
+                            'NONE',
+                        }],
+                        'score_tag':
+                        'NONE'
+                    }
+                }, {
+                    'url':  'http://api.meaningcloud.com/topics-2.0',
+                    'method': 'POST',
+                    'json': {
+                        'entity_list': [{
+                            'form':
+                            'Obama',
+                            'id':
+                            '__1265958475430276310',
+                            'variant_list': [{
+                                'endp': '16',
+                                'form': 'Obama',
+                                'inip': '12'
+                            }],
+                            'sementity': {
+                                'fiction': 'nonfiction',
+                                'confidence': 'uncertain',
+                                'class': 'instance',
+                                'type': 'Top>Person'
+                            }
+                        }],
+                        'concept_list': [{
+                            'form':
+                            'world',
+                            'id':
+                            '5c053cd39d',
+                            'relevance':
+                            '100',
+                            'semtheme_list': [{
+                                'id': 'ODTHEME_ASTRONOMY',
+                                'type': 'Top>NaturalSciences>Astronomy'
+                            }]
+                        }],
+                    }
+                }]
+        }
+    ]
 
-        check_template(res,
-                       {'sentiments': [
-                           {'marl:hasPolarity': 'marl:Neutral'}],
-                         'entities': [
-                             {'itsrdf:taIdentRef': 'http://dbpedia.org/resource/Obama'}],
-                         'topics': [
-                             {'fam:topic-reference': 'http://dbpedia.org/resource/Astronomy'}]
-                       })
 
 if __name__ == '__main__':
     from senpy import easy_test
