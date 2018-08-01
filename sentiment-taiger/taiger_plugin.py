@@ -11,7 +11,7 @@ from senpy.plugins import SentimentPlugin
 from senpy.models import Results, Entry, Entity, Topic, Sentiment, Error
 
 
-TAIGER_ENDPOINT = os.environ.get("TAIGER_ENDPOINT", 'http://134.244.91.7:8080/sentiment/classifyPositivity')
+TAIGER_ENDPOINT = os.environ.get("TAIGER_ENDPOINT", 'http://34.244.91.7:8080/sentiment/classifyPositivity')
 
 
 class TaigerPlugin(SentimentPlugin):
