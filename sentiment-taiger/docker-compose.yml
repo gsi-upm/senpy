@@ -1,0 +1,11 @@
+version: '3'
+services:
+    dev:
+        image: gsiupm/senpy:latest
+        working_dir: "/senpy-plugins"
+        ports:
+            - "127.0.0.1:5005:5000"
+        volumes:
+            - ".:/senpy-plugins"
+        environment:
+            TAIGER_ENDPOINT: 'http://34.244.91.7:8080/sentiment/classifyPositivity'
