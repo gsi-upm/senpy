@@ -153,7 +153,6 @@ class Senpy(object):
                 yield i
             return
         plugin = plugins[0]
-        self._activate(plugin)  # Make sure the plugin is activated
         specific_params = api.parse_extra_params(req, plugin)
         req.analysis.append({'plugin': plugin,
                              'parameters': specific_params})
@@ -352,7 +351,7 @@ class Senpy(object):
 
         logger.info("Activating plugin: {}".format(plugin.name))
 
-        if sync or 'async' in plugin and not plugin.async:
+        if sync or not getattr(plugin, 'async', True):
             return self._activate(plugin)
         else:
             th = Thread(target=partial(self._activate, plugin))
@@ -375,7 +374,7 @@ class Senpy(object):
 
         self._set_active(plugin, False)
 
-        if sync or 'async' in plugin and not plugin.async:
+        if sync or not getattr(plugin, 'async', True):
             self._deactivate(plugin)
         else:
             th = Thread(target=partial(self._deactivate, plugin))

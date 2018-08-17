@@ -70,7 +70,7 @@ class BlueprintsTest(TestCase):
 
     def test_analysis_extra(self):
         """
-        Extra params that have a default should
+        Extra params that have a default should use it
         """
         resp = self.client.get("/api/?i=My aloha mohame&algo=Dummy&with_parameters=true")
         self.assertCode(resp, 200)
@@ -94,6 +94,44 @@ class BlueprintsTest(TestCase):
         self.assertCode(resp, 400)
         resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired&example=a")
         self.assertCode(resp, 200)
+
+    def test_analysis_url(self):
+        """
+        The algorithm can also be specified as part of the URL
+        """
+        self.app.config['TESTING'] = False  # Errors are expected in this case
+        resp = self.client.get("/api/DummyRequired?i=My aloha mohame")
+        self.assertCode(resp, 400)
+        js = parse_resp(resp)
+        logging.debug("Got response: %s", js)
+        assert isinstance(js, models.Error)
+        resp = self.client.get("/api/DummyRequired?i=My aloha mohame&example=notvalid")
+        self.assertCode(resp, 400)
+        resp = self.client.get("/api/DummyRequired?i=My aloha mohame&example=a")
+        self.assertCode(resp, 200)
+
+    def test_analysis_chain(self):
+        """
+        More than one algorithm can be specified. Plugins will then be chained
+        """
+        resp = self.client.get("/api/Dummy?i=My aloha mohame")
+        js = parse_resp(resp)
+        assert len(js['analysis']) == 1
+        assert js['entries'][0]['nif:isString'] == 'My aloha mohame'[::-1]
+
+        resp = self.client.get("/api/Dummy/Dummy?i=My aloha mohame")
+        # Calling dummy twice, should return the same string
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        assert len(js['analysis']) == 2
+        assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
+
+        resp = self.client.get("/api/Dummy+Dummy?i=My aloha mohame")
+        # Same with pluses instead of slashes
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        assert len(js['analysis']) == 2
+        assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
 
     def test_error(self):
         """

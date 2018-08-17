@@ -184,14 +184,19 @@ def basic_api(f):
     return decorated_function
 
 
-@api_blueprint.route('/', methods=['POST', 'GET'])
+@api_blueprint.route('/', defaults={'plugin': None}, methods=['POST', 'GET'])
+@api_blueprint.route('/<path:plugin>', methods=['POST', 'GET'])
 @basic_api
-def api_root():
+def api_root(plugin):
     if request.parameters['help']:
         dic = dict(api.API_PARAMS, **api.NIF_PARAMS)
         response = Help(valid_parameters=dic)
         return response
     req = api.parse_call(request.parameters)
+    if plugin:
+        plugin = plugin.replace('+', '/')
+        plugin = plugin.split('/')
+        req.parameters['algorithm'] = plugin
     return current_app.senpy.analyse(req)
 
 
@@ -221,7 +226,7 @@ def plugins():
 
 @api_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
 @basic_api
-def plugin(plugin=None):
+def plugin(plugin):
     sp = current_app.senpy
     return sp.get_plugin(plugin)
 
