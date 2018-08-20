@@ -188,15 +188,20 @@ def basic_api(f):
 @api_blueprint.route('/<path:plugin>', methods=['POST', 'GET'])
 @basic_api
 def api_root(plugin):
+    if plugin:
+        if 'algorithm' in request.parameters:
+            raise Error('You cannot specify the algorithm with a parameter and a URL variable.'
+                        ' Please, remove one of them')
+        plugin = plugin.replace('+', '/')
+        request.parameters['algorithm'] = plugin.split('/')
+
     if request.parameters['help']:
-        dic = dict(api.API_PARAMS, **api.NIF_PARAMS)
-        response = Help(valid_parameters=dic)
+        sp = current_app.senpy
+        plugins = sp._get_plugins(request)
+        allparameters = api.get_all_params(plugins, api.WEB_PARAMS, api.API_PARAMS, api.NIF_PARAMS)
+        response = Help(valid_parameters=allparameters)
         return response
     req = api.parse_call(request.parameters)
-    if plugin:
-        plugin = plugin.replace('+', '/')
-        plugin = plugin.split('/')
-        req.parameters['algorithm'] = plugin
     return current_app.senpy.analyse(req)
 
 

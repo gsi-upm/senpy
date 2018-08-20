@@ -143,7 +143,7 @@ class Senpy(object):
             plugins.append(self._plugins[algo])
         return plugins
 
-    def _process_entries(self, entries, req, plugins):
+    def _process_entries(self, entries, req, plugins, extra, ith=0):
         """
         Recursively process the entries with the first plugin in the list, and pass the results
         to the rest of the plugins.
@@ -153,11 +153,11 @@ class Senpy(object):
                 yield i
             return
         plugin = plugins[0]
-        specific_params = api.parse_extra_params(req, plugin)
+        specific_params = extra[ith]
         req.analysis.append({'plugin': plugin,
                              'parameters': specific_params})
         results = plugin.analyse_entries(entries, specific_params)
-        for i in self._process_entries(results, req, plugins[1:]):
+        for i in self._process_entries(results, req, plugins[1:], extra, ith=ith + 1):
             yield i
 
     def install_deps(self):
@@ -169,12 +169,16 @@ class Senpy(object):
         It takes a processed request, provided by the user, as returned
         by api.parse_call().
         """
+
         logger.debug("analysing request: {}".format(request))
-        entries = request.entries
-        request.entries = []
+
         plugins = self._get_plugins(request)
+        extra = api.parse_extra_params(request.parameters, plugins)
+
+        entries = request.entries
         results = request
-        for i in self._process_entries(entries, results, plugins):
+        results.entries = []
+        for i in self._process_entries(entries, results, plugins, extra):
             results.entries.append(i)
         self.convert_emotions(results)
         logger.debug("Returning analysis result: {}".format(results))
