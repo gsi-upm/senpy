@@ -17,36 +17,35 @@ class maxSentiment(AnalysisPlugin):
     }
 
     def analyse_entry(self, entry, params):
-        if params["max"]==True:
-            set_emotions= entry.emotions[0]['onyx:hasEmotion']  
-            max_emotion =set_emotions[0]
-         
-            # Extract max emotion from the set emotions (emotion with highest intensity)
-            for tmp_emotion in set_emotions:
-                if tmp_emotion['onyx:hasEmotionIntensity']>max_emotion['onyx:hasEmotionIntensity']:
-                    max_emotion=tmp_emotion
+        if not params["max"]:
+            yield entry
+            return
 
-            if max_emotion['onyx:hasEmotionIntensity'] == 0:
-                max_emotion['onyx:hasEmotionCategory'] = "neutral"
-                max_emotion['onyx:hasEmotionIntensity'] = 1.0
+        set_emotions= entry.emotions[0]['onyx:hasEmotion']  
+        max_emotion =set_emotions[0]
+     
+        # Extract max emotion from the set emotions (emotion with highest intensity)
+        for tmp_emotion in set_emotions:
+            if tmp_emotion['onyx:hasEmotionIntensity']>max_emotion['onyx:hasEmotionIntensity']:
+                max_emotion=tmp_emotion
 
-            entry.emotions[0]['onyx:hasEmotion'] = [max_emotion]
-            
-            
-            
+        if max_emotion['onyx:hasEmotionIntensity'] == 0:
+            max_emotion['onyx:hasEmotionCategory'] = "neutral"
+            max_emotion['onyx:hasEmotionIntensity'] = 1.0
+
+        entry.emotions[0]['onyx:hasEmotion'] = [max_emotion]
+        
+        
+        
         entry.emotions[0]['prov:wasGeneratedBy'] = "maxSentiment"
         #print(entry)
         yield entry
-        
 
-
-    
     # Test Cases:
-    #   1º Normal Situation.
-    #   2º Case to return a Neutral Emotion.
+    #   1 Normal Situation.
+    #   2 Case to return a Neutral Emotion.
     test_cases = [{
         "entry": {
-            "@id": "#",
             "@type": "entry",
             "emotions": [
                 {
@@ -83,23 +82,16 @@ class maxSentiment(AnalysisPlugin):
                             "onyx:hasEmotionCategory": "disgust",
                             "onyx:hasEmotionIntensity": 0
                         }
-                    ],
-                    'prov:wasGeneratedBy':"maxSentiment_plugin"
+                    ]
 
-                }
+                },
             ],
-            "entities": [],
-            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!",
-            "sentiments": [],
-            "suggestions": [],
-            "topics": []
-
+            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!"
         },
         'params': {
             'max': True
         },
         'expected' : {
-            "@id": "#",
             "@type": "entry",
             "emotions": [
                 {
@@ -112,19 +104,15 @@ class maxSentiment(AnalysisPlugin):
                             "onyx:hasEmotionCategory": "joy",
                             "onyx:hasEmotionIntensity": 0.3333333333333333
                         }
-                    ]
+                    ],
+                    "prov:wasGeneratedBy" : 'maxSentiment'
                 }
             ],
-            "entities": [],
-            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!",
-            "sentiments": [],
-            "suggestions": [],
-            "topics": []
+            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!"
         }
     },
     {
         "entry": {
-            "@id": "#",
             "@type": "entry",
             "emotions": [
                 {
@@ -161,23 +149,17 @@ class maxSentiment(AnalysisPlugin):
                             "onyx:hasEmotionCategory": "disgust",
                             "onyx:hasEmotionIntensity": 0
                         }
-                    ],
-                    'prov:wasGeneratedBy':"maxSentiment_plugin"
+                    ]
 
                 }
             ],
-            "entities": [],
-            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!",
-            "sentiments": [],
-            "suggestions": [],
-            "topics": []
-
+            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!"
         },
         'params': {
             'max': True
         },
         'expected' : {
-            "@id": "#",
+
             "@type": "entry",
             "emotions": [
                 {
@@ -190,14 +172,11 @@ class maxSentiment(AnalysisPlugin):
                             "onyx:hasEmotionCategory": "neutral",
                             "onyx:hasEmotionIntensity": 1
                         }
-                    ]
+                    ],
+                    "prov:wasGeneratedBy" : 'maxSentiment'
                 }
             ],
-            "entities": [],
-            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!",
-            "sentiments": [],
-            "suggestions": [],
-            "topics": []
+            "nif:isString": "This text makes me sad.\nwhilst this text makes me happy and surprised at the same time.\nI cannot believe it!"
         }
     
     }]
