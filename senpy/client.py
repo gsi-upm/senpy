@@ -25,7 +25,11 @@ class Client(object):
 
     def request(self, path=None, method='GET', **params):
         url = '{}{}'.format(self.endpoint.rstrip('/'), path)
-        response = requests.request(method=method, url=url, params=params)
+        if method == 'POST':
+            response = requests.post(url=url, data=params)
+        else:
+            response = requests.request(method=method, url=url, params=params)
+
         try:
             resp = models.from_dict(response.json())
         except Exception as ex:
