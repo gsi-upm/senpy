@@ -15,9 +15,12 @@ try:
     from gsitk.datasets.datasets import DatasetManager
     from gsitk.evaluation.evaluation import Evaluation as Eval
     from sklearn.pipeline import Pipeline
-    GSITK_AVAILABLE = True
+    import pkg_resources
+    GSITK_VERSION = pkg_resources.get_distribution("gsitk").version.split()
+    GSITK_AVAILABLE = GSITK_VERSION > (0, 1, 9, 1)  # Earlier versions have a bug
     modules = locals()
 except ImportError:
-    logger.warn(IMPORTMSG)
+    logger.warning(IMPORTMSG)
     GSITK_AVAILABLE = False
+    GSITK_VERSION = ()
     DatasetManager = Eval = Pipeline = raise_exception

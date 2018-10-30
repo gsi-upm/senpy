@@ -1,15 +1,15 @@
 #!/bin/env python
 
 import os
-import sys
 import pickle
 import shutil
 import tempfile
 
-from unittest import TestCase
+from unittest import TestCase, skipIf
 from senpy.models import Results, Entry, EmotionSet, Emotion, Plugins
 from senpy import plugins
 from senpy.plugins.conversion.emotion.centroids import CentroidConversion
+from senpy.gsitk_compat import GSITK_AVAILABLE
 
 import pandas as pd
 
@@ -346,13 +346,15 @@ class PluginsTest(TestCase):
         smart_metrics = results[0].metrics[0]
         assert abs(smart_metrics['accuracy'] - 1) < 0.01
 
+    @skipIf(not GSITK_AVAILABLE, "GSITK is not available")
     def test_evaluation(self):
-        if sys.version_info < (3, 0):
-            with self.assertRaises(Exception) as context:
-                self._test_evaluation()
-            self.assertTrue('GSITK ' in str(context.exception))
-        else:
+        self._test_evaluation()
+
+    @skipIf(GSITK_AVAILABLE, "GSITK is available")
+    def test_evaluation_unavailable(self):
+        with self.assertRaises(Exception) as context:
             self._test_evaluation()
+        self.assertTrue('GSITK ' in str(context.exception))
 
 
 def make_mini_test(fpath):

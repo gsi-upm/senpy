@@ -24,6 +24,19 @@ class ModelsTest(TestCase):
             except Error:
                 pass
 
+    def test_client_post(self):
+        endpoint = 'http://dummy/'
+        client = Client(endpoint)
+        with patch_requests('http://dummy/', Results()):
+            resp = client.analyse('hello')
+            assert isinstance(resp, Results)
+        with patch_requests('http://dummy/', Error('Nothing'), method='POST'):
+            try:
+                client.analyse(input='hello', method='POST', algorithm='NONEXISTENT')
+                raise Exception('Exceptions should be raised. This is not golang')
+            except Error:
+                pass
+
     def test_plugins(self):
         endpoint = 'http://dummy/'
         client = Client(endpoint)

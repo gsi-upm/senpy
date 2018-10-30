@@ -67,6 +67,20 @@ class BlueprintsTest(TestCase):
         logging.debug("Got response: %s", js)
         assert "@context" in js
         assert "entries" in js
+        assert len(js['analysis']) == 1
+
+    def test_analysis_post(self):
+        """
+        The results for a POST request should be the same as for a GET request.
+        """
+        resp = self.client.post("/api/", data={'i': 'My aloha mohame',
+                                               'with_parameters': True})
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        logging.debug("Got response: %s", js)
+        assert "@context" in js
+        assert "entries" in js
+        assert len(js['analysis']) == 1
 
     def test_analysis_extra(self):
         """

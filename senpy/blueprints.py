@@ -69,7 +69,7 @@ def encoded_url(url=None, base=None):
         if request.method == 'GET':
             url = request.full_path[1:]  # Remove the first slash
         else:
-            hash(frozenset(request.form.params().items()))
+            hash(frozenset(request.parameters.items()))
             code = 'hash:{}'.format(hash)
 
     code = code or base64.urlsafe_b64encode(url.encode()).decode()
