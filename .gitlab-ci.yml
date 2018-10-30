@@ -31,29 +31,19 @@ test-2.7:
   variables:
     PYTHON_VERSION: "2.7"
 
-.image: &image_definition
+push:
   stage: push
   script:
-    - make -e push-$PYTHON_VERSION
+    - make -e push
   only:
     - tags
     - triggers
     - fix-makefiles
 
-push-3.5:
-  <<: *image_definition
-  variables:
-    PYTHON_VERSION: "3.5"
-
-push-2.7:
-  <<: *image_definition
-  variables:
-    PYTHON_VERSION: "2.7"
-
 push-latest:
-  <<: *image_definition
-  variables:
-    PYTHON_VERSION: latest
+  stage: push
+  script:
+    - make -e push-latest
   only:
     - master
     - triggers
