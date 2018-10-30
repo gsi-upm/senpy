@@ -11,7 +11,7 @@ class Async(AnalysisPlugin):
     '''An example of an asynchronous module'''
     author = '@balkian'
     version = '0.2'
-    async = True
+    sync = False
 
     def _do_async(self, num_processes):
         pool = multiprocessing.Pool(processes=num_processes)

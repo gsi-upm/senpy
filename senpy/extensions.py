@@ -351,7 +351,7 @@ class Senpy(object):
 
         logger.info("Activating plugin: {}".format(plugin.name))
 
-        if sync or not getattr(plugin, 'async', True):
+        if sync or not getattr(plugin, 'async', True) or getattr(plugin, 'sync', False):
             return self._activate(plugin)
         else:
             th = Thread(target=partial(self._activate, plugin))
@@ -374,7 +374,7 @@ class Senpy(object):
 
         self._set_active(plugin, False)
 
-        if sync or not getattr(plugin, 'async', True):
+        if sync or not getattr(plugin, 'async', True) or not getattr(plugin, 'sync', False):
             self._deactivate(plugin)
         else:
             th = Thread(target=partial(self._deactivate, plugin))

@@ -1,5 +1,7 @@
 import logging
 
+from pkg_resources import parse_version, get_distribution, DistributionNotFound
+
 logger = logging.getLogger(__name__)
 
 MSG = 'GSITK is not (properly) installed.'
@@ -12,15 +14,18 @@ def raise_exception(*args, **kwargs):
 
 
 try:
+    gsitk_distro = get_distribution("gsitk")
+    GSITK_VERSION = parse_version(gsitk_distro.version)
+    GSITK_AVAILABLE = GSITK_VERSION > parse_version("0.1.9.1")  # Earlier versions have a bug
+except DistributionNotFound:
+    GSITK_AVAILABLE = False
+    GSITK_VERSION = ()
+
+if GSITK_AVAILABLE:
     from gsitk.datasets.datasets import DatasetManager
     from gsitk.evaluation.evaluation import Evaluation as Eval
     from sklearn.pipeline import Pipeline
-    import pkg_resources
-    GSITK_VERSION = pkg_resources.get_distribution("gsitk").version.split()
-    GSITK_AVAILABLE = GSITK_VERSION > (0, 1, 9, 1)  # Earlier versions have a bug
     modules = locals()
-except ImportError:
+else:
     logger.warning(IMPORTMSG)
-    GSITK_AVAILABLE = False
-    GSITK_VERSION = ()
     DatasetManager = Eval = Pipeline = raise_exception
