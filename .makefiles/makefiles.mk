@@ -6,6 +6,7 @@ makefiles-commit: makefiles-remote
 	git commit -em "Updated makefiles from ${NAME}"
 
 makefiles-push:
+	git fetch makefiles $(NAME)
 	git subtree push --prefix=.makefiles/ makefiles $(NAME)
 
 makefiles-pull: makefiles-remote
