@@ -175,8 +175,8 @@ def parse_params(indict, *specs):
             parameters=outdict,
             errors=wrong_params)
         raise message
-    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], list):
-        outdict['algorithm'] = list(outdict['algorithm'].split(','))
+    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], tuple):
+        outdict['algorithm'] = tuple(outdict['algorithm'].split(','))
     return outdict
 
 
