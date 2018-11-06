@@ -74,6 +74,7 @@ class BlueprintsTest(TestCase):
         The results for a POST request should be the same as for a GET request.
         """
         resp = self.client.post("/api/", data={'i': 'My aloha mohame',
+                                               'algorithm': 'rand',
                                                'with_parameters': True})
         self.assertCode(resp, 200)
         js = parse_resp(resp)

@@ -196,7 +196,7 @@ def api_root(plugin):
     if plugin:
         plugin = plugin.replace('+', '/')
         plugin = plugin.split('/')
-        req.parameters['algorithm'] = plugin
+        req.parameters['algorithm'] = tuple(plugin)
     return current_app.senpy.analyse(req)
 
 
