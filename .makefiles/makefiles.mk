@@ -1,5 +1,5 @@
 makefiles-remote:
-	@git remote add makefiles ssh://git@lab.cluster.gsi.dit.upm.es:2200/docs/templates/makefiles.git 2>/dev/null || true
+	git ls-remote --exit-code  makefiles 2> /dev/null || git remote add makefiles ssh://git@lab.cluster.gsi.dit.upm.es:2200/docs/templates/makefiles.git
 
 makefiles-commit: makefiles-remote
 	git add -f .makefiles
@@ -12,7 +12,4 @@ makefiles-push:
 makefiles-pull: makefiles-remote
 	git subtree pull --prefix=.makefiles/ makefiles master --squash
 
-pull:: makefiles-pull
-push:: makefiles-push
-
-.PHONY:: makefiles-remote makefiles-commit makefiles-push makefiles-pull pull push
+.PHONY:: makefiles-remote makefiles-commit makefiles-push makefiles-pull

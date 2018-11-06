@@ -22,7 +22,4 @@ else
 	rm $(KEY_FILE)
 endif
 
-push:: git-push
-pull:: git-pull
-
-.PHONY:: commit tag push git-push git-pull push-github 
+.PHONY:: commit tag git-push git-pull push-github 
