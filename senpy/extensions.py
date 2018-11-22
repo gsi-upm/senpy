@@ -144,7 +144,7 @@ class Senpy(object):
 
         return plugins
 
-    def _process(self, req, pending, done=None):
+    def _process(self, req, parameters, pending, done=None):
         """
         Recursively process the entries with the first plugin in the list, and pass the results
         to the rest of the plugins.
@@ -154,10 +154,11 @@ class Senpy(object):
             return req
 
         plugin = pending[0]
+        req.parameters = parameters[0]
         results = plugin.process(req, conversions_applied=done)
         if plugin not in results.analysis:
             results.analysis.append(plugin)
-        return self._process(results, pending[1:], done)
+        return self._process(results, parameters[1:], pending[1:], done)
 
     def install_deps(self):
         plugins.install_deps(*self.plugins())
@@ -168,10 +169,11 @@ class Senpy(object):
         It takes a processed request, provided by the user, as returned
         by api.parse_call().
         """
+
         logger.debug("analysing request: {}".format(request))
         plugins = self._get_plugins(request)
-        request.parameters = api.parse_extra_params(request, plugins)
-        results = self._process(request, plugins)
+        parameters = api.parse_extra_params(request.parameters, plugins)
+        results = self._process(request, parameters, plugins)
         logger.debug("Got analysis result: {}".format(results))
         results = self.postprocess(results)
         logger.debug("Returning post-processed result: {}".format(results))

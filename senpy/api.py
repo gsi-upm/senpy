@@ -187,20 +187,106 @@ def parse_params(indict, *specs):
     return outdict
 
 
-def parse_extra_params(request, plugins=None):
-    plugins = plugins or []
-    params = request.parameters.copy()
-    for plugin in plugins:
-        if plugin:
-            extra_params = parse_params(params, plugin.get('extra_params', {}))
-            for k, v in extra_params.items():
-                if k not in BUILTIN_PARAMS:
-                    if k in params:  # Set by another plugin
-                        del params[k]
-                    else:
-                        params[k] = v
-                params['{}.{}'.format(plugin.name, k)] = v
+def get_all_params(plugins, *specs):
+    '''Return a list of parameters for a given set of specifications and plugins.'''
+    dic = {}
+    for s in specs:
+        dic.update(s)
+    dic.update(get_extra_params(plugins))
+    return dic
+
+
+def get_extra_params(plugins):
+    '''Get a list of possible parameters given a list of plugins'''
+    params = {}
+    extra_params = {}
+    for i, plugin in enumerate(plugins):
+        this_params = plugin.get('extra_params', {})
+        for k, v in this_params.items():
+            if k not in extra_params:
+                extra_params[k] = []
+            extra_params[k].append(v)
+            params['{}.{}'.format(plugin.name, k)] = v
+            params['{}.{}'.format(i, k)] = v
+    for k, v in extra_params.items():  # Resolve conflicts
+        if len(v) == 1:  # Add the extra options that do not collide
+            params[k] = v[0]
+        else:
+            required = False
+            aliases = None
+            options = None
+            default = None
+            nodefault = False  # Set when defaults are not compatible
+
+            for opt in v:
+                required = required or opt.get('required', False)
+                newaliases = set(opt.get('aliases', []))
+                if aliases is None:
+                    aliases = newaliases
+                else:
+                    aliases = aliases & newaliases
+                if 'options' in opt:
+                    newoptions = set(opt['options'])
+                    options = newoptions if options is None else options & newoptions
+                if 'default' in opt:
+                    newdefault = opt['default']
+                    if newdefault:
+                        if default is None and not nodefault:
+                            default = newdefault
+                        elif newdefault != default:
+                            nodefault = True
+                            default = None
+            # Check for incompatibilities
+            if options != set():
+                params[k] = {
+                    'default': default,
+                    'aliases': list(aliases),
+                    'required': required,
+                    'options': list(options)
+                }
     return params
+
+
+def parse_extra_params(params, plugins):
+    '''
+    Parse the given parameters individually for each plugin, and get a list of the parameters that
+    belong to each of the plugins. Each item can then be used in the plugin.analyse_entries method.
+    '''
+    extra_params = []
+    for i, plugin in enumerate(plugins):
+        this_params = filter_params(params, plugin, i)
+        parsed = parse_params(this_params, plugin.get('extra_params', {}))
+        extra_params.append(parsed)
+    return extra_params
+
+
+def filter_params(params, plugin, ith=-1):
+    '''
+    Get the values within params that apply to a plugin.
+    More specific names override more general names, in this order:
+
+    <index_order>.parameter > <plugin.name>.parameter > parameter
+
+
+    Example:
+
+    >>> filter_params({'0.hello': True, 'hello': False}, Plugin(), 0)
+    { '0.hello': True, 'hello': True}
+
+    '''
+    thisparams = {}
+    if ith >= 0:
+        ith = '{}.'.format(ith)
+    else:
+        ith = ""
+    for k, v in params.items():
+        if ith and k.startswith(str(ith)):
+            thisparams[k[len(ith):]] = v
+        elif k.startswith(plugin.name):
+            thisparams[k[len(plugin.name) + 1:]] = v
+        elif k not in thisparams:
+            thisparams[k] = v
+    return thisparams
 
 
 def parse_call(params):

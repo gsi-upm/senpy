@@ -107,6 +107,7 @@ class BlueprintsTest(TestCase):
         assert isinstance(js, models.Error)
         resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired&example=notvalid")
         self.assertCode(resp, 400)
+        self.app.config['TESTING'] = True
         resp = self.client.get("/api/?i=My aloha mohame&algo=DummyRequired&example=a")
         self.assertCode(resp, 200)
 
@@ -147,6 +148,53 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         assert len(js['analysis']) == 1
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
+
+    def test_requirements_chain_help(self):
+        '''The extra parameters of each plugin should be merged if they are in a chain '''
+        resp = self.client.get("/api/split/DummyRequired?help=true")
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        assert 'valid_parameters' in js
+        vp = js['valid_parameters']
+        assert 'example' in vp
+
+    def test_requirements_chain_repeat_help(self):
+        '''
+        If a plugin appears several times in a chain, there should be a way to set different
+        parameters for each.
+        '''
+        resp = self.client.get("/api/split/split?help=true")
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        assert 'valid_parameters' in js
+        vp = js['valid_parameters']
+        assert '0.delimiter' in vp
+        assert '1.delimiter' in vp
+        assert 'delimiter' in vp
+
+    def test_requirements_chain(self):
+        """
+        It should be possible to specify different parameters for each step in the chain.
+        """
+
+        # First, we split by sentence twice. Each call should generate 3 additional entries
+        # (one per sentence in the original).
+        resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.'
+                               '\nA new paragraph&delimiter=sentence')
+        js = parse_resp(resp)
+        assert len(js['analysis']) == 2
+        assert len(js['entries']) == 7
+
+        # Now, we split by sentence. This produces 3 additional entries.
+        # Then, we split by paragraph. This should create 2 additional entries (One per paragraph
+        # in the original text)
+        resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.'
+                               '\nA new paragraph&0.delimiter=sentence&1.delimiter=paragraph')
+        # Calling dummy twice, should return the same string
+        self.assertCode(resp, 200)
+        js = parse_resp(resp)
+        assert len(js['analysis']) == 2
+        assert len(js['entries']) == 6
 
     def test_error(self):
         """
