@@ -197,7 +197,9 @@ def api_root(plugin):
         plugin = plugin.replace('+', '/')
         plugin = plugin.split('/')
         req.parameters['algorithm'] = tuple(plugin)
-    return current_app.senpy.analyse(req)
+    results = current_app.senpy.analyse(req)
+    results.analysis = set(i.id for i in results.analysis)
+    return results
 
 
 @api_blueprint.route('/evaluate/', methods=['POST', 'GET'])

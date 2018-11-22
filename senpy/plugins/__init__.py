@@ -1,7 +1,6 @@
 from future import standard_library
 standard_library.install_aliases()
 
-
 from future.utils import with_metaclass
 from functools import partial
 
@@ -10,7 +9,6 @@ import os
 import re
 import pickle
 import logging
-import copy
 import pprint
 
 import inspect
@@ -25,7 +23,6 @@ from .. import models, utils
 from .. import api
 from .. import gsitk_compat
 from .. import testing
-
 
 logger = logging.getLogger(__name__)
 
@@ -46,16 +43,19 @@ class PluginMeta(models.BaseMeta):
             if doc:
                 attrs['description'] = doc
             else:
-                logger.warn(('Plugin {} does not have a description. '
-                             'Please, add a short summary to help other developers').format(name))
+                logger.warning(
+                    ('Plugin {} does not have a description. '
+                     'Please, add a short summary to help other developers'
+                     ).format(name))
         cls = super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
 
         if alias in mcs._classes:
             if os.environ.get('SENPY_TESTING', ""):
-                raise Exception(('The type of plugin {} already exists. '
-                                'Please, choose a different name').format(name))
+                raise Exception(
+                    ('The type of plugin {} already exists. '
+                     'Please, choose a different name').format(name))
             else:
-                logger.warn('Overloading plugin class: {}'.format(alias))
+                logger.warning('Overloading plugin class: {}'.format(alias))
         mcs._classes[alias] = cls
         return cls
 
@@ -87,10 +87,12 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         if info:
             self.update(info)
         self.validate()
-        self.id = 'endpoint:plugins/{}_{}'.format(self['name'], self['version'])
+        self.id = 'endpoint:plugins/{}_{}'.format(self['name'],
+                                                  self['version'])
         self.is_activated = False
         self._lock = threading.Lock()
-        self._directory = os.path.abspath(os.path.dirname(inspect.getfile(self.__class__)))
+        self._directory = os.path.abspath(
+            os.path.dirname(inspect.getfile(self.__class__)))
 
         data_folder = data_folder or os.getcwd()
         subdir = os.path.join(data_folder, self.name)
@@ -118,7 +120,8 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
             if x not in self:
                 missing.append(x)
         if missing:
-            raise models.Error('Missing configuration parameters: {}'.format(missing))
+            raise models.Error(
+                'Missing configuration parameters: {}'.format(missing))
 
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
@@ -129,22 +132,60 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     def deactivate(self):
         pass
 
+    def process(self, request, **kwargs):
+        """
+        An implemented plugin should override this method.
+        Here, we assume that a process_entries method exists."""
+        newentries = list(
+            self.process_entries(request.entries, request.parameters))
+        request.entries = newentries
+        return request
+
+    def process_entries(self, entries, parameters):
+        for entry in entries:
+            self.log.debug('Processing entry with plugin {}: {}'.format(
+                self, entry))
+            results = self.process_entry(entry, parameters)
+            if inspect.isgenerator(results):
+                for result in results:
+                    yield result
+            else:
+                yield results
+
+    def process_entry(self, entry, parameters):
+        """
+        This base method is here to adapt plugins which only
+        implement the *process* function.
+        Note that this method may yield an annotated entry or a list of
+        entries (e.g. in a tokenizer)
+        """
+        raise NotImplementedError(
+            'You need to implement process, process_entries or process_entry in your plugin'
+        )
+
     def test(self, test_cases=None):
         if not test_cases:
             if not hasattr(self, 'test_cases'):
-                raise AttributeError(('Plugin {} [{}] does not have any defined '
-                                      'test cases').format(self.id,
-                                                           inspect.getfile(self.__class__)))
+                raise AttributeError(
+                    ('Plugin {} [{}] does not have any defined '
+                     'test cases').format(self.id,
+                                          inspect.getfile(self.__class__)))
             test_cases = self.test_cases
         for case in test_cases:
             try:
                 self.test_case(case)
-                self.log.debug('Test case passed:\n{}'.format(pprint.pformat(case)))
+                self.log.debug('Test case passed:\n{}'.format(
+                    pprint.pformat(case)))
             except Exception as ex:
-                self.log.warn('Test case failed:\n{}'.format(pprint.pformat(case)))
+                self.log.warning('Test case failed:\n{}'.format(
+                    pprint.pformat(case)))
                 raise
 
     def test_case(self, case, mock=testing.MOCK_REQUESTS):
+        if 'entry' not in case and 'input' in case:
+            entry = models.Entry(_auto_id=False)
+            entry.nif__isString = case['input']
+            case['entry'] = entry
         entry = models.Entry(case['entry'])
         given_parameters = case.get('params', case.get('parameters', {}))
         expected = case.get('expected', None)
@@ -152,21 +193,25 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         responses = case.get('responses', [])
 
         try:
-            params = api.parse_params(given_parameters, self.extra_params)
+            request = models.Response()
+            request.parameters = api.parse_params(given_parameters,
+                                                  self.extra_params)
+            request.entries = [
+                entry,
+            ]
 
-            method = partial(self.analyse_entries, [entry, ], params)
+            method = partial(self.process, request)
 
             if mock:
-                res = list(method())
+                res = method()
             else:
                 with testing.patch_all_requests(responses):
-                    res = list(method())
+                    res = method()
 
             if not isinstance(expected, list):
                 expected = [expected]
-            utils.check_template(res, expected)
-            for r in res:
-                r.validate()
+            utils.check_template(res.entries, expected)
+            res.validate()
         except models.Error:
             if should_fail:
                 return
@@ -203,40 +248,26 @@ class Analysis(Plugin):
     A subclass of Plugin that analyses text and provides an annotation.
     '''
 
-    def analyse(self, *args, **kwargs):
-        raise NotImplementedError(
-            'Your plugin should implement either analyse or analyse_entry')
-
-    def analyse_entry(self, entry, parameters):
-        """ An implemented plugin should override this method.
-        This base method is here to adapt old style plugins which only
-        implement the *analyse* function.
-        Note that this method may yield an annotated entry or a list of
-        entries (e.g. in a tokenizer)
-        """
-        text = entry['nif:isString']
-        params = copy.copy(parameters)
-        params['input'] = text
-        results = self.analyse(**params)
-        for i in results.entries:
-            yield i
+    def analyse(self, request, parameters):
+        return super(Analysis, self).process(request)
 
     def analyse_entries(self, entries, parameters):
-        for entry in entries:
-            self.log.debug('Analysing entry with plugin {}: {}'.format(self, entry))
-            results = self.analyse_entry(entry, parameters)
-            if inspect.isgenerator(results):
-                for result in results:
-                    yield result
-            else:
-                yield results
+        for i in super(Analysis, self).process_entries(entries, parameters):
+            yield i
 
-    def test_case(self, case):
-        if 'entry' not in case and 'input' in case:
-            entry = models.Entry(_auto_id=False)
-            entry.nif__isString = case['input']
-            case['entry'] = entry
-        super(Analysis, self).test_case(case)
+    def process(self, request, **kwargs):
+        return self.analyse(request, request.parameters)
+
+    def process_entries(self, entries, parameters):
+        for i in self.analyse_entries(entries, parameters):
+            yield i
+
+    def process_entry(self, entry, parameters, **kwargs):
+        if hasattr(self, 'analyse_entry'):
+            for i in self.analyse_entry(entry, parameters):
+                yield i
+        else:
+            super(Analysis, self).process_entry(entry, parameters, **kwargs)
 
 
 AnalysisPlugin = Analysis
@@ -247,7 +278,20 @@ class Conversion(Plugin):
     A subclass of Plugins that convert between different annotation models.
     e.g. a conversion of emotion models, or normalization of sentiment values.
     '''
-    pass
+
+    def process(self, response, plugins=None, **kwargs):
+        plugins = plugins or []
+        newentries = []
+        for entry in response.entries:
+            newentries.append(
+                self.convert_entry(entry, response.parameters, plugins))
+        response.entries = newentries
+        return response
+
+    def convert_entry(self, entry, parameters, conversions_applied):
+        raise NotImplementedError(
+            'You should implement a way to convert each entry, or a custom process method'
+        )
 
 
 ConversionPlugin = Conversion
@@ -284,10 +328,26 @@ class EmotionConversion(Conversion):
     '''
     A subclass of Conversion that converts emotion annotations using different models
     '''
-    pass
+
+    def can_convert(self, fromModel, toModel):
+        '''
+        Whether this plugin can convert from fromModel to toModel.
+        If fromModel is None, it is interpreted as "any Model"
+        '''
+        for pair in self.onyx__doesConversion:
+            if (pair['onyx:conversionTo'] == toModel) and \
+               ((fromModel is None) or (pair['onyx:conversionFrom'] == fromModel)):
+                return True
+        return False
 
 
 EmotionConversionPlugin = EmotionConversion
+
+
+class PostProcessing(Plugin):
+    def check(self, request, plugins):
+        '''Should this plugin be run for this request?'''
+        return False
 
 
 class Box(AnalysisPlugin):
@@ -314,9 +374,10 @@ class Box(AnalysisPlugin):
         return output
 
     def predict_one(self, input):
-        raise NotImplementedError('You should define the behavior of this plugin')
+        raise NotImplementedError(
+            'You should define the behavior of this plugin')
 
-    def analyse_entries(self, entries, params):
+    def process_entries(self, entries, params):
         for entry in entries:
             input = self.input(entry=entry, params=params)
             results = self.predict_one(input=input)
@@ -385,7 +446,6 @@ class EmotionBox(TextBox, EmotionPlugin):
 
 
 class MappingMixin(object):
-
     @property
     def mappings(self):
         return self._mappings
@@ -395,11 +455,10 @@ class MappingMixin(object):
         self._mappings = value
 
     def output(self, output, entry, params):
-        output = self.mappings.get(output,
-                                   self.mappings.get('default', output))
-        return super(MappingMixin, self).output(output=output,
-                                                entry=entry,
-                                                params=params)
+        output = self.mappings.get(output, self.mappings.get(
+            'default', output))
+        return super(MappingMixin, self).output(
+            output=output, entry=entry, params=params)
 
 
 class ShelfMixin(object):
@@ -412,7 +471,8 @@ class ShelfMixin(object):
                     with self.open(self.shelf_file, 'rb') as p:
                         self._sh = pickle.load(p)
                 except (IndexError, EOFError, pickle.UnpicklingError):
-                    self.log.warning('Corrupted shelf file: {}'.format(self.shelf_file))
+                    self.log.warning('Corrupted shelf file: {}'.format(
+                        self.shelf_file))
                     if not self.get('force_shelf', False):
                         raise
         return self._sh
@@ -460,8 +520,7 @@ def pfilter(plugins, plugin_type=Analysis, **kwargs):
             plugin_type = plugin_type[0].upper() + plugin_type[1:]
             pclass = globals()[plugin_type]
             logger.debug('Class: {}'.format(pclass))
-            candidates = filter(lambda x: isinstance(x, pclass),
-                                plugins)
+            candidates = filter(lambda x: isinstance(x, pclass), plugins)
         except KeyError:
             raise models.Error('{} is not a valid type'.format(plugin_type))
     else:
@@ -471,8 +530,7 @@ def pfilter(plugins, plugin_type=Analysis, **kwargs):
 
     def matches(plug):
         res = all(getattr(plug, k, None) == v for (k, v) in kwargs.items())
-        logger.debug(
-            "matching {} with {}: {}".format(plug.name, kwargs, res))
+        logger.debug("matching {} with {}: {}".format(plug.name, kwargs, res))
         return res
 
     if kwargs:
@@ -506,14 +564,14 @@ def install_deps(*plugins):
             for req in requirements:
                 pip_args.append(req)
             logger.info('Installing requirements: ' + str(requirements))
-            process = subprocess.Popen(pip_args,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+            process = subprocess.Popen(
+                pip_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             _log_subprocess_output(process)
             exitcode = process.wait()
             installed = True
             if exitcode != 0:
-                raise models.Error("Dependencies not properly installed: {}".format(pip_args))
+                raise models.Error(
+                    "Dependencies not properly installed: {}".format(pip_args))
         nltk_resources |= set(info.get('nltk_resources', []))
 
     installed |= nltk.download(list(nltk_resources))
@@ -556,7 +614,7 @@ def from_folder(folders, loader=from_path, **kwargs):
 
 
 def from_info(info, root=None, install_on_fail=True, **kwargs):
-    if any(x not in info for x in ('module',)):
+    if any(x not in info for x in ('module', )):
         raise ValueError('Plugin info is not valid: {}'.format(info))
     module = info["module"]
 
@@ -593,7 +651,8 @@ def one_from_module(module, root, info, **kwargs):
     if '@type' in info:
         cls = PluginMeta.from_type(info['@type'])
         return cls(info=info, **kwargs)
-    instance = next(from_module(module=module, root=root, info=info, **kwargs), None)
+    instance = next(
+        from_module(module=module, root=root, info=info, **kwargs), None)
     if not instance:
         raise Exception("No valid plugin for: {}".format(module))
     return instance
@@ -617,7 +676,8 @@ def _instances_in_module(module):
 
 def _from_module_name(module, root, info=None, **kwargs):
     module = load_module(module, root)
-    for plugin in _from_loaded_module(module=module, root=root, info=info, **kwargs):
+    for plugin in _from_loaded_module(
+            module=module, root=root, info=info, **kwargs):
         yield plugin
 
 
@@ -629,9 +689,10 @@ def _from_loaded_module(module, info=None, **kwargs):
 
 
 def evaluate(plugins, datasets, **kwargs):
-    ev = gsitk_compat.Eval(tuples=None,
-                           datasets=datasets,
-                           pipelines=[plugin.as_pipe() for plugin in plugins])
+    ev = gsitk_compat.Eval(
+        tuples=None,
+        datasets=datasets,
+        pipelines=[plugin.as_pipe() for plugin in plugins])
     ev.evaluate()
     results = ev.results
     evaluations = evaluations_to_JSONLD(results, **kwargs)

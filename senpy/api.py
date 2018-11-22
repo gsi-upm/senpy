@@ -3,9 +3,7 @@ from .models import Error, Results, Entry, from_string
 import logging
 logger = logging.getLogger(__name__)
 
-
 boolean = [True, False]
-
 
 API_PARAMS = {
     "algorithm": {
@@ -140,6 +138,15 @@ NIF_PARAMS = {
     }
 }
 
+BUILTIN_PARAMS = {}
+
+for d in [
+        NIF_PARAMS, CLI_PARAMS, WEB_PARAMS, PLUGINS_PARAMS, EVAL_PARAMS,
+        API_PARAMS
+]:
+    for k, v in d.items():
+        BUILTIN_PARAMS[k] = v
+
 
 def parse_params(indict, *specs):
     if not specs:
@@ -164,7 +171,7 @@ def parse_params(indict, *specs):
                 continue
             if "options" in options:
                 if options["options"] == boolean:
-                    outdict[param] = outdict[param] in [None, True, 'true', '1']
+                    outdict[param] = str(outdict[param]).lower() in ['true', '1']
                 elif outdict[param] not in options["options"]:
                     wrong_params[param] = spec[param]
     if wrong_params:
@@ -180,11 +187,19 @@ def parse_params(indict, *specs):
     return outdict
 
 
-def parse_extra_params(request, plugin=None):
+def parse_extra_params(request, plugins=None):
+    plugins = plugins or []
     params = request.parameters.copy()
-    if plugin:
-        extra_params = parse_params(params, plugin.get('extra_params', {}))
-        params.update(extra_params)
+    for plugin in plugins:
+        if plugin:
+            extra_params = parse_params(params, plugin.get('extra_params', {}))
+            for k, v in extra_params.items():
+                if k not in BUILTIN_PARAMS:
+                    if k in params:  # Set by another plugin
+                        del params[k]
+                    else:
+                        params[k] = v
+                params['{}.{}'.format(plugin.name, k)] = v
     return params
 
 
@@ -194,12 +209,12 @@ def parse_call(params):
     params = parse_params(params, NIF_PARAMS)
     if params['informat'] == 'text':
         results = Results()
-        entry = Entry(nif__isString=params['input'],
-                      id='#')  # Use @base
+        entry = Entry(nif__isString=params['input'], id='#')  # Use @base
         results.entries.append(entry)
     elif params['informat'] == 'json-ld':
         results = from_string(params['input'], cls=Results)
     else:  # pragma: no cover
-        raise NotImplementedError('Informat {} is not implemented'.format(params['informat']))
+        raise NotImplementedError('Informat {} is not implemented'.format(
+            params['informat']))
     results.parameters = params
     return results

@@ -8,7 +8,7 @@ import tempfile
 from unittest import TestCase, skipIf
 from senpy.models import Results, Entry, EmotionSet, Emotion, Plugins
 from senpy import plugins
-from senpy.plugins.conversion.emotion.centroids import CentroidConversion
+from senpy.plugins.postprocessing.emotion.centroids import CentroidConversion
 from senpy.gsitk_compat import GSITK_AVAILABLE
 
 import pandas as pd

@@ -1,6 +1,6 @@
 ---
 name: Ekman2PAD
-module: senpy.plugins.conversion.emotion.centroids
+module: senpy.plugins.postprocessing.emotion.centroids
 description: Plugin to convert emotion sets from Ekman to VAD
 version: 0.2
 # No need to specify onyx:doesConversion because centroids.py adds it automatically from centroids_direction

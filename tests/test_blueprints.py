@@ -138,14 +138,14 @@ class BlueprintsTest(TestCase):
         # Calling dummy twice, should return the same string
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert len(js['analysis']) == 2
+        assert len(js['analysis']) == 1
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
 
         resp = self.client.get("/api/Dummy+Dummy?i=My aloha mohame")
         # Same with pluses instead of slashes
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert len(js['analysis']) == 2
+        assert len(js['analysis']) == 1
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
 
     def test_error(self):

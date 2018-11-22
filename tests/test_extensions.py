@@ -121,8 +121,8 @@ class ExtensionsTest(TestCase):
         # Leaf (defaultdict with  __setattr__ and __getattr__.
         r1 = analyse(self.senpy, algorithm="Dummy", input="tupni", output="tuptuo")
         r2 = analyse(self.senpy, input="tupni", output="tuptuo")
-        assert r1.analysis[0] == "endpoint:plugins/Dummy_0.1"
-        assert r2.analysis[0] == "endpoint:plugins/Dummy_0.1"
+        assert r1.analysis[0].id == "endpoint:plugins/Dummy_0.1"
+        assert r2.analysis[0].id == "endpoint:plugins/Dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_empty(self):
@@ -156,8 +156,8 @@ class ExtensionsTest(TestCase):
         r2 = analyse(self.senpy,
                      input="tupni",
                      output="tuptuo")
-        assert r1.analysis[0] == "endpoint:plugins/Dummy_0.1"
-        assert r2.analysis[0] == "endpoint:plugins/Dummy_0.1"
+        assert r1.analysis[0].id == "endpoint:plugins/Dummy_0.1"
+        assert r2.analysis[0].id == "endpoint:plugins/Dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_error(self):
@@ -165,7 +165,7 @@ class ExtensionsTest(TestCase):
         mm.id = 'magic_mock'
         mm.name = 'mock'
         mm.is_activated = True
-        mm.analyse_entries.side_effect = Error('error in analysis', status=500)
+        mm.process.side_effect = Error('error in analysis', status=500)
         self.senpy.add_plugin(mm)
         try:
             analyse(self.senpy, input='nothing', algorithm='MOCK')
@@ -175,8 +175,7 @@ class ExtensionsTest(TestCase):
             assert ex['status'] == 500
 
         ex = Exception('generic exception on analysis')
-        mm.analyse.side_effect = ex
-        mm.analyse_entries.side_effect = ex
+        mm.process.side_effect = ex
 
         try:
             analyse(self.senpy, input='nothing', algorithm='MOCK')
@@ -211,27 +210,28 @@ class ExtensionsTest(TestCase):
             'emoml:valence': 0
         }))
         response = Results({
-            'analysis': [{'plugin': plugin}],
+            'analysis': [plugin],
             'entries': [Entry({
                 'nif:isString': 'much ado about nothing',
                 'emotions': [eSet1]
             })]
         })
         params = {'emotionModel': 'emoml:big6',
+                  'algorithm': ['conversion'],
                   'conversion': 'full'}
         r1 = deepcopy(response)
         r1.parameters = params
-        self.senpy.convert_emotions(r1)
+        self.senpy.analyse(r1)
         assert len(r1.entries[0].emotions) == 2
         params['conversion'] = 'nested'
         r2 = deepcopy(response)
         r2.parameters = params
-        self.senpy.convert_emotions(r2)
+        self.senpy.analyse(r2)
         assert len(r2.entries[0].emotions) == 1
         assert r2.entries[0].emotions[0]['prov:wasDerivedFrom'] == eSet1
         params['conversion'] = 'filtered'
         r3 = deepcopy(response)
         r3.parameters = params
-        self.senpy.convert_emotions(r3)
+        self.senpy.analyse(r3)
         assert len(r3.entries[0].emotions) == 1
         r3.jsonld()
