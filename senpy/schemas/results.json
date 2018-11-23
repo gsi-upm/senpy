@@ -21,13 +21,7 @@
           "default": [],
           "type": "array",
           "items": {
-            "anyOf": [
-              {
-                "$ref": "analysis.json"
-              },{
-                "type": "string"
-              }
-            ]
+              "$ref": "analysis.json"
           }
         },
         "entries": {

@@ -4,8 +4,9 @@
   "@type": "results",
   "analysis": [
     {
-      "@id": "me:NER1",
-      "@type": "me:NERAnalysis"
+      "@id": "_:NER1_Activity",
+      "@type": "me:NERAnalysis",
+      "prov:wasAssociatedWith": "me:NER1"
     }
   ],
   "entries": [

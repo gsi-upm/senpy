@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from unittest import TestCase
-from senpy.api import (boolean, parse_params, get_extra_params, parse_extra_params,
+from senpy.api import (boolean, parse_params, get_extra_params, parse_analysis,
                        API_PARAMS, NIF_PARAMS, WEB_PARAMS)
 from senpy.models import Error, Plugin
 
@@ -91,7 +91,7 @@ class APITest(TestCase):
         assert 'input' in p
         assert p['input'] == 'Aloha my friend'
 
-    def test_parse_extra_params(self):
+    def test_parse_analysis(self):
         '''The API should parse user parameters and return them in a format that plugins can use'''
         plugins = [
             Plugin({
@@ -161,10 +161,11 @@ class APITest(TestCase):
             }
 
         ]
-        p = parse_extra_params(call, plugins)
+        p = parse_analysis(call, plugins)
         for i, arg in enumerate(expected):
+            params = p[i].params
             for k, v in arg.items():
-                assert p[i][k] == v
+                assert params[k] == v
 
     def test_get_extra_params(self):
         '''The API should return the list of valid parameters for a set of plugins'''
@@ -216,13 +217,11 @@ class APITest(TestCase):
         ]
 
         expected = {
-            # Each plugin's parameters
-            '0.param0': plugins[0]['extra_params']['param0'],
-            '0.param1': plugins[0]['extra_params']['param1'],
-            '0.param2': plugins[0]['extra_params']['param2'],
-            '1.param0': plugins[1]['extra_params']['param0'],
-            '1.param1': plugins[1]['extra_params']['param1'],
-            '1.param3': plugins[1]['extra_params']['param3'],
+            # Overlapping parameters
+            'plugin1.param0': plugins[0]['extra_params']['param0'],
+            'plugin1.param1': plugins[0]['extra_params']['param1'],
+            'plugin2.param0': plugins[1]['extra_params']['param0'],
+            'plugin2.param1': plugins[1]['extra_params']['param1'],
 
             # Non-overlapping parameters
             'param2': plugins[0]['extra_params']['param2'],

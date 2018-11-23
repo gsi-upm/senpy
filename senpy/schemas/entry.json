@@ -35,5 +35,5 @@
       "default": []
     }
   },
-  "required": ["@id", "nif:isString"]
+  "required": ["nif:isString"]
 }

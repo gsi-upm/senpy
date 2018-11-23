@@ -6,13 +6,9 @@
   ],
   "entries": [
     {
-      "@type": [
-        "nif:RFC5147String",
-        "nif:Context"
-      ],
       "nif:beginIndex": 0,
       "nif:endIndex": 40,
-      "nif:isString": "My favourite actress is Natalie Portman"
+      "text": "An entry should have a nif:isString key"
     }
   ]
 }

@@ -3,10 +3,21 @@
   "@id": "me:Result1",
   "@type": "results",
   "analysis": [
-    "me:SAnalysis1",
-    "me:SgAnalysis1",
-    "me:EmotionAnalysis1",
-    "me:NER1"
+      {
+          "@id": "_:SAnalysis1_Activity",
+          "@type": "marl:SentimentAnalysis",
+          "prov:wasAssociatedWith": "me:SAnalysis1"
+      },
+      {
+          "@id": "_:EmotionAnalysis1_Activity",
+          "@type": "onyx:EmotionAnalysis",
+          "prov:wasAssociatedWith": "me:EmotionAnalysis1"
+      },
+      {
+          "@id": "_:NER1_Activity",
+          "@type": "me:NER",
+          "prov:wasAssociatedWith": "me:NER1"
+      }
   ],
   "entries": [
     {
@@ -23,7 +34,7 @@
           "nif:endIndex": 13,
           "nif:anchorOf": "Microsoft",
           "me:references": "http://dbpedia.org/page/Microsoft",
-          "prov:wasGeneratedBy": "me:NER1"
+          "prov:wasGeneratedBy": "_:NER1_Activity"
         },
         {
           "@id": "http://micro.blog/status1#char=25,37",
@@ -31,7 +42,7 @@
           "nif:endIndex": 37,
           "nif:anchorOf": "Windows Phone",
           "me:references": "http://dbpedia.org/page/Windows_Phone",
-          "prov:wasGeneratedBy": "me:NER1"
+          "prov:wasGeneratedBy": "_:NER1_Activity"
         }
       ],
       "suggestions": [
@@ -40,7 +51,7 @@
           "nif:beginIndex": 16,
           "nif:endIndex": 77,
           "nif:anchorOf": "put your Windows Phone on your newest #open technology program",
-          "prov:wasGeneratedBy": "me:SgAnalysis1"
+          "prov:wasGeneratedBy": "_:SgAnalysis1_Activity"
         }
       ],
       "sentiments": [
@@ -51,14 +62,14 @@
           "nif:anchorOf": "You'll be awesome.",
           "marl:hasPolarity": "marl:Positive",
           "marl:polarityValue": 0.9,
-          "prov:wasGeneratedBy": "me:SAnalysis1"
+          "prov:wasGeneratedBy": "_:SgAnalysis1_Activity"
         }
       ],
       "emotions": [
         {
           "@id": "http://micro.blog/status1#char=0,109",
           "nif:anchorOf": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
-          "prov:wasGeneratedBy": "me:EAnalysis1",
+          "prov:wasGeneratedBy": "_:EmotionAnalysis1_Activity",
           "onyx:hasEmotion": [
             {
               "onyx:hasEmotionCategory": "wna:liking"

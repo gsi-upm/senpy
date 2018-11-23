@@ -4,10 +4,9 @@
   "@type": "results",
   "analysis": [
     {
-      "@id": "me:SAnalysis1",
+      "@id": "_:SAnalysis1_Activity",
       "@type": "marl:SentimentAnalysis",
-      "marl:maxPolarityValue": 1,
-      "marl:minPolarityValue": 0
+      "prov:wasAssociatedWith": "me:SAnalysis1"
     }
   ],
   "entries": [
@@ -30,7 +29,7 @@
           "nif:anchorOf": "You'll be awesome.",
           "marl:hasPolarity": "marl:Positive",
           "marl:polarityValue": 0.9,
-          "prov:wasGeneratedBy": "me:SAnalysis1"
+          "prov:wasGeneratedBy": "_:SAnalysis1_Activity"
         }
       ],
       "emotionSets": [

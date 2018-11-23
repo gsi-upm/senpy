@@ -1,5 +1,5 @@
 from future.utils import iteritems
-from .models import Error, Results, Entry, from_string
+from .models import Analysis, Error, Results, Entry, from_string
 import logging
 logger = logging.getLogger(__name__)
 
@@ -8,7 +8,8 @@ boolean = [True, False]
 API_PARAMS = {
     "algorithm": {
         "aliases": ["algorithms", "a", "algo"],
-        "required": False,
+        "required": True,
+        "default": 'default',
         "description": ("Algorithms that will be used to process the request."
                         "It may be a list of comma-separated names."),
     },
@@ -40,6 +41,14 @@ API_PARAMS = {
         "required": True,
         "options": boolean,
         "default": False
+    },
+    "verbose": {
+        "@id": "verbose",
+        "description": "Show all help, including the common API parameters, or only plugin-related info",
+        "aliases": ["v"],
+        "required": True,
+        "options": boolean,
+        "default": True
     },
     "emotionModel": {
         "@id": "emotionModel",
@@ -168,8 +177,7 @@ def parse_params(indict, *specs):
                     outdict[param] = options["default"]
                 elif options.get("required", False):
                     wrong_params[param] = spec[param]
-                continue
-            if "options" in options:
+            elif "options" in options:
                 if options["options"] == boolean:
                     outdict[param] = str(outdict[param]).lower() in ['true', '1']
                 elif outdict[param] not in options["options"]:
@@ -182,8 +190,6 @@ def parse_params(indict, *specs):
             parameters=outdict,
             errors=wrong_params)
         raise message
-    if 'algorithm' in outdict and not isinstance(outdict['algorithm'], tuple):
-        outdict['algorithm'] = tuple(outdict['algorithm'].split(','))
     return outdict
 
 
@@ -200,17 +206,15 @@ def get_extra_params(plugins):
     '''Get a list of possible parameters given a list of plugins'''
     params = {}
     extra_params = {}
-    for i, plugin in enumerate(plugins):
+    for plugin in plugins:
         this_params = plugin.get('extra_params', {})
         for k, v in this_params.items():
             if k not in extra_params:
-                extra_params[k] = []
-            extra_params[k].append(v)
-            params['{}.{}'.format(plugin.name, k)] = v
-            params['{}.{}'.format(i, k)] = v
+                extra_params[k] = {}
+            extra_params[k][plugin.name] = v
     for k, v in extra_params.items():  # Resolve conflicts
         if len(v) == 1:  # Add the extra options that do not collide
-            params[k] = v[0]
+            params[k] = list(v.values())[0]
         else:
             required = False
             aliases = None
@@ -218,7 +222,8 @@ def get_extra_params(plugins):
             default = None
             nodefault = False  # Set when defaults are not compatible
 
-            for opt in v:
+            for plugin, opt in v.items():
+                params['{}.{}'.format(plugin, k)] = opt
                 required = required or opt.get('required', False)
                 newaliases = set(opt.get('aliases', []))
                 if aliases is None:
@@ -247,17 +252,20 @@ def get_extra_params(plugins):
     return params
 
 
-def parse_extra_params(params, plugins):
+def parse_analysis(params, plugins):
     '''
     Parse the given parameters individually for each plugin, and get a list of the parameters that
     belong to each of the plugins. Each item can then be used in the plugin.analyse_entries method.
     '''
-    extra_params = []
+    analysis_list = []
     for i, plugin in enumerate(plugins):
+        if not plugin:
+            continue
         this_params = filter_params(params, plugin, i)
         parsed = parse_params(this_params, plugin.get('extra_params', {}))
-        extra_params.append(parsed)
-    return extra_params
+        analysis = plugin.activity(parsed)
+        analysis_list.append(analysis)
+    return analysis_list
 
 
 def filter_params(params, plugin, ith=-1):
@@ -290,7 +298,8 @@ def filter_params(params, plugin, ith=-1):
 
 
 def parse_call(params):
-    '''Return a results object based on the parameters used in a call/request.
+    '''
+    Return a results object based on the parameters used in a call/request.
     '''
     params = parse_params(params, NIF_PARAMS)
     if params['informat'] == 'text':

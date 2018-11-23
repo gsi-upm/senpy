@@ -5,7 +5,8 @@ import jsonschema
 import json
 import rdflib
 from unittest import TestCase
-from senpy.models import (Emotion,
+from senpy.models import (Analysis,
+                          Emotion,
                           EmotionAnalysis,
                           EmotionSet,
                           Entry,
@@ -61,7 +62,7 @@ class ModelsTest(TestCase):
     def test_id(self):
         """ Adding the id after creation should overwrite the automatic ID
         """
-        r = Entry()
+        r = Entry(_auto_id=True)
         j = r.jsonld()
         assert '@id' in j
         r.id = "test"
@@ -188,6 +189,19 @@ class ModelsTest(TestCase):
         js = plugs.jsonld()
         assert isinstance(js['plugins'], list)
         assert js['plugins'][0]['@type'] == 'sentimentPlugin'
+
+    def test_parameters(self):
+        '''An Analysis should contain the algorithm and the list of parameters to be used'''
+        a = Analysis()
+        a.params = {'param1': 1, 'param2': 2}
+        assert len(a.parameters) == 2
+        for param in a.parameters:
+            if param.name == 'param1':
+                assert param.value == 1
+            elif param.name == 'param2':
+                assert param.value == 2
+            else:
+                raise Exception('Unknown value %s' % param)
 
     def test_from_string(self):
         results = {

@@ -19,5 +19,5 @@
       "description": "The ID of the analysis that generated this Sentiment. The full object should be included in the \"analysis\" property of the root object"
     }
   },
-  "required": ["@id", "prov:wasGeneratedBy"]
+  "required": ["prov:wasGeneratedBy"]
 }

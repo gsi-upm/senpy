@@ -85,7 +85,8 @@ class BaseMeta(ABCMeta):
             schema = json.load(f)
 
         resolver = jsonschema.RefResolver(schema_path, schema)
-        attrs['@type'] = "".join((name[0].lower(), name[1:]))
+        if '@type' not in attrs:
+            attrs['@type'] = "".join((name[0].lower(), name[1:]))
         attrs['_schema_file'] = schema_file
         attrs['schema'] = schema
         attrs['_validator'] = jsonschema.Draft4Validator(schema, resolver=resolver)
@@ -244,10 +245,10 @@ class CustomDict(MutableMapping, object):
         return key[0] == '_'
 
     def __str__(self):
-        return str(self.serializable())
+        return json.dumps(self.serializable(), sort_keys=True, indent=4)
 
     def __repr__(self):
-        return str(self.serializable())
+        return json.dumps(self.serializable(), sort_keys=True, indent=4)
 
 
 _Alias = namedtuple('Alias', 'indict')

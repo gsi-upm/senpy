@@ -121,11 +121,11 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
 
     '''
 
-    schema_file = DEFINITIONS_FILE
+    # schema_file = DEFINITIONS_FILE
     _context = base_context["@context"]
 
     def __init__(self, *args, **kwargs):
-        auto_id = kwargs.pop('_auto_id', True)
+        auto_id = kwargs.pop('_auto_id', False)
 
         super(BaseModel, self).__init__(*args, **kwargs)
 
@@ -133,7 +133,7 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
             self.id
 
         if '@type' not in self:
-            logger.warn('Created an instance of an unknown model')
+            logger.warning('Created an instance of an unknown model')
 
     @property
     def id(self):
@@ -325,7 +325,6 @@ def _add_class_from_schema(*args, **kwargs):
 
 for i in [
         'aggregatedEvaluation',
-        'analysis',
         'dataset',
         'datasets',
         'emotion',
@@ -339,7 +338,7 @@ for i in [
         'entity',
         'help',
         'metric',
-        'plugin',
+        'parameter',
         'plugins',
         'response',
         'results',
@@ -349,3 +348,55 @@ for i in [
 
 ]:
     _add_class_from_schema(i)
+
+
+class Analysis(BaseModel):
+    schema = 'analysis'
+
+    parameters  = alias('prov:used')
+
+    @property
+    def params(self):
+        outdict = {}
+        outdict['algorithm'] = self.algorithm
+        for param in self.parameters:
+            outdict[param['name']] = param['value']
+        return outdict
+
+    @params.setter
+    def params(self, value):
+        for k, v in value.items():
+            for param in self.parameters:
+                if param.name == k:
+                    param.value = v
+                    break
+            else:
+                self.parameters.append(Parameter(name=k, value=v))
+
+    @property
+    def algorithm(self):
+        return self['prov:wasAssociatedWith']
+
+    @property
+    def plugin(self):
+        return self._plugin
+
+    @plugin.setter
+    def plugin(self, value):
+        self._plugin = value
+        self['prov:wasAssociatedWith'] = value.id
+
+    def run(self, request):
+        return self.plugin.process(request, self.params)
+
+
+class Plugin(BaseModel):
+    schema = 'plugin'
+
+    def activity(self, parameters):
+        '''Generate a prov:Activity from this plugin and the '''
+        a = Analysis()
+        a.plugin = self
+        a.params = parameters
+        return a
+

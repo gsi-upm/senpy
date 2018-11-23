@@ -41,7 +41,7 @@
       "@container": "@set"
     },
     "analysis": {
-      "@id": "AnalysisInvolved",
+      "@id": "prov:wasInformedBy",
       "@type": "@id",
       "@container": "@set"
     },

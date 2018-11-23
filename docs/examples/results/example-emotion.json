@@ -4,8 +4,9 @@
   "@type": "results",
   "analysis": [
     {
-      "@id": "me:EmotionAnalysis1",
-      "@type": "onyx:EmotionAnalysis"
+      "@id": "me:EmotionAnalysis1_Activity",
+      "@type": "me:EmotionAnalysis1",
+      "prov:wasAssociatedWith": "me:EmotionAnalysis1"
     }
   ],
   "entries": [
@@ -26,7 +27,7 @@
         {
           "@id": "http://micro.blog/status1#char=0,109",
           "nif:anchorOf": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
-          "prov:wasGeneratedBy": "me:EmotionAnalysis1",
+          "prov:wasGeneratedBy": "_:EmotionAnalysis1_Activity",
           "onyx:hasEmotion": [
             {
               "onyx:hasEmotionCategory": "wna:liking"

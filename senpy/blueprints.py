@@ -189,21 +189,27 @@ def basic_api(f):
 @basic_api
 def api_root(plugin):
     if plugin:
-        if 'algorithm' in request.parameters:
+        if request.parameters['algorithm'] != api.API_PARAMS['algorithm']['default']:
             raise Error('You cannot specify the algorithm with a parameter and a URL variable.'
                         ' Please, remove one of them')
-        plugin = plugin.replace('+', '/')
-        request.parameters['algorithm'] = tuple(plugin.split('/'))
+        request.parameters['algorithm'] =  tuple(plugin.replace('+', '/').split('/'))
+
+    params = request.parameters
+    plugin = request.parameters['algorithm']
+
+    sp = current_app.senpy
+    plugins = sp.get_plugins(plugin)
 
     if request.parameters['help']:
-        sp = current_app.senpy
-        plugins = sp._get_plugins(request)
-        allparameters = api.get_all_params(plugins, api.WEB_PARAMS, api.API_PARAMS, api.NIF_PARAMS)
+        apis = []
+        if request.parameters['verbose']:
+            apis.append(api.BUILTIN_PARAMS)
+        allparameters = api.get_all_params(plugins, *apis)
         response = Help(valid_parameters=allparameters)
         return response
     req = api.parse_call(request.parameters)
-    results = current_app.senpy.analyse(req)
-    results.analysis = set(i.id for i in results.analysis)
+    analysis = api.parse_analysis(req.parameters, plugins)
+    results = current_app.senpy.analyse(req, analysis)
     return results
 
 

@@ -26,8 +26,7 @@ class BlueprintsTest(TestCase):
         cls.senpy.init_app(cls.app)
         cls.dir = os.path.join(os.path.dirname(__file__), "..")
         cls.senpy.add_folder(cls.dir)
-        cls.senpy.activate_plugin("Dummy", sync=True)
-        cls.senpy.activate_plugin("DummyRequired", sync=True)
+        cls.senpy.activate_all()
         cls.senpy.default_plugin = 'Dummy'
 
     def setUp(self):
@@ -139,15 +138,26 @@ class BlueprintsTest(TestCase):
         # Calling dummy twice, should return the same string
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert len(js['analysis']) == 1
+        assert len(js['analysis']) == 2
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
 
         resp = self.client.get("/api/Dummy+Dummy?i=My aloha mohame")
         # Same with pluses instead of slashes
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert len(js['analysis']) == 1
+        assert len(js['analysis']) == 2
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
+
+    def test_analysis_chain_required(self):
+        """
+        If a parameter is required and duplicated (because two plugins require it), specifying
+        it once should suffice
+        """
+        resp = self.client.get("/api/DummyRequired/DummyRequired?i=My aloha mohame&example=a")
+        js = parse_resp(resp)
+        assert len(js['analysis']) == 2
+        assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
+        assert js['entries'][0]['reversed'] == 2
 
     def test_requirements_chain_help(self):
         '''The extra parameters of each plugin should be merged if they are in a chain '''
@@ -157,6 +167,7 @@ class BlueprintsTest(TestCase):
         assert 'valid_parameters' in js
         vp = js['valid_parameters']
         assert 'example' in vp
+        assert 'delimiter' in vp
 
     def test_requirements_chain_repeat_help(self):
         '''
@@ -168,9 +179,13 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         assert 'valid_parameters' in js
         vp = js['valid_parameters']
-        assert '0.delimiter' in vp
-        assert '1.delimiter' in vp
         assert 'delimiter' in vp
+
+        resp = self.client.get("/api/split/split?help=true&verbose=false")
+        js = parse_resp(resp)
+        vp = js['valid_parameters']
+        assert len(vp.keys()) == 1
+
 
     def test_requirements_chain(self):
         """
