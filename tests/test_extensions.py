@@ -3,10 +3,6 @@ import os
 from copy import deepcopy
 import logging
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 
 from functools import partial
 from senpy.extensions import Senpy
@@ -18,7 +14,8 @@ from unittest import TestCase
 
 
 def analyse(instance, **kwargs):
-    request = api.parse_call(kwargs)
+    basic = api.parse_params(kwargs, api.API_PARAMS)
+    request = api.parse_call(basic)
     return instance.analyse(request)
 
 
@@ -49,9 +46,9 @@ class ExtensionsTest(TestCase):
         '''Should be able to add and delete new plugins. '''
         new = plugins.Analysis(name='new', description='new', version=0)
         self.senpy.add_plugin(new)
-        assert new in self.senpy.plugins()
+        assert new in self.senpy.plugins(is_activated=False)
         self.senpy.delete_plugin(new)
-        assert new not in self.senpy.plugins()
+        assert new not in self.senpy.plugins(is_activated=False)
 
     def test_adding_folder(self):
         """ It should be possible for senpy to look for plugins in more folders. """
@@ -60,7 +57,7 @@ class ExtensionsTest(TestCase):
                       default_plugins=False)
         assert not senpy.analysis_plugins
         senpy.add_folder(self.examples_dir)
-        assert senpy.analysis_plugins
+        assert senpy.plugins(plugin_type=plugins.AnalysisPlugin, is_activated=False)
         self.assertRaises(AttributeError, senpy.add_folder, 'DOES NOT EXIST')
 
     def test_installing(self):
@@ -121,8 +118,8 @@ class ExtensionsTest(TestCase):
         # Leaf (defaultdict with  __setattr__ and __getattr__.
         r1 = analyse(self.senpy, algorithm="Dummy", input="tupni", output="tuptuo")
         r2 = analyse(self.senpy, input="tupni", output="tuptuo")
-        assert r1.analysis[0].id == "endpoint:plugins/Dummy_0.1"
-        assert r2.analysis[0].id == "endpoint:plugins/Dummy_0.1"
+        assert r1.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
+        assert r2.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_empty(self):
@@ -130,7 +127,7 @@ class ExtensionsTest(TestCase):
         senpy = Senpy(plugin_folder=None,
                       app=self.app,
                       default_plugins=False)
-        self.assertRaises(Error, senpy.analyse, Results())
+        self.assertRaises(Error, senpy.analyse, Results(), [])
 
     def test_analyse_wrong(self):
         """ Trying to analyse with a non-existent plugin should raise an error."""
@@ -156,29 +153,32 @@ class ExtensionsTest(TestCase):
         r2 = analyse(self.senpy,
                      input="tupni",
                      output="tuptuo")
-        assert r1.analysis[0].id == "endpoint:plugins/Dummy_0.1"
-        assert r2.analysis[0].id == "endpoint:plugins/Dummy_0.1"
+        assert r1.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
+        assert r2.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_error(self):
-        mm = mock.MagicMock()
-        mm.id = 'magic_mock'
-        mm.name = 'mock'
-        mm.is_activated = True
-        mm.process.side_effect = Error('error in analysis', status=500)
-        self.senpy.add_plugin(mm)
+        class ErrorPlugin(plugins.Analysis):
+            author = 'nobody'
+            version = 0
+            ex = Error()
+
+            def process(self, *args, **kwargs):
+                raise self.ex
+
+        m = ErrorPlugin(ex=Error('error in analysis', status=500))
+        self.senpy.add_plugin(m)
         try:
-            analyse(self.senpy, input='nothing', algorithm='MOCK')
+            analyse(self.senpy, input='nothing', algorithm='ErrorPlugin')
             assert False
         except Error as ex:
             assert 'error in analysis' in ex['message']
             assert ex['status'] == 500
 
-        ex = Exception('generic exception on analysis')
-        mm.process.side_effect = ex
+        m.ex = Exception('generic exception on analysis')
 
         try:
-            analyse(self.senpy, input='nothing', algorithm='MOCK')
+            analyse(self.senpy, input='nothing', algorithm='ErrorPlugin')
             assert False
         except Exception as ex:
             assert 'generic exception on analysis' in str(ex)
@@ -194,7 +194,7 @@ class ExtensionsTest(TestCase):
 
     def test_load_default_plugins(self):
         senpy = Senpy(plugin_folder=self.examples_dir, default_plugins=True)
-        assert len(senpy.plugins()) > 1
+        assert len(senpy.plugins(is_activated=False)) > 1
 
     def test_convert_emotions(self):
         self.senpy.activate_all(sync=True)

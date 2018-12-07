@@ -78,27 +78,47 @@ class Senpy(object):
     def delete_plugin(self, plugin):
         del self._plugins[plugin.name.lower()]
 
-    def plugins(self, **kwargs):
+    def plugins(self, plugin_type=None, is_activated=True, **kwargs):
         """ Return the plugins registered for a given application. Filtered by criteria  """
-        return list(plugins.pfilter(self._plugins, **kwargs))
+        return list(plugins.pfilter(self._plugins, plugin_type=plugin_type,
+                                    is_activated=is_activated, **kwargs))
 
     def get_plugin(self, name, default=None):
         if name == 'default':
             return self.default_plugin
-        plugin = name.lower()
-        if plugin in self._plugins:
-            return self._plugins[plugin]
+        elif name == 'conversion':
+            return None
 
-        results = self.plugins(id='endpoint:plugins/{}'.format(name))
+        if name.lower() in self._plugins:
+            return self._plugins[name.lower()]
 
-        if not results:
-            return Error(message="Plugin not found", status=404)
-        return results[0]
+        results = self.plugins(id='endpoint:plugins/{}'.format(name.lower()),
+                               plugin_type=None)
+        if results:
+            return results[0]
+
+        results = self.plugins(id=name,
+                               plugin_type=None)
+        if results:
+            return results[0]
+
+        msg = ("Plugin not found: '{}'\n"
+               "Make sure it is ACTIVATED\n"
+               "Valid algorithms: {}").format(name,
+                                              self._plugins.keys())
+        raise Error(message=msg, status=404)
+
+    def get_plugins(self, name):
+        try:
+            name = name.split(',')
+        except AttributeError:
+            pass  # Assume it is a tuple or a list
+        return tuple(self.get_plugin(n) for n in name)
 
     @property
     def analysis_plugins(self):
-        """ Return only the analysis plugins """
-        return self.plugins(plugin_type='analysisPlugin')
+        """ Return only the analysis plugins that are active"""
+        return self.plugins(plugin_type='analysisPlugin', is_activated=True)
 
     def add_folder(self, folder, from_root=False):
         """ Find plugins in this folder and add them to this instance """
@@ -113,37 +133,6 @@ class Senpy(object):
         else:
             raise AttributeError("Not a folder or does not exist: %s", folder)
 
-    def _get_plugins(self, request):
-        '''Get a list of plugins that should be run for a specific request'''
-        if not self.analysis_plugins:
-            raise Error(
-                status=404,
-                message=("No plugins found."
-                         " Please install one."))
-        algos = request.parameters.get('algorithm', None)
-        if not algos:
-            if self.default_plugin:
-                algos = [self.default_plugin.name, ]
-            else:
-                raise Error(
-                    status=404,
-                    message="No default plugin found, and None provided")
-
-        plugins = list()
-        for algo in algos:
-            algo = algo.lower()
-            if algo == 'conversion':
-                continue  # Allow 'conversion' as a virtual plugin, which does nothing
-            if algo not in self._plugins:
-                msg = ("The algorithm '{}' is not valid\n"
-                       "Valid algorithms: {}").format(algo,
-                                                      self._plugins.keys())
-                logger.debug(msg)
-                raise Error(status=404, message=msg)
-            plugins.append(self._plugins[algo])
-
-        return plugins
-
     def _process(self, req, pending, done=None):
         """
         Recursively process the entries with the first plugin in the list, and pass the results
@@ -153,25 +142,31 @@ class Senpy(object):
         if not pending:
             return req
 
-        plugin = pending[0]
-        results = plugin.process(req, conversions_applied=done)
-        if plugin not in results.analysis:
-            results.analysis.append(plugin)
+        analysis = pending[0]
+        results = analysis.run(req)
+        results.analysis.append(analysis)
+        done += analysis
         return self._process(results, pending[1:], done)
 
     def install_deps(self):
         plugins.install_deps(*self.plugins())
 
-    def analyse(self, request):
+    def analyse(self, request, analysis=None):
         """
         Main method that analyses a request, either from CLI or HTTP.
         It takes a processed request, provided by the user, as returned
         by api.parse_call().
         """
+        if not self.plugins():
+            raise Error(
+                status=404,
+                message=("No plugins found."
+                         " Please install one."))
+        if analysis is None:
+            plugins = self.get_plugins(request.parameters['algorithm'])
+            analysis = api.parse_analysis(request.parameters, plugins)
         logger.debug("analysing request: {}".format(request))
-        plugins = self._get_plugins(request)
-        request.parameters = api.parse_extra_params(request, plugins)
-        results = self._process(request, plugins)
+        results = self._process(request, analysis)
         logger.debug("Got analysis result: {}".format(results))
         results = self.postprocess(results)
         logger.debug("Returning post-processed result: {}".format(results))
@@ -187,7 +182,10 @@ class Senpy(object):
         """
         plugins = resp.analysis
 
-        params = resp.parameters
+        if 'parameters' not in resp:
+            return resp
+
+        params = resp['parameters']
         toModel = params.get('emotionModel', None)
         if not toModel:
             return resp
@@ -288,7 +286,10 @@ class Senpy(object):
         results = AggregatedEvaluation()
         results.parameters = params
         datasets = self._get_datasets(results)
-        plugins = self._get_plugins(results)
+        plugins = []
+        for plugname in params.algorithm:
+            plugins = self.get_plugin(plugname)
+
         for eval in plugins.evaluate(plugins, datasets):
             results.evaluations.append(eval)
         if 'with_parameters' not in results.parameters:

@@ -9,7 +9,7 @@ class Split(AnalysisPlugin):
     '''description: A sample plugin that chunks input text'''
 
     author = ["@militarpancho", '@balkian']
-    version = '0.2'
+    version = '0.3'
     url = "https://github.com/gsi-upm/senpy"
 
     extra_params = {
@@ -33,12 +33,15 @@ class Split(AnalysisPlugin):
         if chunker_type == "paragraph":
             tokenizer = LineTokenizer()
         chars = list(tokenizer.span_tokenize(original_text))
-        for i, chunk in enumerate(tokenizer.tokenize(original_text)):
-            print(chunk)
+        if len(chars) == 1:
+            # This sentence was already split
+            return
+        for i, chunk in enumerate(chars):
+            start, end = chunk
             e = Entry()
-            e['nif:isString'] = chunk
+            e['nif:isString'] = original_text[start:end]
             if entry.id:
-                e.id = entry.id + "#char={},{}".format(chars[i][0], chars[i][1])
+                e.id = entry.id + "#char={},{}".format(start, end)
             yield e
 
     test_cases = [

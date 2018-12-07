@@ -1,88 +1,100 @@
 {
-  "@context": "http://mixedemotions-project.eu/ns/context.jsonld",
-  "@id": "me:Result1",
-  "@type": "results",
-  "analysis": [
-    {
-      "@id": "me:SAnalysis1",
-      "@type": "marl:SentimentAnalysis",
-      "marl:maxPolarityValue": 1,
-      "marl:minPolarityValue": 0
-    },
-    {
-      "@id": "me:SgAnalysis1",
-      "@type": "me:SuggestionAnalysis"
-    },
-    {
-      "@id": "me:EmotionAnalysis1",
-      "@type": "me:EmotionAnalysis"
-    },
-    {
-      "@id": "me:NER1",
-      "@type": "me:NER"
-    }
-  ],
-  "entries": [
-    {
-      "@id": "http://micro.blog/status1",
-      "@type": [
-        "nif:RFC5147String",
-        "nif:Context"
-      ],
-      "nif:isString": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
-      "entities": [
+    "@context": "http://mixedemotions-project.eu/ns/context.jsonld",
+    "@id": "me:Result1",
+    "@type": "results",
+    "analysis": [
         {
-          "@id": "http://micro.blog/status1#char=5,13",
-          "nif:beginIndex": 5,
-          "nif:endIndex": 13,
-          "nif:anchorOf": "Microsoft",
-          "me:references": "http://dbpedia.org/page/Microsoft",
-          "prov:wasGeneratedBy": "me:NER1"
+            "@id": "_:SAnalysis1_Activity",
+            "@type": "marl:SentimentAnalysis",
+            "prov:wasAssociatedWith": "me:SentimentAnalysis",
+            "prov:used": [
+                {
+                    "name": "marl:maxPolarityValue",
+                    "prov:value": "1"
+                },
+                {
+                    "name": "marl:minPolarityValue",
+                    "prov:value": "0"
+                }
+            ]
         },
         {
-          "@id": "http://micro.blog/status1#char=25,37",
-          "nif:beginIndex": 25,
-          "nif:endIndex": 37,
-          "nif:anchorOf": "Windows Phone",
-          "me:references": "http://dbpedia.org/page/Windows_Phone",
-          "prov:wasGeneratedBy": "me:NER1"
-        }
-      ],
-      "suggestions": [
+            "@id": "_:SgAnalysis1_Activity",
+            "prov:wasAssociatedWith": "me:SgAnalysis1",
+            "@type": "me:SuggestionAnalysis"
+        },
         {
-          "@id": "http://micro.blog/status1#char=16,77",
-          "nif:beginIndex": 16,
-          "nif:endIndex": 77,
-          "nif:anchorOf": "put your Windows Phone on your newest #open technology program",
-          "prov:wasGeneratedBy": "me:SgAnalysis1"
-        }
-      ],
-      "sentiments": [
+            "@id": "_:EmotionAnalysis1_Activity",
+            "@type": "me:EmotionAnalysis",
+            "prov:wasAssociatedWith": "me:EmotionAnalysis1"
+        },
         {
-          "@id": "http://micro.blog/status1#char=80,97",
-          "nif:beginIndex": 80,
-          "nif:endIndex": 97,
-          "nif:anchorOf": "You'll be awesome.",
-          "marl:hasPolarity": "marl:Positive",
-          "marl:polarityValue": 0.9,
-          "prov:wasGeneratedBy": "me:SAnalysis1"
+            "@id": "_:NER1_Activity",
+            "@type": "me:NER",
+            "prov:wasAssociatedWith": "me:EmotionNER1"
         }
-      ],
-      "emotions": [
+    ],
+    "entries": [
         {
-          "@id": "http://micro.blog/status1#char=0,109",
-          "nif:anchorOf": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
-          "prov:wasGeneratedBy": "me:EAnalysis1",
-          "onyx:hasEmotion": [
-            {
-              "onyx:hasEmotionCategory": "wna:liking"
-            },
-            {
-              "onyx:hasEmotionCategory": "wna:excitement"
-            }
-          ]
+            "@id": "http://micro.blog/status1",
+            "@type": [
+                "nif:RFC5147String",
+                "nif:Context"
+            ],
+            "nif:isString": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
+            "entities": [
+                {
+                    "@id": "http://micro.blog/status1#char=5,13",
+                    "nif:beginIndex": 5,
+                    "nif:endIndex": 13,
+                    "nif:anchorOf": "Microsoft",
+                    "me:references": "http://dbpedia.org/page/Microsoft",
+                    "prov:wasGeneratedBy": "me:NER1"
+                },
+                {
+                    "@id": "http://micro.blog/status1#char=25,37",
+                    "nif:beginIndex": 25,
+                    "nif:endIndex": 37,
+                    "nif:anchorOf": "Windows Phone",
+                    "me:references": "http://dbpedia.org/page/Windows_Phone",
+                    "prov:wasGeneratedBy": "me:NER1"
+                }
+            ],
+            "suggestions": [
+                {
+                    "@id": "http://micro.blog/status1#char=16,77",
+                    "nif:beginIndex": 16,
+                    "nif:endIndex": 77,
+                    "nif:anchorOf": "put your Windows Phone on your newest #open technology program",
+                    "prov:wasGeneratedBy": "me:SgAnalysis1"
+                }
+            ],
+            "sentiments": [
+                {
+                    "@id": "http://micro.blog/status1#char=80,97",
+                    "nif:beginIndex": 80,
+                    "nif:endIndex": 97,
+                    "nif:anchorOf": "You'll be awesome.",
+                    "marl:hasPolarity": "marl:Positive",
+                    "marl:polarityValue": 0.9,
+                    "prov:wasGeneratedBy": "me:SAnalysis1"
+                }
+            ],
+            "emotions": [
+                {
+                    "@id": "http://micro.blog/status1#char=0,109",
+                    "nif:anchorOf": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
+                    "prov:wasGeneratedBy": "me:EAnalysis1",
+                    "onyx:hasEmotion": [
+                        {
+                            "onyx:hasEmotionCategory": "wna:liking"
+                        },
+                        {
+                            "onyx:hasEmotionCategory": "wna:excitement"
+                        }
+                    ]
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

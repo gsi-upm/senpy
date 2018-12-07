@@ -9,9 +9,15 @@
   "@type": "results",
   "analysis": [
     {
-      "@id": "me:HesamsAnalysis",
+      "@id": "me:HesamsAnalysis_Activity",
       "@type": "onyx:EmotionAnalysis",
-      "onyx:usesEmotionModel": "emovoc:pad-dimensions"
+      "prov:wasAssociatedWith": "me:HesamsAnalysis",
+      "prov:used": [
+        {
+          "name": "emotion-model",
+          "prov:value": "emovoc:pad-dimensions"
+        }
+      ]
     }
   ],
   "entries": [
@@ -32,7 +38,7 @@
         {
           "@id": "Entry1#char=0,21",
           "nif:anchorOf": "This is a test string",
-          "prov:wasGeneratedBy": "me:HesamAnalysis",
+          "prov:wasGeneratedBy": "_:HesamAnalysis_Activity",
           "onyx:hasEmotion": [
             {
                 "emovoc:pleasure": 0.5,

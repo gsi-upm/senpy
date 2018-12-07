@@ -31,10 +31,10 @@ def main_function(argv):
     default_plugins = params.get('default-plugins', False)
     sp = Senpy(default_plugins=default_plugins, plugin_folder=plugin_folder)
     request = api.parse_call(params)
-    algos = request.parameters.get('algorithm', None)
+    algos = sp.get_plugins(request.parameters.get('algorithm', None))
     if algos:
         for algo in algos:
-            sp.activate_plugin(algo)
+            sp.activate_plugin(algo.name)
     else:
         sp.activate_all()
     res = sp.analyse(request)

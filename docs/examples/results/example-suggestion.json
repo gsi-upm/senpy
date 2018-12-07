@@ -3,7 +3,11 @@
   "@id": "me:Result1",
   "@type": "results",
   "analysis": [
-      "me:SgAnalysis1"
+    {
+      "@id": "_:SgAnalysis1_Activity",
+      "@type": "me:SuggestionAnalysis",
+      "prov:wasAssociatedWith": "me:SgAnalysis1"
+    }
   ],
   "entries": [
     {
@@ -12,7 +16,6 @@
         "nif:RFC5147String",
         "nif:Context"
       ],
-      "prov:wasGeneratedBy": "me:SAnalysis1",
       "nif:isString": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
       "entities": [
       ],
@@ -22,7 +25,7 @@
           "nif:beginIndex": 16,
           "nif:endIndex": 77,
           "nif:anchorOf": "put your Windows Phone on your newest #open technology program",
-          "prov:wasGeneratedBy": "me:SgAnalysis1"
+          "prov:wasGeneratedBy": "_:SgAnalysis1_Activity"
         }
       ],
       "sentiments": [

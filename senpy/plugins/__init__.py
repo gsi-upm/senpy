@@ -17,7 +17,7 @@ import subprocess
 import importlib
 import yaml
 import threading
-import nltk
+from nltk import download
 
 from .. import models, utils
 from .. import api
@@ -132,12 +132,12 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     def deactivate(self):
         pass
 
-    def process(self, request, **kwargs):
+    def process(self, request, parameters, **kwargs):
         """
         An implemented plugin should override this method.
         Here, we assume that a process_entries method exists."""
         newentries = list(
-            self.process_entries(request.entries, request.parameters))
+            self.process_entries(request.entries, parameters))
         request.entries = newentries
         return request
 
@@ -194,13 +194,13 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
 
         try:
             request = models.Response()
-            request.parameters = api.parse_params(given_parameters,
-                                                  self.extra_params)
+            parameters = api.parse_params(given_parameters,
+                                          self.extra_params)
             request.entries = [
                 entry,
             ]
 
-            method = partial(self.process, request)
+            method = partial(self.process, request, parameters)
 
             if mock:
                 res = method()
@@ -249,14 +249,14 @@ class Analysis(Plugin):
     '''
 
     def analyse(self, request, parameters):
-        return super(Analysis, self).process(request)
+        return super(Analysis, self).process(request, parameters)
 
     def analyse_entries(self, entries, parameters):
         for i in super(Analysis, self).process_entries(entries, parameters):
             yield i
 
-    def process(self, request, **kwargs):
-        return self.analyse(request, request.parameters)
+    def process(self, request, parameters, **kwargs):
+        return self.analyse(request, parameters)
 
     def process_entries(self, entries, parameters):
         for i in self.analyse_entries(entries, parameters):
@@ -279,12 +279,12 @@ class Conversion(Plugin):
     e.g. a conversion of emotion models, or normalization of sentiment values.
     '''
 
-    def process(self, response, plugins=None, **kwargs):
+    def process(self, response, parameters, plugins=None, **kwargs):
         plugins = plugins or []
         newentries = []
         for entry in response.entries:
             newentries.append(
-                self.convert_entry(entry, response.parameters, plugins))
+                self.convert_entry(entry, parameters, plugins))
         response.entries = newentries
         return response
 
@@ -574,7 +574,7 @@ def install_deps(*plugins):
                     "Dependencies not properly installed: {}".format(pip_args))
         nltk_resources |= set(info.get('nltk_resources', []))
 
-    installed |= nltk.download(list(nltk_resources))
+    installed |= download(list(nltk_resources))
     return installed
 
 
