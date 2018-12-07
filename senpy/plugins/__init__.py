@@ -17,7 +17,7 @@ import subprocess
 import importlib
 import yaml
 import threading
-import nltk
+from nltk import download
 
 from .. import models, utils
 from .. import api
@@ -195,7 +195,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         try:
             request = models.Response()
             parameters = api.parse_params(given_parameters,
-                                                  self.extra_params)
+                                          self.extra_params)
             request.entries = [
                 entry,
             ]
@@ -574,7 +574,7 @@ def install_deps(*plugins):
                     "Dependencies not properly installed: {}".format(pip_args))
         nltk_resources |= set(info.get('nltk_resources', []))
 
-    installed |= nltk.download(list(nltk_resources))
+    installed |= download(list(nltk_resources))
     return installed
 
 
