@@ -7,9 +7,9 @@ Senpy includes experimental support for emotion/sentiment conversion plugins.
 Use
 ===
 
-Consider the original query: http://127.0.0.1:5000/api/?i=hello&algo=emoRand
+Consider the original query: http://127.0.0.1:5000/api/?i=hello&algo=emotion-random
 
-The requested plugin (emoRand) returns emotions using Ekman's model (or big6 in EmotionML):
+The requested plugin (emotion-random) returns emotions using Ekman's model (or big6 in EmotionML):
 
 .. code:: json
 
@@ -21,14 +21,14 @@ The requested plugin (emoRand) returns emotions using Ekman's model (or big6 in 
                 "@type": "emotion",
                 "onyx:hasEmotionCategory": "emoml:big6anger"
             },
-            "prov:wasGeneratedBy": "plugins/emoRand_0.1"
+            "prov:wasGeneratedBy": "plugins/emotion-random_0.1"
           }
 
           
 
 To get these emotions in VAD space (FSRE dimensions in EmotionML), we'd do this:
 
-http://127.0.0.1:5000/api/?i=hello&algo=emoRand&emotionModel=emoml:fsre-dimensions
+http://127.0.0.1:5000/api/?i=hello&algo=emotion-random&emotionModel=emoml:fsre-dimensions
 
 This call, provided there is a valid conversion plugin from Ekman's to VAD, would return something like this:
 
@@ -42,7 +42,7 @@ This call, provided there is a valid conversion plugin from Ekman's to VAD, woul
                 "@type": "emotion",
                 "onyx:hasEmotionCategory": "emoml:big6anger"
                 },
-            "prov:wasGeneratedBy": "plugins/emoRand_0.1"
+            "prov:wasGeneratedBy": "plugins/emotion-random.1"
           }, {
             "@type": "emotionSet",
             "onyx:hasEmotion": {
@@ -69,7 +69,7 @@ It is also possible to get the original emotion nested within the new converted 
                 "@type": "emotion",
                 "onyx:hasEmotionCategory": "emoml:big6anger"
                 },
-            "prov:wasGeneratedBy": "plugins/emoRand_0.1"
+            "prov:wasGeneratedBy": "plugins/emotion-random.1"
             "onyx:wasDerivedFrom": {
                 "@type": "emotionSet",
                 "onyx:hasEmotion": {

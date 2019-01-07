@@ -1,54 +1,27 @@
 What is Senpy?
 --------------
 
-Senpy is a framework for text analysis using Linked Data. There are three main applications of Senpy so far: sentiment and emotion analysis, user profiling and entity recoginition. Annotations and Services are compliant with NIF (NLP Interchange Format).
-
-Senpy aims at providing a framework where analysis modules can be integrated easily as plugins, and providing a core functionality for managing tasks such as data validation, user interaction, formatting, logging, translation to linked data, etc. 
-
-The figure below summarizes the typical features in a text analysis service.
-Senpy implements all the common blocks, so developers can focus on what really matters: great analysis algorithms that solve real problems.
-
-.. image:: senpy-framework.png
-  :width: 60%
-  :align: center
-
-
-Senpy for end users
-===================
-
-All services built using senpy share a common interface.
-This allows users to use them (almost) interchangeably.
-Senpy comes with a :ref:`built-in client`.
-
-
-Senpy for service developers
-============================
-
-Senpy is a framework that turns your sentiment or emotion analysis algorithm into a full blown semantic service.
-Senpy takes care of:
-
-  * Interfacing with the user: parameter validation, error handling.
-  * Formatting: JSON-LD, Turtle/n-triples input and output, or simple text input
-  * Linked Data: senpy results are semantically annotated, using a series of well established vocabularies, and sane default URIs.
-  * User interface: a web UI where users can explore your service and test different settings
-  * A client to interact with the service. Currently only available in Python.
-
-Sharing your sentiment analysis with the world has never been easier!
-
-Check out the :doc:`plugins` if you have developed an analysis algorithm (e.g. sentiment analysis) and you want to publish it as a service.
-
-Architecture
-============
-
-The main component of a sentiment analysis service is the algorithm itself. However, for the algorithm to work, it needs to get the appropriate parameters from the user, format the results according to the defined API, interact with the user whn errors occur or more information is needed, etc.
-
-Senpy proposes a modular and dynamic architecture that allows:
-
-* Implementing different algorithms in a extensible way, yet offering a common interface.
-* Offering common services that facilitate development, so developers can focus on implementing new and better algorithms.
-
-The framework consists of two main modules: Senpy core, which is the building block of the service, and Senpy plugins, which consist of the analysis algorithm. The next figure depicts a simplified version of the processes involved in an analysis with the Senpy framework.
+Senpy is a framework for sentiment and emotion analysis services.
+Its goal is to produce analysis services that are interchangeable and fully interoperable.
 
 .. image:: senpy-architecture.png
   :width: 100%
   :align: center
+
+All services built using senpy share a common interface.
+This allows users to use them (almost) interchangeably, with the same API and tools, simply by pointing to a different URL or changing a parameter.
+The common schema also makes it easier to evaluate the performance of different algorithms and services.
+In fact, Senpy has a built-in evaluation API you can use to compare results with different algorithms.
+
+Services can also use the common interface to communicate with each other.
+And higher level features can be built on top of these services, such as automatic fusion of results, emotion model conversion, and service discovery.
+
+These benefits are not limited to new services.
+The community has developed wrappers for some proprietary and commercial services (such as sentiment140 and Meaning Cloud), so you can consult them as.
+Senpy comes with a :ref:`built-in client`.
+
+
+To achieve this goal, Senpy uses a Linked Data principled approach, based on the NIF (NLP Interchange Format) specification, and open vocabularies such as Marl and Onyx.
+You can learn more about this in :doc:`vocabularies`.
+
+Check out :doc:`plugins` if you have developed an analysis algorithm (e.g. sentiment analysis) and you want to publish it as a service.

@@ -19,6 +19,7 @@ extra_reqs = parse_requirements("extra-requirements.txt")
 
 setup(
     name='senpy',
+    python_requires='>3.3',
     packages=['senpy'],  # this must be the same as the name above
     version=__version__,
     description=('A sentiment analysis server implementation. '
@@ -30,7 +31,9 @@ setup(
     download_url='https://github.com/gsi-upm/senpy/archive/{}.tar.gz'.format(
         __version__),
     keywords=['eurosentiment', 'sentiment', 'emotions', 'nif'],
-    classifiers=[],
+    classifiers=[
+        'Programming Language :: Python :: 3',
+    ],
     install_requires=install_reqs,
     tests_require=test_reqs,
     setup_requires=['pytest-runner', ],

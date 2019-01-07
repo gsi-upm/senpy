@@ -31,7 +31,7 @@ centroids_direction:
   - emoml:pad
 aliases: # These are aliases for any key in the centroid, to avoid repeating a long name several times
   A: emoml:pad-dimensions:arousal
-  V: emoml:pad-dimensions:pleasure
+  V: emoml:pad-dimensions:valence
   D: emoml:pad-dimensions:dominance
   anger: emoml:big6anger
   disgust: emoml:big6disgust

@@ -9,30 +9,13 @@
       "description": "String contained in this Context. Alternative: nif:isString",
       "type": "string"
     },
-    "sentiments": {
+    "marl:hasOpinion": {
       "type": "array",
-      "items": {"$ref": "sentiment.json" },
-      "default": []
+      "items": {"$ref": "sentiment.json" }
     },
-    "emotions": {
+    "onyx:hasEmotionSet": {
       "type": "array",
-      "items": {"$ref": "emotionSet.json" },
-      "default": []
-    },
-    "entities": {
-      "type": "array",
-      "items": {"$ref": "entity.json" },
-      "default": []
-    },
-    "topics": {
-      "type": "array",
-      "items": {"$ref": "topic.json" },
-      "default": []
-    },
-    "suggestions": {
-      "type": "array",
-      "items": {"$ref": "suggestion.json" },
-      "default": []
+      "items": {"$ref": "emotionSet.json" }
     }
   },
   "required": ["nif:isString"]

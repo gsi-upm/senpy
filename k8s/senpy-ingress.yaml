@@ -12,3 +12,10 @@ spec:
         backend:
           serviceName: senpy-latest
           servicePort: 5000
+  - host: latest.senpy.gsi.upm.es
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: senpy-latest
+          servicePort: 5000

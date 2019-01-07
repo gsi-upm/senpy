@@ -10,7 +10,6 @@ from senpy.models import (Analysis,
                           EmotionAnalysis,
                           EmotionSet,
                           Entry,
-                          Entity,
                           Error,
                           Results,
                           Sentiment,
@@ -25,7 +24,7 @@ from pprint import pprint
 
 class ModelsTest(TestCase):
     def test_jsonld(self):
-        prueba = {"id": "test", "analysis": [], "entries": []}
+        prueba = {"id": "test", "activities": [], "entries": []}
         r = Results(**prueba)
         print("Response's context: ")
         pprint(r._context)
@@ -51,7 +50,7 @@ class ModelsTest(TestCase):
         logging.debug("jsonld: %s", j6)
         assert ("@context" in j6)
         assert ("entries" in j6)
-        assert ("analysis" in j6)
+        assert ("activities" in j6)
         resp = r6.flask()
         received = json.loads(resp.data.decode())
         logging.debug("Response: %s", j6)
@@ -114,7 +113,7 @@ class ModelsTest(TestCase):
                                      }})
         c = p.jsonld()
         assert '@type' in c
-        assert c['@type'] == 'sentimentPlugin'
+        assert c['@type'] == 'SentimentPlugin'
         assert 'info' not in c
         assert 'repo' not in c
         assert 'extra_params' in c
@@ -133,7 +132,7 @@ class ModelsTest(TestCase):
         p._testing = 0
         s = str(p)
         assert "_testing" not in s
-        r.analysis.append(p)
+        r.activities.append(p)
         s = str(r)
         assert "_testing" not in s
 
@@ -146,7 +145,7 @@ class ModelsTest(TestCase):
         """Any model should be serializable as a turtle file"""
         ana = EmotionAnalysis()
         res = Results()
-        res.analysis.append(ana)
+        res.activities.append(ana)
         entry = Entry(text='Just testing')
         eSet = EmotionSet()
         emotion = Emotion()
@@ -155,7 +154,7 @@ class ModelsTest(TestCase):
         eSet.onyx__hasEmotion.append(emotion)
         eSet.prov__wasGeneratedBy = ana.id
         triples = ('ana a :Analysis',
-                   'entry a :entry',
+                   'ent[]ry a :entry',
                    '      nif:isString "Just testing"',
                    '      onyx:hasEmotionSet eSet',
                    'eSet a onyx:EmotionSet',
@@ -163,7 +162,7 @@ class ModelsTest(TestCase):
                    '     onyx:hasEmotion emotion',
                    'emotion a onyx:Emotion',
                    'res a :results',
-                   '    me:AnalysisInvoloved ana',
+                   '    me:AnalysisInvolved ana',
                    '    prov:used entry')
 
         t = res.serialize(format='turtle')
@@ -176,7 +175,7 @@ class ModelsTest(TestCase):
         plugs = Plugins()
         c = plugs.jsonld()
         assert '@type' in c
-        assert c['@type'] == 'plugins'
+        assert c['@type'] == 'Plugins'
 
     def test_single_plugin(self):
         """A response with a single plugin should still return a list"""
@@ -188,7 +187,7 @@ class ModelsTest(TestCase):
         assert isinstance(plugs.plugins, list)
         js = plugs.jsonld()
         assert isinstance(js['plugins'], list)
-        assert js['plugins'][0]['@type'] == 'sentimentPlugin'
+        assert js['plugins'][0]['@type'] == 'SentimentPlugin'
 
     def test_parameters(self):
         '''An Analysis should contain the algorithm and the list of parameters to be used'''
@@ -205,11 +204,11 @@ class ModelsTest(TestCase):
 
     def test_from_string(self):
         results = {
-            '@type': 'results',
+            '@type': 'Results',
             '@id': 'prueba',
             'entries': [{
                 '@id': 'entry1',
-                '@type': 'entry',
+                '@type': 'Entry',
                 'nif:isString': 'TEST'
             }]
         }
@@ -226,10 +225,22 @@ class ModelsTest(TestCase):
     def test_serializable(self):
         r = Results()
         e = Entry()
-        ent = Entity()
-        e.entities.append(ent)
         r.entries.append(e)
         d = r.serializable()
         assert d
         assert d['entries']
-        assert d['entries'][0]['entities']
+
+    def test_template(self):
+        r = Results()
+        e = Entry()
+        e.nif__isString = 'testing the template'
+        sent = Sentiment()
+        sent.polarity = 'marl:Positive'
+        r.entries.append(e)
+        e.sentiments.append(sent)
+        template = ('{% for entry in entries %}'
+                    '{{ entry["nif:isString"] | upper }}'
+                    ',{{entry.sentiments[0]["marl:hasPolarity"].split(":")[1]}}'
+                    '{% endfor %}')
+        res = r.serialize(template=template)
+        assert res == 'TESTING THE TEMPLATE,Positive'

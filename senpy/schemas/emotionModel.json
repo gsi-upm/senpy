@@ -19,8 +19,7 @@
       "type": "array",
       "items": {
         "$ref": "emotion.json"
-      },
-      "default": []
+      }
     }
   },
   "required": ["@id", "onyx:hasEmotion"]

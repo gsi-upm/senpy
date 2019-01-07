@@ -7,6 +7,7 @@ standard_library.install_aliases()
 
 from . import plugins, api
 from .models import Error, AggregatedEvaluation
+from .plugins import AnalysisPlugin
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 
 from threading import Thread
@@ -54,6 +55,7 @@ class Senpy(object):
         self.app = app
         if app is not None:
             self.init_app(app)
+        self._conversion_candidates = {}
 
     def init_app(self, app):
         """ Initialise a flask app to add plugins to its context """
@@ -74,14 +76,18 @@ class Senpy(object):
 
     def add_plugin(self, plugin):
         self._plugins[plugin.name.lower()] = plugin
+        self._conversion_candidates = {}
 
     def delete_plugin(self, plugin):
         del self._plugins[plugin.name.lower()]
 
     def plugins(self, plugin_type=None, is_activated=True, **kwargs):
         """ Return the plugins registered for a given application. Filtered by criteria  """
-        return list(plugins.pfilter(self._plugins, plugin_type=plugin_type,
-                                    is_activated=is_activated, **kwargs))
+        return sorted(plugins.pfilter(self._plugins,
+                                      plugin_type=plugin_type,
+                                      is_activated=is_activated,
+                                      **kwargs),
+                      key=lambda x: x.id)
 
     def get_plugin(self, name, default=None):
         if name == 'default':
@@ -115,10 +121,10 @@ class Senpy(object):
             pass  # Assume it is a tuple or a list
         return tuple(self.get_plugin(n) for n in name)
 
-    @property
-    def analysis_plugins(self):
+    def analysis_plugins(self, **kwargs):
         """ Return only the analysis plugins that are active"""
-        return self.plugins(plugin_type='analysisPlugin', is_activated=True)
+        candidates = self.plugins(**kwargs)
+        return list(plugins.pfilter(candidates, plugin_type=AnalysisPlugin))
 
     def add_folder(self, folder, from_root=False):
         """ Find plugins in this folder and add them to this instance """
@@ -144,14 +150,17 @@ class Senpy(object):
 
         analysis = pending[0]
         results = analysis.run(req)
-        results.analysis.append(analysis)
+        results.activities.append(analysis)
         done += analysis
         return self._process(results, pending[1:], done)
 
     def install_deps(self):
-        plugins.install_deps(*self.plugins())
+        logger.info('Installing dependencies')
+        # If a plugin is activated, its dependencies should already be installed
+        # Otherwise, it would've failed to activate.
+        plugins.install_deps(*self.plugins(is_activated=False))
 
-    def analyse(self, request, analysis=None):
+    def analyse(self, request, analyses=None):
         """
         Main method that analyses a request, either from CLI or HTTP.
         It takes a processed request, provided by the user, as returned
@@ -162,17 +171,17 @@ class Senpy(object):
                 status=404,
                 message=("No plugins found."
                          " Please install one."))
-        if analysis is None:
+        if analyses is None:
             plugins = self.get_plugins(request.parameters['algorithm'])
-            analysis = api.parse_analysis(request.parameters, plugins)
+            analyses = api.parse_analyses(request.parameters, plugins)
         logger.debug("analysing request: {}".format(request))
-        results = self._process(request, analysis)
+        results = self._process(request, analyses)
         logger.debug("Got analysis result: {}".format(results))
-        results = self.postprocess(results)
+        results = self.postprocess(results, analyses)
         logger.debug("Returning post-processed result: {}".format(results))
         return results
 
-    def convert_emotions(self, resp):
+    def convert_emotions(self, resp, analyses):
         """
         Conversion of all emotions in a response **in place**.
         In addition to converting from one model to another, it has
@@ -180,45 +189,50 @@ class Senpy(object):
         Needless to say, this is far from an elegant solution, but it works.
         @todo refactor and clean up
         """
-        plugins = resp.analysis
 
+        logger.debug("Converting emotions")
         if 'parameters' not in resp:
+            logger.debug("NO PARAMETERS")
             return resp
 
         params = resp['parameters']
-        toModel = params.get('emotionModel', None)
+        toModel = params.get('emotion-model', None)
         if not toModel:
+            logger.debug("NO tomodel PARAMETER")
             return resp
 
         logger.debug('Asked for model: {}'.format(toModel))
         output = params.get('conversion', None)
-        candidates = {}
-        for plugin in plugins:
-            try:
-                fromModel = plugin.get('onyx:usesEmotionModel', None)
-                candidates[plugin.id] = next(self._conversion_candidates(fromModel, toModel))
-                logger.debug('Analysis plugin {} uses model: {}'.format(
-                    plugin.id, fromModel))
-            except StopIteration:
-                e = Error(('No conversion plugin found for: '
-                           '{} -> {}'.format(fromModel, toModel)),
-                          status=404)
-                e.original_response = resp
-                e.parameters = params
-                raise e
+
         newentries = []
         done = []
         for i in resp.entries:
+
             if output == "full":
                 newemotions = copy.deepcopy(i.emotions)
             else:
                 newemotions = []
             for j in i.emotions:
-                plugname = j['prov:wasGeneratedBy']
-                candidate = candidates[plugname]
-                done.append({'plugin': candidate, 'parameters': params})
+                activity = j['prov:wasGeneratedBy']
+                act = resp.activity(activity)
+                if not act:
+                    raise Error('Could not find the emotion model for {}'.format(activity))
+                fromModel = act.plugin['onyx:usesEmotionModel']
+                if toModel == fromModel:
+                    continue
+                candidate = self._conversion_candidate(fromModel, toModel)
+                if not candidate:
+                    e = Error(('No conversion plugin found for: '
+                              '{} -> {}'.format(fromModel, toModel)),
+                              status=404)
+                    e.original_response = resp
+                    e.parameters = params
+                    raise e
+
+                analysis = candidate.activity(params)
+                done.append(analysis)
                 for k in candidate.convert(j, fromModel, toModel, params):
-                    k.prov__wasGeneratedBy = candidate.id
+                    k.prov__wasGeneratedBy = analysis.id
                     if output == 'nested':
                         k.prov__wasDerivedFrom = j
                     newemotions.append(k)
@@ -227,26 +241,36 @@ class Senpy(object):
         resp.entries = newentries
         return resp
 
-    def _conversion_candidates(self, fromModel, toModel):
-        candidates = self.plugins(plugin_type=plugins.EmotionConversion)
-        for candidate in candidates:
-            for pair in candidate.onyx__doesConversion:
-                logging.debug(pair)
-                if candidate.can_convert(fromModel, toModel):
-                    yield candidate
+    def _conversion_candidate(self, fromModel, toModel):
+        if not self._conversion_candidates:
+            candidates = {}
+            for conv in self.plugins(plugin_type=plugins.EmotionConversion):
+                for pair in conv.onyx__doesConversion:
+                    logging.debug(pair)
+                    key = (pair['onyx:conversionFrom'], pair['onyx:conversionTo'])
+                    if key not in candidates:
+                        candidates[key] = []
+                    candidates[key].append(conv)
+            self._conversion_candidates = candidates
 
-    def postprocess(self, response):
+        key = (fromModel, toModel)
+        if key not in self._conversion_candidates:
+            return None
+        return self._conversion_candidates[key][0]
+
+    def postprocess(self, response, analyses):
         '''
         Transform the results from the analysis plugins.
         It has some pre-defined post-processing like emotion conversion,
         and it also allows plugins to auto-select themselves.
         '''
 
-        response = self.convert_emotions(response)
+        response = self.convert_emotions(response, analyses)
 
         for plug in self.plugins(plugin_type=plugins.PostProcessing):
-            if plug.check(response, response.analysis):
-                response = plug.process(response)
+            if plug.check(response, response.activities):
+                activity = plug.activity(response.parameters)
+                response = plug.process(response, activity)
         return response
 
     def _get_datasets(self, request):
@@ -286,13 +310,16 @@ class Senpy(object):
         results = AggregatedEvaluation()
         results.parameters = params
         datasets = self._get_datasets(results)
-        plugins = []
-        for plugname in params.algorithm:
-            plugins = self.get_plugin(plugname)
+        plugs = []
+        for plugname in params['algorithm']:
+            plugs = self.get_plugins(plugname)
+        for plug in plugs:
+            if not isinstance(plug, plugins.Evaluable):
+                raise Exception('Plugin {} can not be evaluated', plug.id)
 
-        for eval in plugins.evaluate(plugins, datasets):
+        for eval in plugins.evaluate(plugs, datasets):
             results.evaluations.append(eval)
-        if 'with_parameters' not in results.parameters:
+        if 'with-parameters' not in results.parameters:
             del results.parameters
         logger.debug("Returning evaluation result: {}".format(results))
         return results
@@ -300,8 +327,7 @@ class Senpy(object):
     @property
     def default_plugin(self):
         if not self._default or not self._default.is_activated:
-            candidates = self.plugins(
-                plugin_type='analysisPlugin', is_activated=True)
+            candidates = self.analysis_plugins()
             if len(candidates) > 0:
                 self._default = candidates[0]
             else:
@@ -336,22 +362,15 @@ class Senpy(object):
             ps.append(self.deactivate_plugin(plug, sync=sync))
         return ps
 
-    def _set_active(self, plugin, active=True, *args, **kwargs):
-        ''' We're using a variable in the plugin itself to activate/deactivate plugins.\
-        Note that plugins may activate themselves by setting this variable.
-        '''
-        plugin.is_activated = active
-
     def _activate(self, plugin):
         success = False
         with plugin._lock:
             if plugin.is_activated:
                 return
-            plugin.activate()
+            plugin._activate()
             msg = "Plugin activated: {}".format(plugin.name)
             logger.info(msg)
-            success = True
-            self._set_active(plugin, success)
+            success = plugin.is_activated
         return success
 
     def activate_plugin(self, plugin_name, sync=True):
@@ -375,7 +394,7 @@ class Senpy(object):
         with plugin._lock:
             if not plugin.is_activated:
                 return
-            plugin.deactivate()
+            plugin._deactivate()
             logger.info("Plugin deactivated: {}".format(plugin.name))
 
     def deactivate_plugin(self, plugin_name, sync=True):
@@ -385,13 +404,11 @@ class Senpy(object):
                 message="Plugin not found: {}".format(plugin_name), status=404)
         plugin = self._plugins[plugin_name]
 
-        self._set_active(plugin, False)
-
         if sync or not getattr(plugin, 'async', True) or not getattr(
                 plugin, 'sync', False):
-            self._deactivate(plugin)
+            plugin._deactivate()
         else:
-            th = Thread(target=partial(self._deactivate, plugin))
+            th = Thread(target=plugin.deactivate)
             th.start()
             return th
 

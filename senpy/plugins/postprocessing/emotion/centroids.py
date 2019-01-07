@@ -103,7 +103,9 @@ class CentroidConversion(EmotionConversionPlugin):
             for i in emotionSet.onyx__hasEmotion:
                 e.onyx__hasEmotion.append(self._backwards_conversion(i))
         else:
-            raise Error('EMOTION MODEL NOT KNOWN')
+            raise Error('EMOTION MODEL NOT KNOWN. '
+                        'Cannot convert from {} to {}'.format(fromModel,
+                                                              toModel))
         yield e
 
     def test(self, info=None):

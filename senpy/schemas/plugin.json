@@ -24,8 +24,7 @@
       "description": "Sub-type of plugin. e.g. sentimentPlugin"
     },
     "extra_params": {
-      "type": "object",
-      "default": {}
+      "type": "object"
     }
   }
 }

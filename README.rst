@@ -1,9 +1,18 @@
 .. image:: img/header.png
    :width: 100%
-   :target: http://demos.gsi.dit.upm.es/senpy
+   :target: http://senpy.gsi.upm.es
 
 .. image:: https://travis-ci.org/gsi-upm/senpy.svg?branch=master
    :target: https://travis-ci.org/gsi-upm/senpy
+
+.. image:: https://lab.gsi.upm.es/senpy/senpy/badges/master/pipeline.svg
+   :target: https://lab.gsi.upm.es/senpy/senpy/commits/master
+
+.. image:: https://lab.gsi.upm.es/senpy/senpy/badges/master/coverage.svg
+   :target: https://lab.gsi.upm.es/senpy/senpy/commits/master
+
+.. image:: https://img.shields.io/pypi/l/requests.svg
+   :target: https://lab.gsi.upm.es/senpy/senpy/
 
 Senpy lets you create sentiment analysis web services easily, fast and using a well known API.
 As a bonus, senpy services use semantic vocabularies (e.g. `NIF <http://persistence.uni-leipzig.org/nlp2rdf/>`_, `Marl <http://www.gsi.dit.upm.es/ontologies/marl>`_, `Onyx <http://www.gsi.dit.upm.es/ontologies/onyx>`_) and formats (turtle, JSON-LD, xml-rdf).
@@ -12,7 +21,7 @@ Have you ever wanted to turn your sentiment analysis algorithms into a service?
 With senpy, now you can.
 It provides all the tools so you just have to worry about improving your algorithms:
 
-`See it in action. <http://senpy.cluster.gsi.dit.upm.es/>`_
+`See it in action. <http://senpy.gsi.upm.es/>`_
 
 Installation
 ------------
@@ -38,9 +47,9 @@ If you want to install senpy globally, use sudo instead of the ``--user`` flag.
 
 Docker Image
 ************
-Build the image or use the pre-built one: ``docker run -ti -p 5000:5000 gsiupm/senpy --default-plugins``.
+Build the image or use the pre-built one: ``docker run -ti -p 5000:5000 gsiupm/senpy``.
 
-To add custom plugins, add a volume and tell senpy where to find the plugins: ``docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --default-plugins -f /plugins``
+To add custom plugins, add a volume and tell senpy where to find the plugins: ``docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy -f /plugins``
 
 
 Developing
@@ -123,6 +132,16 @@ Just use the example Procfile in this repository, or build your own.
 
 For more information, check out the `documentation <http://senpy.readthedocs.org>`_.
 ------------------------------------------------------------------------------------
+
+
+Python 2.x compatibility
+------------------------
+
+Keeping compatibility between python 2.7 and 3.x is not always easy, especially for a framework that deals both with text and web requests.
+Hence, starting February 2019, this project will no longer make efforts to support python 2.7, which will reach its end of life in 2020.
+Most of the functionality should still work, and the compatibility shims will remain for now, but we cannot make any guarantees at this point.
+Instead, the maintainers will focus their efforts on keeping the codebase compatible across different Python 3.3+ versions, including upcoming ones.
+We apologize for the inconvenience.
 
 
 Acknowledgement

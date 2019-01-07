@@ -7,7 +7,6 @@
       "properties": {
         "datasets": {
           "type": "array",
-          "default": [],
           "items": {
             "$ref": "dataset.json"
           }

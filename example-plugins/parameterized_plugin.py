@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from senpy import easy_test, models, plugins
 
@@ -25,7 +25,8 @@ class ParameterizedDictionary(plugins.SentimentPlugin):
         }
     }
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
+        params = activity.params
         positive_words = params['positive-words'].split(',')
         negative_words = params['negative-words'].split(',')
         dictionary = {
@@ -35,7 +36,7 @@ class ParameterizedDictionary(plugins.SentimentPlugin):
         polarity = basic.get_polarity(entry.text, [dictionary])
 
         s = models.Sentiment(marl__hasPolarity=polarity)
-        s.prov(self)
+        s.prov(activity)
         entry.sentiments.append(s)
         yield entry
 

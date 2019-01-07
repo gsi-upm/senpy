@@ -1,6 +1,6 @@
 This is a collection of plugins that exemplify certain aspects of plugin development with senpy.
 
-The first series of plugins the `basic` ones.
+The first series of plugins are the `basic` ones.
 Their starting point is a classification function defined in `basic.py`.
 They all include testing and running them as a script will run all tests.
 In ascending order of customization, the plugins are:
@@ -19,5 +19,5 @@ In rest of the plugins show advanced topics:
 
 All of the plugins in this folder include a set of test cases and they are periodically tested with the latest version of senpy.
 
-Additioanlly, for an example of stand-alone plugin that can be tested and deployed with docker, take a look at: lab.cluster.gsi.dit.upm.es/senpy/plugin-example
+Additioanlly, for an example of stand-alone plugin that can be tested and deployed with docker, take a look at: lab.gsi.upm.es/senpy/plugin-example
  bbm

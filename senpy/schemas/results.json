@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "name": "Entry",
   "allOf": [
     {"$ref": "response.json"},
     {
@@ -10,15 +11,11 @@
         "@context": {
           "$ref": "context.json"
         },
-        "@type": {
-          "default": "results"
-        },
         "@id": {
           "description": "ID of the analysis",
           "type": "string"
         },
-        "analysis": {
-          "default": [],
+        "activities": {
           "type": "array",
           "items": {
               "$ref": "analysis.json"
@@ -26,14 +23,13 @@
         },
         "entries": {
           "type": "array",
-          "default": [],
           "items": {
             "$ref": "entry.json"
           }
         }
 
       },
-      "required": ["@id", "analysis", "entries"]
+      "required": ["@id", "activities", "entries"]
     }
   ]
 }

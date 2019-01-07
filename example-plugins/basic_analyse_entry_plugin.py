@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from senpy import easy_test, models, plugins
 
@@ -18,13 +18,13 @@ class BasicAnalyseEntry(plugins.SentimentPlugin):
         'default': 'marl:Neutral'
     }
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
         polarity = basic.get_polarity(entry.text)
 
         polarity = self.mappings.get(polarity, self.mappings['default'])
 
         s = models.Sentiment(marl__hasPolarity=polarity)
-        s.prov(self)
+        s.prov(activity)
         entry.sentiments.append(s)
         yield entry
 

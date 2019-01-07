@@ -5,7 +5,7 @@ IMAGENAME=gsiupm/senpy
 
 # The first version is the main one (used for quick builds)
 # See .makefiles/python.mk for more info
-PYVERSIONS=3.5 2.7
+PYVERSIONS=3.6 3.7
 
 DEVPORT=5000
 

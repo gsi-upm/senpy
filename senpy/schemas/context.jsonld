@@ -1,8 +1,8 @@
 {
   "@context": {
-    "@vocab": "http://www.gsi.dit.upm.es/ontologies/senpy#",
+    "@vocab": "http://www.gsi.upm.es/onto/senpy/ns#",
     "dc": "http://dublincore.org/2012/06/14/dcelements#",
-    "me": "http://www.mixedemotions-project.eu/ns/model#",
+    "senpy": "http://www.gsi.upm.es/onto/senpy/ns#",
     "prov": "http://www.w3.org/ns/prov#",
     "nif": "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#",
     "marl": "http://www.gsi.dit.upm.es/ontologies/marl/ns#",
@@ -16,10 +16,10 @@
       "@container": "@set"
     },
     "entities": {
-      "@id": "me:hasEntities"
+      "@id": "senpy:hasEntities"
     },
     "suggestions": {
-      "@id": "me:hasSuggestions",
+      "@id": "senpy:hasSuggestions",
       "@container": "@set"
     },
     "onyx:hasEmotion": {
@@ -40,7 +40,7 @@
       "@id": "prov:used",
       "@container": "@set"
     },
-    "analysis": {
+    "activities": {
       "@id": "prov:wasInformedBy",
       "@type": "@id",
       "@container": "@set"
@@ -65,6 +65,13 @@
     },
     "onyx:conversionTo": {
       "@type": "@id"
-    }
+    },
+    "parameters": {
+        "@type": "Parameter"
+    },
+    "errors": {
+        "@type": "ParameterError"
+    },
+    "prefix": "http://senpy.invalid/"
   }
 }

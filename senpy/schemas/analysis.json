@@ -17,7 +17,6 @@
     "prov:used": {
         "description": "Parameters of the algorithm",
         "@type": "array",
-        "default": [],
         "type": "array",
         "items": {
             "$ref": "parameter.json"

@@ -5,7 +5,7 @@ import json
 from senpy.testing import patch_requests
 from senpy.models import Results
 
-ENDPOINT = 'http://example.com'
+ENDPOINT = 'http://invalid.com'
 
 
 class TestTest(TestCase):

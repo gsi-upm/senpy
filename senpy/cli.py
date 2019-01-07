@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 from .models import Error
 from .extensions import Senpy
@@ -27,8 +29,8 @@ def main_function(argv):
                               api.CLI_PARAMS,
                               api.API_PARAMS,
                               api.NIF_PARAMS)
-    plugin_folder = params['plugin_folder']
-    default_plugins = params.get('default-plugins', False)
+    plugin_folder = params['plugin-folder']
+    default_plugins = not params.get('no-default-plugins', False)
     sp = Senpy(default_plugins=default_plugins, plugin_folder=plugin_folder)
     request = api.parse_call(params)
     algos = sp.get_plugins(request.parameters.get('algorithm', None))
@@ -48,7 +50,7 @@ def main():
         res = main_function(sys.argv[1:])
         print(res.serialize())
     except Error as err:
-        print(err.serialize())
+        print(err.serialize(), file=sys.stderr)
         sys.exit(2)
 
 

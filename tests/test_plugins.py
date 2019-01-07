@@ -1,4 +1,5 @@
-#!/bin/env python
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
 
 import os
 import pickle
@@ -71,7 +72,7 @@ class PluginsTest(TestCase):
         ps = Plugins()
         for i in (plugins.SentimentPlugin,
                   plugins.EmotionPlugin,
-                  plugins.AnalysisPlugin):
+                  plugins.Analyser):
             p = i(name='Plugin_{}'.format(i.__name__),
                   description='TEST',
                   version=0,
@@ -212,14 +213,15 @@ class PluginsTest(TestCase):
             author = 'me'
             version = 0
 
-            def input(self, entry, **kwargs):
-                return entry.text
+            def to_features(self, entry, **kwargs):
+                return entry.text.split()
 
-            def predict_one(self, input):
-                return 'SIGN' in input
+            def predict_one(self, features, **kwargs):
+                return ['SIGN' in features]
 
-            def output(self, output, entry, **kwargs):
-                if output:
+            def to_entry(self, features, entry, **kwargs):
+                print('Features for to_entry:', features)
+                if features[0]:
                     entry.myAnnotation = 'DETECTED'
                 return entry
 
@@ -237,16 +239,17 @@ class PluginsTest(TestCase):
 
     def test_sentimentbox(self):
 
-        class SentimentBox(plugins.MappingMixin, plugins.SentimentBox):
+        class SentimentBox(plugins.SentimentBox):
             ''' Vague description'''
 
             author = 'me'
             version = 0
 
-            mappings = {'happy': 'marl:Positive', 'sad': 'marl:Negative'}
-
-            def predict_one(self, input, **kwargs):
-                return 'happy' if ':)' in input else 'sad'
+            def predict_one(self, features, **kwargs):
+                text = ' '.join(features)
+                if ':)' in text:
+                    return [1, 0, 0]
+                return [0, 0, 1]
 
             test_cases = [
                 {
@@ -320,19 +323,19 @@ class PluginsTest(TestCase):
             testdata.append(["bad", 0])
         dataset = pd.DataFrame(testdata, columns=['text', 'polarity'])
 
-        class DummyPlugin(plugins.TextBox):
+        class DummyPlugin(plugins.SentimentBox):
             description = 'Plugin to test evaluation'
             version = 0
 
-            def predict_one(self, input):
+            def predict_one(self, features, **kwargs):
                 return 0
 
-        class SmartPlugin(plugins.TextBox):
+        class SmartPlugin(plugins.SentimentBox):
             description = 'Plugin to test evaluation'
             version = 0
 
-            def predict_one(self, input):
-                if input == 'good':
+            def predict_one(self, features, **kwargs):
+                if features[0] == 'good':
                     return 1
                 return 0
 

@@ -1,19 +1,26 @@
-from senpy.plugins import AnalysisPlugin
+from senpy.plugins import Transformation
 from senpy.models import Entry
 from nltk.tokenize.punkt import PunktSentenceTokenizer
 from nltk.tokenize.simple import LineTokenizer
-import nltk
 
 
-class Split(AnalysisPlugin):
-    '''description: A sample plugin that chunks input text'''
+class Split(Transformation):
+    '''
+    A plugin that chunks input text, into paragraphs or sentences.
+
+    It does not provide any sort of annotation, and it is meant to precede
+    other annotation plugins, when the annotation of individual sentences
+    (or paragraphs) is required.
+    '''
 
     author = ["@militarpancho", '@balkian']
     version = '0.3'
     url = "https://github.com/gsi-upm/senpy"
+    nltk_resources = ['punkt']
 
     extra_params = {
         'delimiter': {
+            'description': 'Split text into paragraphs or sentences.',
             'aliases': ['type', 't'],
             'required': False,
             'default': 'sentence',
@@ -21,12 +28,9 @@ class Split(AnalysisPlugin):
         },
     }
 
-    def activate(self):
-        nltk.download('punkt')
-
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
         yield entry
-        chunker_type = params["delimiter"]
+        chunker_type = activity.params["delimiter"]
         original_text = entry['nif:isString']
         if chunker_type == "sentence":
             tokenizer = PunktSentenceTokenizer()

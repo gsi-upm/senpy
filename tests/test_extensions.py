@@ -28,6 +28,7 @@ class ExtensionsTest(TestCase):
                            default_plugins=False)
         self.senpy.deactivate_all()
         self.senpy.activate_plugin("Dummy", sync=True)
+        self.app.config['TESTING'] = True  # Tell Flask not to catch Exceptions
 
     def test_init(self):
         """ Initialising the app with the extension.  """
@@ -44,7 +45,7 @@ class ExtensionsTest(TestCase):
 
     def test_add_delete(self):
         '''Should be able to add and delete new plugins. '''
-        new = plugins.Analysis(name='new', description='new', version=0)
+        new = plugins.Analyser(name='new', description='new', version=0)
         self.senpy.add_plugin(new)
         assert new in self.senpy.plugins(is_activated=False)
         self.senpy.delete_plugin(new)
@@ -55,9 +56,9 @@ class ExtensionsTest(TestCase):
         senpy = Senpy(plugin_folder=None,
                       app=self.app,
                       default_plugins=False)
-        assert not senpy.analysis_plugins
+        assert not senpy.analysis_plugins()
         senpy.add_folder(self.examples_dir)
-        assert senpy.plugins(plugin_type=plugins.AnalysisPlugin, is_activated=False)
+        assert senpy.plugins(plugin_type=plugins.Analyser, is_activated=False)
         self.assertRaises(AttributeError, senpy.add_folder, 'DOES NOT EXIST')
 
     def test_installing(self):
@@ -102,7 +103,7 @@ class ExtensionsTest(TestCase):
     def test_default(self):
         """ Default plugin should be set """
         assert self.senpy.default_plugin
-        assert self.senpy.default_plugin.name == "Dummy"
+        assert self.senpy.default_plugin.name == "dummy"
         self.senpy.deactivate_all(sync=True)
         logging.debug("Default: {}".format(self.senpy.default_plugin))
         assert self.senpy.default_plugin is None
@@ -118,8 +119,8 @@ class ExtensionsTest(TestCase):
         # Leaf (defaultdict with  __setattr__ and __getattr__.
         r1 = analyse(self.senpy, algorithm="Dummy", input="tupni", output="tuptuo")
         r2 = analyse(self.senpy, input="tupni", output="tuptuo")
-        assert r1.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
-        assert r2.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
+        assert r1.activities[0].algorithm == "endpoint:plugins/dummy_0.1"
+        assert r2.activities[0].algorithm == "endpoint:plugins/dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_empty(self):
@@ -153,12 +154,12 @@ class ExtensionsTest(TestCase):
         r2 = analyse(self.senpy,
                      input="tupni",
                      output="tuptuo")
-        assert r1.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
-        assert r2.analysis[0].algorithm == "endpoint:plugins/Dummy_0.1"
+        assert r1.activities[0].algorithm == "endpoint:plugins/dummy_0.1"
+        assert r2.activities[0].algorithm == "endpoint:plugins/dummy_0.1"
         assert r1.entries[0]['nif:isString'] == 'input'
 
     def test_analyse_error(self):
-        class ErrorPlugin(plugins.Analysis):
+        class ErrorPlugin(plugins.Analyser):
             author = 'nobody'
             version = 0
             ex = Error()
@@ -203,20 +204,21 @@ class ExtensionsTest(TestCase):
             'onyx:usesEmotionModel': 'emoml:fsre-dimensions'
         })
         eSet1 = EmotionSet()
-        eSet1.prov__wasGeneratedBy = plugin['@id']
+        activity = plugin.activity()
+        eSet1.prov(activity)
         eSet1['onyx:hasEmotion'].append(Emotion({
             'emoml:arousal': 1,
             'emoml:potency': 0,
             'emoml:valence': 0
         }))
         response = Results({
-            'analysis': [plugin],
+            'activities': [activity],
             'entries': [Entry({
                 'nif:isString': 'much ado about nothing',
-                'emotions': [eSet1]
+                'onyx:hasEmotionSet': [eSet1]
             })]
         })
-        params = {'emotionModel': 'emoml:big6',
+        params = {'emotion-model': 'emoml:big6',
                   'algorithm': ['conversion'],
                   'conversion': 'full'}
         r1 = deepcopy(response)

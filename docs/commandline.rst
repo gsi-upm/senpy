@@ -1,7 +1,8 @@
 Command line
 ============
 
-This video shows how to analyse text directly on the command line using the senpy tool.
+Although the main use of senpy is to publish services, the tool can also be used locally to analyze text in the command line.
+This is a short video demonstration:
 
 .. image:: https://asciinema.org/a/9uwef1ghkjk062cw2t4mhzpyk.png
    :width: 100%

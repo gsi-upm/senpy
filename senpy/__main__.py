@@ -40,8 +40,14 @@ def main():
         '-l',
         metavar='logging_level',
         type=str,
-        default="WARN",
+        default="INFO",
         help='Logging level')
+    parser.add_argument(
+        '--log-format',
+        metavar='log_format',
+        type=str,
+        default='%(asctime)s %(levelname)-10s %(name)-30s \t %(message)s',
+        help='Logging format')
     parser.add_argument(
         '--debug',
         '-d',
@@ -49,10 +55,10 @@ def main():
         default=False,
         help='Run the application in debug mode')
     parser.add_argument(
-        '--default-plugins',
+        '--no-default-plugins',
         action='store_true',
         default=False,
-        help='Load the default plugins')
+        help='Do not load the default plugins')
     parser.add_argument(
         '--host',
         type=str,
@@ -68,7 +74,7 @@ def main():
         '--plugins-folder',
         '-f',
         type=str,
-        default='.',
+        action='append',
         help='Where to look for plugins.')
     parser.add_argument(
         '--only-install',
@@ -100,10 +106,10 @@ def main():
         default=None,
         help='Where to look for data. It be set with the SENPY_DATA environment variable as well.')
     parser.add_argument(
-        '--threaded',
-        action='store_false',
-        default=True,
-        help='Run a threaded server')
+        '--no-threaded',
+        action='store_true',
+        default=False,
+        help='Run a single-threaded server')
     parser.add_argument(
         '--no-deps',
         '-n',
@@ -123,30 +129,42 @@ def main():
         default=False,
         help='Do not exit if some plugins fail to activate')
     args = parser.parse_args()
+    print('Senpy version {}'.format(senpy.__version__))
+    print(sys.version)
     if args.version:
-        print('Senpy version {}'.format(senpy.__version__))
-        print(sys.version)
         exit(1)
     rl = logging.getLogger()
     rl.setLevel(getattr(logging, args.level))
+    logger_handler = rl.handlers[0]
+
+    # First, generic formatter:
+    logger_handler.setFormatter(logging.Formatter(args.log_format))
+
     app = Flask(__name__)
     app.debug = args.debug
-    sp = Senpy(app, args.plugins_folder,
-               default_plugins=args.default_plugins,
+    sp = Senpy(app,
+               plugin_folder=None,
+               default_plugins=not args.no_default_plugins,
                data_folder=args.data_folder)
+    folders = list(args.plugins_folder) if args.plugins_folder else []
+    if not folders:
+        folders.append(".")
+    for p in folders:
+        sp.add_folder(p)
+
+    plugins = sp.plugins(plugin_type=None, is_activated=False)
+    maxname = max(len(x.name) for x in plugins)
+    maxversion = max(len(str(x.version)) for x in plugins)
+    print('Found {} plugins:'.format(len(plugins)))
+    for plugin in plugins:
+        import inspect
+        fpath = inspect.getfile(plugin.__class__)
+        print('\t{: <{maxname}} @ {: <{maxversion}} -> {}'.format(plugin.name,
+                                                                  plugin.version,
+                                                                  fpath,
+                                                                  maxname=maxname,
+                                                                  maxversion=maxversion))
     if args.only_list:
-        plugins = sp.plugins()
-        maxname = max(len(x.name) for x in plugins)
-        maxversion = max(len(x.version) for x in plugins)
-        print('Found {} plugins:'.format(len(plugins)))
-        for plugin in plugins:
-            import inspect
-            fpath = inspect.getfile(plugin.__class__)
-            print('\t{: <{maxname}} @ {: <{maxversion}} -> {}'.format(plugin.name,
-                                                                      plugin.version,
-                                                                      fpath,
-                                                                      maxname=maxname,
-                                                                      maxversion=maxversion))
         return
     if not args.no_deps:
         sp.install_deps()
@@ -160,10 +178,13 @@ def main():
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                             args.port))
-    app.run(args.host,
-            args.port,
-            threaded=args.threaded,
-            debug=app.debug)
+    try:
+        app.run(args.host,
+                args.port,
+                threaded=not args.no_threaded,
+                debug=app.debug)
+    except KeyboardInterrupt:
+        print('Bye!')
     sp.deactivate_all()
 
 

@@ -1,264 +1,319 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>Playground {{version}}</title>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <title>Playground {{version}}</title>
 
-  </head>
-  <script>
-   this.evaluation_enabled = {% if evaluation %}true{%else %}false{%endif%};
-  </script>
-  <script src="static/js/jquery-2.1.1.min.js" ></script>
-  <!--<script src="jquery.autosize.min.js"></script>-->
-  <link rel="stylesheet" href="static/css/bootstrap.min.css">
-  <link rel="stylesheet" href="static/css/main.css">
-  <link rel="stylesheet" href="static/font-awesome-4.1.0/css/font-awesome.min.css">
-  <link href="static/css/jsoneditor.css" rel="stylesheet" type="text/css">
-
-
-
-  <script src="static/js/bootstrap.min.js"></script>
-  <script src="static/js/jsoneditor.js"></script>
-  <script src="static/js/main.js"></script>
+    </head>
+    <script>
+     this.evaluation_enabled = {% if evaluation %}true{%else %}false{%endif%};
+    </script>
+    <script src="static/js/jquery-2.1.1.min.js" ></script>
+    <script src="static/js/d3.min.js" ></script>
+    <!--<script src="jquery.autosize.min.js"></script>-->
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/font-awesome-4.1.0/css/font-awesome.min.css">
 
 
-  <body>
-    <div class="container">
-      <div id="header">
-        <h3 id="header-title">
-          <a href="https://github.com/gsi-upm/senpy" target="_blank">
-            <img id="header-logo" class="imsg-responsive" src="static/img/header.png"/></a> Playground
-        </h3>
-          <h4>v{{ version}}</h4>
-      </div>
 
-      <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" ><a class="active" href="#about">About</a></li>
-        <li role="presentation"class="active"><a class="active" href="#test">Test it</a></li>
-        {% if evaluation %}
-        <li role="presentation"><a class="active" href="#evaluate">Evaluate Plugins</a></li>
-        {% endif %}
+    <script src="static/js/bootstrap.min.js"></script>
+    <script src="static/js/showdown.min.js"></script>
+    <script src="static/js/main.js"></script>
+    <script src="static/js/nodes.js"></script>
 
-      </ul>
 
-      <div class="tab-content">
-        <div class="tab-pane" id="about">
+    <body>
+        <nav id="header" class="navbar navbar-default sticky-top">
+            <div class="container">
+                
+                <h3 id="header-title" class="p-2">
+                    <a href="https://github.com/gsi-upm/senpy" target="_blank">
+                        <img id="header-logo" class="imsg-responsive" src="static/img/header.png"/></a> Playground
+                </h3>
+                <span class="nav nav-pills p-2" id="nav-pills" role="pill-list">
+                    <a class="nav-item nav-link" data-toggle="pill" id="nav-about" role="pill" aria-controls="about" href="#about" aria-selected="false" >About</a>
+                    <a class="nav-item nav-link" data-toggle="pill" id="nav-plugins" role="pill" aria-controls="plugins" href="#plugins" aria-selected="false">Plugins</a>
+                    <a class="nav-item nav-link active" data-toggle="pill" id="nav-test" role="pill" aria-controls="test" href="#test" aria-selected="true">Test it</a>
+                    {% if evaluation %}
+                    <a class="nav-item nav-link" data-toggle="pill" id="nav-evaluate" role="pill" aria-controls="evaluate" href="#evaluate" aria-selected="false">Evaluate Plugins</a>
+                    {% endif %}
+                </span>
+                <h6 class="p-2 ml-auto">v{{ version}}</h6>
+            </div>
+        </nav>
+        <div id="content" class="container">
+            <a href="https://github.com/gsi-upm/senpy" target="_blank"><img width="149" height="149" src="static/img/ribbon.png" class="ribbon" alt="Fork me on GitHub" data-recalc-dims="1"></a>
+            <div class="tab-content">
 
-          <div class="row">
-                <div class="col-lg-6">
-                  <h2>About Senpy</h2>
-                  <p>Senpy is a framework to build semantic sentiment and emotion analysis services. It does so by using a mix of web and semantic technologies, such as JSON-LD, RDFlib and Flask.</p>
-                  <p>Senpy makes it easy to develop and publish your own analysis algorithms (plugins in senpy terms).
-                  </p>
-                  <p>
-                    This website is the senpy Playground, which allows you to test the instance of senpy in this server. It provides a user-friendly interface to the functions exposed by the senpy API.
-                    </p>
-                  <p>
-                    Once you get comfortable with the parameters and results, you are encouraged to issue your own requests to the API endpoint. You can find examples of API URL's when you try out a plugin with the "Analyse!" button on the "Test it" tab.
-                  </p>
-                  <p>
-                    These are some of the things you can do with the API:
-                    <ul>
-                      <li>List all available plugins: <a href="/api/plugins">/api/plugins</a></li>
-                      <li>Get information about the default plugin: <a href="/api/plugins/default">/api/plugins/default</a></li>
-                      <li>List all available datasets: <a href="/api/datasets">/api/datasets</a></li>
-                      <li>Download the JSON-LD context used: <a href="/api/contexts/Results.jsonld">/api/contexts/Results.jsonld</a></li>
-                    </ul>
+                <div class="tab-pane" role="tabpanel" aria-labelledby="nav-about" id="about">
 
-                  </p>
-                  <p>Senpy is a research project. If you use it in your research, please cite:
-                  <pre>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h2>About Senpy</h2>
+                            <p>Senpy is a framework to build semantic sentiment and emotion analysis services. It leverages a mix of web and semantic technologies, such as JSON-LD, RDFlib and Flask.</p>
+                            <p>Senpy makes it easy to develop and publish your own analysis algorithms (plugins in senpy terms).
+                            </p>
+                            <p>
+                                This website is the senpy Playground, which allows you to test the instance of senpy in this server. It provides a user-friendly interface to the functions exposed by the senpy API.
+                            </p>
+                            <p>
+                                Once you get comfortable with the parameters and results, you are encouraged to issue your own requests to the API endpoint. You can find examples of API URL's when you try out a plugin with the "Analyse!" button on the "Test it" tab.
+                            </p>
+                            <p>
+                                These are some of the things you can do with the API:
+                                <ul>
+                                    <li>List all available plugins: <a href="/api/plugins">/api/plugins</a></li>
+                                    <li>Get information about the default plugin: <a href="/api/plugins/default">/api/plugins/default</a></li>
+                                    <li>List all available datasets: <a href="/api/datasets">/api/datasets</a></li>
+                                    <li>Download the JSON-LD context used: <a href="/api/contexts/Results.jsonld">/api/contexts/Results.jsonld</a></li>
+                                </ul>
+
+                            </p>
+                            
+                        </div>
+                        <div class="col-lg-6">
+
+                            <div class="card my-2">
+                                <div id="plugin_selection" class="card-body">
+                                    <h6 class="card-title">
+                                        Senpy is a research project. If you use it in your research, please cite:
+                                    </h6>
+                                    <pre>
 Senpy: A Pragmatic Linked Sentiment Analysis Framework.
 Sánchez-Rada, J. F., Iglesias, C. A., Corcuera, I., & Araque, Ó.
 In Data Science and Advanced Analytics (DSAA),
 2016 IEEE International Conference on (pp. 735-742). IEEE.
-                  </pre>
-                  </p>
-                  
+                                    </pre>
+                                </div>
+                            </div>
+                            <a href="http://senpy.readthedocs.io">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fa fa-book"></i> If you are new to senpy, you might want to read senpy's documentation</h6>
+                                    </div>
+                                </div>
+                            </a>
+                            <a href="http://www.github.com/gsi-upm/senpy">
+                                <div class="card my-2">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fa fa-sign-in"></i> If you like senpy, feel free star it on GitHub</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            <div class="col-lg-6 ">
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                Available Plugins
+                <div class="tab-pane" role="tabpanel" aria-labelledby="nav-plugins" id="plugins">
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h5>The following plugins are available in this instance:</h5>
+                            <div id="availablePlugins" class="card-columns"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="panel-body"><ul id=availablePlugins></ul></div>
-              </div>
-              <a href="http://senpy.readthedocs.io">
-              <div class="panel panel-default">
-                <div class="panel-heading"><i class="fa fa-book"></i> If you are new to senpy, you might want to read senpy's documentation</div>
-              </div>
-              </a>
-              <a href="http://www.github.com/gsi-upm/senpy">
-              <div class="panel panel-default">
-                <div class="panel-heading"><i class="fa fa-sign-in"></i> Feel free to follow us on GitHub</div>
-              </div>
-              </a>
-            </div>     
-          </div>
+
+                <div role="tabpanel" aria-labelledby="nav-test" class="tab-pane active" id="test">
+                    <div class="card my-2">
+                        <div class="card-body">
+                            <form id="form" class="container" onsubmit="load_results();" accept-charset="utf-8">
+                                <label>Enter the text you want to analyze or select one of the pre-defined examples:</label>
+                                <div>
+                                    <select id="examples" name="examples" onchange="example_selected()">
+                                        <option data-text="Who knew NLP and text preprocessing could be so easy with python? #DataScience #NLP">
+                                            Regular Tweet</option>
+                                        <option data-text="Russia attacked the 2016 election to help Trump. His campaign signaled Moscow it was fine with that, and Trump also lied about the attack and helped Putin get away with it. And most Republicans and conservatives don’t give a damn. This is sad and troubling.">
+                                            Political Tweet</option>
+                                        <option data-text='The bus was traveling from Florida to New York with 57 people aboard when it swerved "like a roller coaster" and tumbled "five or six times" off the left side of a Virginia interstate, killing two passengers and injuring others aboard.'>
+                                            Excerpt from a news article</option>
+                                    </select>
+                                </div>
+                                <div><textarea id="input" class="boxsizingBorder" rows="5" name="i"></textarea>
+                                </div>
+                                <!-- PARAMETERS -->
+                                <div  id="parameters">
+                                    <div class="card my-2">
+                                        <div class="card-header">
+                                            <h5>
+                                                Select the plugin.
+                                            </h5>
+                                        </div>
+                                        <div id="plugin_selection" class="card-body">
+                                            <span id="pipeline"></span>
+                                            <select id="plugins-select" name="plugins" class="plugin" onchange="plugin_selected()">
+                                            </select>
+                                            <span onclick="add_plugin_pipeline()"><span class="btn"><i class="fa fa-plus" title="Add more plugins to the pipeline. Processing order is left to right. i.e. the results of the leftmost plugin will be used as input for the second leftmost, and so on."></i></span></span>
+                                            <span class="help-block " id="plugdescription"></span>
+                                        </div>
+                                    </div>
+                                    <div class="card my-2">
+                                        <div class="card-header">
+                                            <h5>
+                                                Plugin extra parameters
+                                            </h5>
+                                        </div>
+                                        <div id="extra_params" class="card-body">
+                                        </div>
+                                    </div>
+
+                                </div> 
+
+                                <div class="card my-2">
+                                    <div class="card-body">
+                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#parametersModal">
+                                            Change advanced parameters
+                                        </button>
+                                    </div>
+
+                                </div>
+                                <!-- MODAL -->
+                                <div class="modal fade" id="parametersModal" tabindex="-1" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="modalTitle">Advanced API parameters</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div id="basic_params" class="modal-body">
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- END MODAL -->
+                                <!-- END PARAMETERS -->
+
+                                <button id="preview" class="btn btn-lg btn-primary" onclick="load_results()">Analyse</button>
+                                <div id="loading-results" class="loading"></div>
+                                <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
+                            </form>
+                        </div>
+                    </div>
+                    <span id="input_request"></span>
+                    <div id="results-div">
+                        <ul class="nav nav-pills nav-header-pills" role="tablist">
+                            <li role="presentation" class="nav-item active"><a data-toggle="pill" class="active nav-link"  href="#json-ld" onclick='load_results("json-ld")'>JSON-LD</a></li>
+                            <li role="presentation nav-item" ><a class="nav-link" data-toggle="pill" href="#turtle" onclick='load_results("turtle")'>Turtle</a></li>
+                            <li role="presentation nav-item" ><a class="nav-link" data-toggle="pill" href="#ntriples" onclick='load_results("ntriples")'>N-Triples</a></li>
+                            <li role="presentation nav-item" ><a class="nav-link" data-toggle="pill" href="#graph" onclick='load_graph()'>Graph</a></li>
+                        </ul>
+                        <div class="tab-content" id="results-container">
+                            
+                            <div role="tabpanel" aria-labelledby="" class="tab-pane active" id="json-ld">
+                                <div>
+                                    <pre id="results-json-ld" class="results"></pre>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane" role="tabpanel" aria-labelledby="" id="turtle">
+                                <div>
+                                    <pre id="results-turtle" class="results"></pre>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane" role="tabpanel" aria-labelledby="" id="ntriples">
+                                <div>
+                                    <pre id="results-ntriples" class="results"></pre>
+                                </div>
+                            </div>
+                            <div class="tab-pane" role="tabpanel" aria-labelledby="" id="graph">
+                                <svg id='svg-body'></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if evaluation %}
+
+                <div class="tab-pane" role="tabpanel" aria-labelledby="nav-evaluate" id="evaluate">
+                    <div class="card my-2">
+                        <div class="card-body">
+                            
+                            <form id="form" class="container" onsubmit="" accept-charset="utf-8">
+                                <div>
+                                    <p>Automatically evaluate the classification performance of your plugin in several public datasets, and compare it with other plugins.</p>
+                                    <p>The datasets will be automatically downloaded if they are not already available locally. Depending on the size of the dataset and the speed of the plugin, the evaluation may take a long time.</p>
+                                    <label>Select the plugin:</label>
+                                    <select id="plugins-eval" name="plugins-eval" class=plugin onchange="draw_extra_parameters()">
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>Select the datasets:</label>
+                                    <div id="datasets" name="datasets" >
+                                    </select>
+                                    </div>
+                                    
+                                    <button id="doevaluate" class="btn btn-lg btn-primary" onclick="evaluate_JSON()">Evaluate Plugin</button>
+                                    <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
+                                </div>
+                            </form>
+                        </div>
+                        <div id="loading-results" class="loading"></div>
+                        <span id="input_request_eval"></span>
+                        <div id="evaluate-div">
+                            <ul class="nav nav-pills" role="tablist">
+
+                                <li role="presentation nav-item" ><a class="nav-link" data-toggle="pill" href="#evaluate-raw" onclick=''>Raw</a></li>
+                                <li role="presentation nav-item" ><a class="nav-link" data-toggle="pill" href="#evaluate-table" onclick=''>Table</a></li>
+                            </ul>
+                            <div class="tab-content" id="evaluate-container">
+                                <div  role="tabpanel" aria-labelledby="" class="tab-pane active" id="evaluate-viewer">
+                                    <div>
+                                        <pre id="results_eval" class="results_eval"></pre>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" role="tabpanel" aria-labelledby=""  id="evaluate-raw">
+                                    <div>
+                                        <pre id="jsonraw_eval" class="results_eval"></pre>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" role="tabpanel" aria-labelledby=""  id="evaluate-table">
+                                    <table id="eval_table" class="table table-condensed">
+                                        <thead>
+                                            <tr>
+                                                <th>Plugin</th>
+                                                <th>Dataset</th>
+                                                <th>Accuracy</th>
+                                                <th>Precision_macro</th>
+                                                <th>Recall_macro</th>
+                                                <th>F1_macro</th>
+                                                <th>F1_weighted</th>
+                                                <th>F1_micro</th>
+                                                <th>F1</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
         </div>
 
-        <div class="tab-pane active" id="test">
-          <div class="well">
-            <form id="form" class="container" onsubmit="return getPlugins();" accept-charset="utf-8">
-                <div><textarea id="input" class="boxsizingBorder" rows="5" name="i">This text makes me sad.
-whilst this text makes me happy and surprised at the same time.
-I cannot believe it!</textarea>
+        <div id="footer">
+            <div class="container">
+                <div id="site-info">
+                    <p>
+                        This development has been partially funded by the European Union through the<a href="http://mixedemotions-project.eu/"><span style="text-transform:uppercase;">MixedEmotions project</span></a>(project number H2020 655632), as part of the RIA ICT 15 Big data and Open Data Innovation and take-up programme.
+                    </p>
                 </div>
-                <!-- PARAMETERS -->
-                <div class="panel-group" id="parameters">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                Select the plugin.
-                            </h4>
-                        </div>
-                        <div id="plugin_selection" class="panel-collapse panel-body">
-                            <span id="pipeline"></span>
-                            <select name="plugins" class="plugin" onchange="plugin_selected()">
-                            </select>
-                            <span onclick="add_plugin_pipeline()"><span class="btn"><i class="fa fa-plus" title="Add more plugins to the pipeline. Processing order is left to right. i.e. the results of the leftmost plugin will be used as input for the second leftmost, and so on."></i></span></span>
-                            <label class="help-block " id="plugdescription"></label>
-                        </div>
-                    </div>
-                    <div class="panel panel-default">
-                        <a data-toggle="collapse" class="deco-none collapsed" href="#basic_params">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">
-                                    <i class="fa fa-chevron-right pull-left expandicon"></i>
-                                    <i class="fa fa-chevron-down pull-left collapseicon"></i>
-                                    Basic API parameters
-                                </h4>
-                            </div>
-                        </a>
-                        <div id="basic_params" class="panel-collapse collapse panel-body">
-                        </div>
-                    </div>
-                    <div class="panel panel-default">
-                        <a data-toggle="collapse" class="deco-none" href="#extra_params">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">
-                                    <i class="fa fa-chevron-right pull-left expandicon"></i>
-                                    <i class="fa fa-chevron-down pull-left collapseicon"></i>
-                                    Plugin extra parameters
-                                </h4>
-                            </div>
-                        </a>
-                        <div id="extra_params" class="panel-collapse collapse in panel-body">
-                        </div>
-                    </div>
-                </div> 
-                <!-- END PARAMETERS -->
- 
-                <a id="preview" class="btn btn-lg btn-primary" onclick="load_JSON()">Analyse!</a>
-                <div id="loading-results" class="loading"></div>
-                <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
-            </form>
-          </div>
-            <span id="input_request"></span>
-            <div id="results-div">
-              <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="active"><a data-toggle="tab" class="active" href="#viewer">Viewer</a></li>
-                <li role="presentation"><a data-toggle="tab" class="active" href="#raw">Raw</a></li>
-              </ul>
-              <div class="tab-content" id="results-container">
-                
-                <div class="tab-pane active" id="viewer">
-                  <div id="content">
-                    <pre id="results" class="results"></pre>
-                  </div>
+                <div id="site-logos">
+                    <a href="http://www.gsi.dit.upm.es" target="_blank"><img id="mixedemotions-logo"src="static/img/me.png"/></a>
+
                 </div>
-                
-                <div class="tab-pane"  id="raw">
-                  <div id="content">
-                    <pre id="jsonraw" class="results"></pre>
-                  </div>
-                </div>
-              </div>
             </div>
         </div>
-
-        {% if evaluation %}
-
-        <div class="tab-pane" id="evaluate">
-          <div class="well">
-            <form id="form" class="container" onsubmit="return getPlugins();" accept-charset="utf-8">
-                <div>
-                    <label>Select the plugin:</label>
-                    <select id="plugins-eval" name="plugins-eval" class=plugin onchange="draw_extra_parameters()">
-                    </select>
-                </div>
-                <div>
-                    <label>Select the datasets:</label>
-                    <div id="datasets" name="datasets" >
-                    </select>
-                </div>
- 
-                <a id="doevaluate" class="btn btn-lg btn-primary" onclick="evaluate_JSON()">Evaluate Plugin!</a>
-                <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
-            </form>
-          </div>
-            <span id="input_request_eval"></span>
-            <div id="evaluate-div">
-              <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="active"><a data-toggle="tab" class="active" href="#evaluate-viewer">Viewer</a></li>
-                <li role="presentation"><a data-toggle="tab" class="active" href="#evaluate-raw">Raw</a></li>
-                <li role="presentation"><a data-toggle="tab" class="active" href="#evaluate-table">Table</a></li>
-              </ul>
-              <div class="tab-content" id="evaluate-container">
-                
-                <div class="tab-pane active" id="evaluate-viewer">
-                  <div id="content">
-                    <pre id="results_eval" class="results_eval"></pre>
-                  </div>
-                </div>
-                
-                <div class="tab-pane"  id="evaluate-raw">
-                  <div id="content">
-                    <pre id="jsonraw_eval" class="results_eval"></pre>
-                  </div>
-                </div>
-                <div class="tab-pane"  id="evaluate-table">
-                    <table id="eval_table" class="table table-condensed">
-                      <thead>
-                        <tr>
-                        <th>Plugin</th>
-                        <th>Dataset</th>
-                        <th>Accuracy</th>
-                        <th>Precision_macro</th>
-                        <th>Recall_macro</th>
-                        <th>F1_macro</th>
-                        <th>F1_weighted</th>
-                        <th>F1_micro</th>
-                        <th>F1</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                </div>
-              </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <a href="http://www.gsi.dit.upm.es" target="_blank"><img class="center-block" src="static/img/gsi.png"/>  </a> 
-
-      </div>
-    </div>
-    <div id="footer">
-      <div class="container">
-        <div id="site-info">
-          <p>
-            This development has been partially funded by the European Union through the<a href="http://mixedemotions-project.eu/"><span style="text-transform:uppercase;">MixedEmotions project</span></a>(project number H2020 655632), as part of the RIA ICT 15 Big data and Open Data Innovation and take-up programme.
-          </p>
-        </div>
-        <div id="site-logos">
-          <a href="http://www.gsi.dit.upm.es" target="_blank"><img id="mixedemotions-logo"src="static/img/me.png"/></a>
-
-        </div>
-      </div>
-  </body>
-  <link href='http://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    </body>
+    <link href='http://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
 </html>

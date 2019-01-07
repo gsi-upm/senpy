@@ -1,3 +1,5 @@
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
 from future import standard_library
 standard_library.install_aliases()
 
@@ -17,7 +19,12 @@ import subprocess
 import importlib
 import yaml
 import threading
+import multiprocessing
+import pkg_resources
 from nltk import download
+from textwrap import dedent
+from sklearn.base import TransformerMixin, BaseEstimator
+from itertools import product
 
 from .. import models, utils
 from .. import api
@@ -31,17 +38,19 @@ class PluginMeta(models.BaseMeta):
     _classes = {}
 
     def __new__(mcs, name, bases, attrs, **kwargs):
-        plugin_type = []
-        if hasattr(bases[0], 'plugin_type'):
-            plugin_type += bases[0].plugin_type
-        plugin_type.append(name)
-        alias = attrs.get('name', name)
-        attrs['plugin_type'] = plugin_type
+        plugin_type = set()
+        for base in bases:
+            if hasattr(base, '_plugin_type'):
+                plugin_type |= base._plugin_type
+        plugin_type.add(name)
+        alias = attrs.get('name', name).lower()
+        attrs['_plugin_type'] = plugin_type
+        logger.debug('Adding new plugin class', name, bases, attrs, plugin_type)
         attrs['name'] = alias
         if 'description' not in attrs:
             doc = attrs.get('__doc__', None)
             if doc:
-                attrs['description'] = doc
+                attrs['description'] = dedent(doc)
             else:
                 logger.warning(
                     ('Plugin {} does not have a description. '
@@ -76,6 +85,9 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     Additionally, they may provide a URL (url) of a repository or website.
 
     '''
+
+    _terse_keys = ['name', '@id', '@type', 'author', 'description',
+                   'extra_params', 'is_activated', 'url', 'version']
 
     def __init__(self, info=None, data_folder=None, **kwargs):
         """
@@ -126,33 +138,42 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
 
+    def _activate(self):
+        self.activate()
+        self.is_activated = True
+
+    def _deactivate(self):
+        self.is_activated = False
+        self.deactivate()
+
     def activate(self):
         pass
 
     def deactivate(self):
         pass
 
-    def process(self, request, parameters, **kwargs):
+    def process(self, request, activity, **kwargs):
         """
         An implemented plugin should override this method.
-        Here, we assume that a process_entries method exists."""
+        Here, we assume that a process_entries method exists.
+        """
         newentries = list(
-            self.process_entries(request.entries, parameters))
+            self.process_entries(request.entries, activity))
         request.entries = newentries
         return request
 
-    def process_entries(self, entries, parameters):
+    def process_entries(self, entries, activity):
         for entry in entries:
             self.log.debug('Processing entry with plugin {}: {}'.format(
                 self, entry))
-            results = self.process_entry(entry, parameters)
+            results = self.process_entry(entry, activity)
             if inspect.isgenerator(results):
                 for result in results:
                     yield result
             else:
                 yield results
 
-    def process_entry(self, entry, parameters):
+    def process_entry(self, entry, activity):
         """
         This base method is here to adapt plugins which only
         implement the *process* function.
@@ -173,9 +194,12 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
             test_cases = self.test_cases
         for case in test_cases:
             try:
+                fmt = 'case: {}'.format(case.get('name', case))
+                if 'name' in case:
+                    self.log.info('Test case: {}'.format(case['name']))
+                self.log.debug('Test case:\n\t{}'.format(
+                    pprint.pformat(fmt)))
                 self.test_case(case)
-                self.log.debug('Test case passed:\n{}'.format(
-                    pprint.pformat(case)))
             except Exception as ex:
                 self.log.warning('Test case failed:\n{}'.format(
                     pprint.pformat(case)))
@@ -200,7 +224,9 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
                 entry,
             ]
 
-            method = partial(self.process, request, parameters)
+            activity = self.activity(parameters)
+
+            method = partial(self.process, request, activity)
 
             if mock:
                 res = method()
@@ -243,34 +269,41 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
 SenpyPlugin = Plugin
 
 
-class Analysis(Plugin):
+class Analyser(Plugin):
     '''
     A subclass of Plugin that analyses text and provides an annotation.
     '''
 
-    def analyse(self, request, parameters):
-        return super(Analysis, self).process(request, parameters)
+    # Deprecated
+    def analyse(self, request, activity):
+        return super(Analyser, self).process(request, activity)
 
-    def analyse_entries(self, entries, parameters):
-        for i in super(Analysis, self).process_entries(entries, parameters):
+    # Deprecated
+    def analyse_entries(self, entries, activity):
+        for i in super(Analyser, self).process_entries(entries, activity):
             yield i
 
-    def process(self, request, parameters, **kwargs):
-        return self.analyse(request, parameters)
+    def process(self, request, activity, **kwargs):
+        return self.analyse(request, activity)
 
-    def process_entries(self, entries, parameters):
-        for i in self.analyse_entries(entries, parameters):
+    def process_entries(self, entries, activity):
+        for i in self.analyse_entries(entries, activity):
             yield i
 
-    def process_entry(self, entry, parameters, **kwargs):
+    def process_entry(self, entry, activity, **kwargs):
         if hasattr(self, 'analyse_entry'):
-            for i in self.analyse_entry(entry, parameters):
+            for i in self.analyse_entry(entry, activity):
                 yield i
         else:
-            super(Analysis, self).process_entry(entry, parameters, **kwargs)
+            super(Analyser, self).process_entry(entry, activity, **kwargs)
 
 
-AnalysisPlugin = Analysis
+AnalysisPlugin = Analyser
+
+
+class Transformation(AnalysisPlugin):
+    '''Empty'''
+    pass
 
 
 class Conversion(Plugin):
@@ -297,31 +330,78 @@ class Conversion(Plugin):
 ConversionPlugin = Conversion
 
 
-class SentimentPlugin(Analysis, models.SentimentPlugin):
+class Evaluable(Plugin):
+    '''
+    Common class for plugins that can be evaluated with GSITK.
+
+    They should implement the methods below.
+    '''
+
+    def as_pipe(self):
+        raise Exception('Implement the as_pipe function')
+
+    def evaluate_func(self, X, activity=None):
+        raise Exception('Implement the evaluate_func function')
+
+
+class SentimentPlugin(Analyser, Evaluable, models.SentimentPlugin):
     '''
     Sentiment plugins provide sentiment annotation (using Marl)
     '''
     minPolarityValue = 0
     maxPolarityValue = 1
 
+    _terse_keys = Analyser._terse_keys + ['minPolarityValue', 'maxPolarityValue']
+
     def test_case(self, case):
         if 'polarity' in case:
             expected = case.get('expected', {})
             s = models.Sentiment(_auto_id=False)
             s.marl__hasPolarity = case['polarity']
-            if 'sentiments' not in expected:
-                expected['sentiments'] = []
-            expected['sentiments'].append(s)
+            if 'marl:hasOpinion' not in expected:
+                expected['marl:hasOpinion'] = []
+            expected['marl:hasOpinion'].append(s)
             case['expected'] = expected
         super(SentimentPlugin, self).test_case(case)
 
+    def normalize(self, value, minValue, maxValue):
+        nv = minValue + (value - self.minPolarityValue) * (
+            self.maxPolarityValue - self.minPolarityValue) / (maxValue - minValue)
+        return nv
 
-class EmotionPlugin(Analysis, models.EmotionPlugin):
+    def as_pipe(self):
+        pipe = gsitk_compat.Pipeline([('senpy-plugin', ScikitWrapper(self))])
+        pipe.name = self.id
+        return pipe
+
+    def evaluate_func(self, X, activity=None):
+        if activity is None:
+            parameters = api.parse_params({},
+                                          self.extra_params)
+            activity = self.activity(parameters)
+        entries = []
+        for feat in X:
+            entries.append(models.Entry(nif__isString=feat[0]))
+        labels = []
+        for e in self.process_entries(entries, activity):
+            sent = e.sentiments[0].polarity
+            label = -1
+            if sent == 'marl:Positive':
+                label = 1
+            elif sent == 'marl:Negative':
+                label = -1
+            labels.append(label)
+        return labels
+
+
+class EmotionPlugin(Analyser, models.EmotionPlugin):
     '''
     Emotion plugins provide emotion annotation (using Onyx)
     '''
     minEmotionValue = 0
     maxEmotionValue = 1
+
+    _terse_keys = Analyser._terse_keys + ['minEmotionValue', 'maxEmotionValue']
 
 
 class EmotionConversion(Conversion):
@@ -345,69 +425,67 @@ EmotionConversionPlugin = EmotionConversion
 
 
 class PostProcessing(Plugin):
+    '''
+    A plugin that converts the output of other plugins (post-processing).
+    '''
     def check(self, request, plugins):
         '''Should this plugin be run for this request?'''
         return False
 
 
-class Box(AnalysisPlugin):
+class Box(Analyser):
     '''
     Black box plugins delegate analysis to a function.
-    The flow is like so:
+    The flow is like this:
 
     .. code-block::
 
-                   entry --> input() --> predict_one() --> output() --> entry'
+                   entries --> to_features() --> predict_many() --> to_entry() --> entries'
 
 
-    In other words: their ``input`` method convers a query (entry and a set of parameters) into
-    the input to the box method. The ``output`` method convers the results given by the box into
-    an entry that senpy can handle.
+    In other words: their ``to_features`` method converts a query (entry and a set of parameters)
+    into the input to the `predict_one` method, which only uses an array of features.
+    The ``to_entry`` method converts the results given by the box into an entry that senpy can
+    handle.
     '''
 
-    def input(self, entry, params=None):
+    def to_features(self, entry, activity=None):
         '''Transforms a query (entry+param) into an input for the black box'''
         return entry
 
-    def output(self, output, entry=None, params=None):
+    def to_entry(self, features, entry=None, activity=None):
         '''Transforms the results of the black box into an entry'''
-        return output
+        return entry
 
-    def predict_one(self, input):
+    def predict_one(self, features, activity=None):
         raise NotImplementedError(
             'You should define the behavior of this plugin')
 
-    def process_entries(self, entries, params):
+    def predict_many(self, features, activity=None):
+        results = []
+        for feat in features:
+            results.append(self.predict_one(features=feat, activity=activity))
+        return results
+
+    def process_entry(self, entry, activity):
+        for i in self.process_entries([entry], activity):
+            yield i
+
+    def process_entries(self, entries, activity):
+        features = []
         for entry in entries:
-            input = self.input(entry=entry, params=params)
-            results = self.predict_one(input=input)
-            yield self.output(output=results, entry=entry, params=params)
+            features.append(self.to_features(entry=entry, activity=activity))
+        results = self.predict_many(features=features, activity=activity)
 
-    def fit(self, X=None, y=None):
-        return self
-
-    def transform(self, X):
-        return [self.predict_one(x) for x in X]
-
-    def predict(self, X):
-        return self.transform(X)
-
-    def fit_transform(self, X, y):
-        self.fit(X, y)
-        return self.transform(X)
-
-    def as_pipe(self):
-        pipe = gsitk_compat.Pipeline([('plugin', self)])
-        pipe.name = self.name
-        return pipe
+        for (result, entry) in zip(results, entries):
+            yield self.to_entry(features=result, entry=entry, activity=activity)
 
 
 class TextBox(Box):
     '''A black box plugin that takes only text as input'''
 
-    def input(self, entry, params):
-        entry = super(TextBox, self).input(entry, params)
-        return entry['nif:isString']
+    def to_features(self, entry, activity):
+        return [entry['nif:isString']]
 
 
 class SentimentBox(TextBox, SentimentPlugin):
@@ -415,17 +493,35 @@ class SentimentBox(TextBox, SentimentPlugin):
     A box plugin where the output is only a polarity label or a tuple (polarity, polarityValue)
     '''
 
-    def output(self, output, entry, **kwargs):
-        s = models.Sentiment()
-        try:
-            label, value = output
-        except ValueError:
-            label, value = output, None
-        s.prov(self)
-        s.polarity = label
-        if value is not None:
-            s.polarityValue = value
-        entry.sentiments.append(s)
+    classes = ['marl:Positive', 'marl:Neutral', 'marl:Negative']
+    binary = True
+
+    def to_entry(self, features, entry, activity, **kwargs):
+
+        if len(features) != len(self.classes):
+            raise models.Error('The number of features ({}) does not match the classes '
+                               '(plugin.classes ({})'.format(len(features), len(self.classes)))
+
+        minValue = activity.param('marl:minPolarityValue', 0)
+        maxValue = activity.param('marl:minPolarityValue', 1)
+        activity['marl:minPolarityValue'] = minValue
+        activity['marl:maxPolarityValue'] = maxValue
+
+        for k, v in zip(self.classes, features):
+            s = models.Sentiment()
+            if self.binary:
+                if not v:  # Carry on if the value is 0
+                    continue
+                s['marl:hasPolarity'] = k
+            else:
+                if v is not None:
+                    s['marl:hasPolarity'] = k
+                    nv = self.normalize(v, minValue, maxValue)
+                    s['marl:polarityValue'] = nv
+            s.prov(activity)
+
+            entry.sentiments.append(s)
+
         return entry
 
 
@@ -434,14 +530,23 @@ class EmotionBox(TextBox, EmotionPlugin):
     A box plugin where the output is only an a tuple of emotion labels
     '''
 
-    def output(self, output, entry, **kwargs):
-        if not isinstance(output, list):
-            output = [output]
+    EMOTIONS = []
+    with_intensity = True
+
+    def to_entry(self, features, entry, activity, **kwargs):
         s = models.EmotionSet()
-        entry.emotions.append(s)
-        for label in output:
+
+        if len(features) != len(self.EMOTIONS):
+            raise Exception(('The number of classes in the plugin and the number of features '
+                             'do not match'))
+
+        for label, intensity in zip(self.EMOTIONS, features):
             e = models.Emotion(onyx__hasEmotionCategory=label)
-            s.append(e)
+            if self.with_intensity:
+                e.onyx__hasEmotionIntensity = intensity
+            s.onyx__hasEmotion.append(e)
+        s.prov(activity)
+        entry.emotions.append(s)
         return entry
 
 
@@ -454,11 +559,15 @@ class MappingMixin(object):
     def mappings(self, value):
         self._mappings = value
 
-    def output(self, output, entry, params):
-        output = self.mappings.get(output, self.mappings.get(
-            'default', output))
-        return super(MappingMixin, self).output(
-            output=output, entry=entry, params=params)
+    def to_entry(self, features, entry, activity):
+        features = list(features)
+        for i, feat in enumerate(features):
+            features[i] = self.mappings.get(feat,
+                                            self.mappings.get('default',
+                                                              feat))
+        return super(MappingMixin, self).to_entry(features=features,
+                                                  entry=entry,
+                                                  activity=activity)
 
 
 class ShelfMixin(object):
@@ -505,7 +614,7 @@ class ShelfMixin(object):
                 pickle.dump(self._sh, f)
 
 
-def pfilter(plugins, plugin_type=Analysis, **kwargs):
+def pfilter(plugins, plugin_type=Analyser, **kwargs):
     """ Filter plugins by different criteria """
     if isinstance(plugins, models.Plugins):
         plugins = plugins.plugins
@@ -525,6 +634,9 @@ def pfilter(plugins, plugin_type=Analysis, **kwargs):
             raise models.Error('{} is not a valid type'.format(plugin_type))
     else:
         candidates = plugins
+
+    if 'name' in kwargs:
+        kwargs['name'] = kwargs['name'].lower()
 
     logger.debug(candidates)
 
@@ -549,31 +661,48 @@ def load_module(name, root=None):
 
 def _log_subprocess_output(process):
     for line in iter(process.stdout.readline, b''):
-        logger.info('%r', line)
+        logger.info('%s', line.decode())
     for line in iter(process.stderr.readline, b''):
-        logger.error('%r', line)
+        logger.error('%s', line.decode())
+
+
+def missing_requirements(reqs):
+    queue = []
+    pool = multiprocessing.Pool(4)
+    for req in reqs:
+        res = pool.apply_async(pkg_resources.get_distribution, (req,))
+        queue.append((req, res))
+    missing = []
+    for req, job in queue:
+        try:
+            job.get(1)
+        except Exception:
+            missing.append(req)
+    return missing
 
 
 def install_deps(*plugins):
     installed = False
     nltk_resources = set()
+    requirements = []
     for info in plugins:
         requirements = info.get('requirements', [])
         if requirements:
-            pip_args = [sys.executable, '-m', 'pip', 'install']
-            for req in requirements:
-                pip_args.append(req)
-            logger.info('Installing requirements: ' + str(requirements))
-            process = subprocess.Popen(
-                pip_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            _log_subprocess_output(process)
-            exitcode = process.wait()
-            installed = True
-            if exitcode != 0:
-                raise models.Error(
-                    "Dependencies not properly installed: {}".format(pip_args))
+            requirements += missing_requirements(requirements)
         nltk_resources |= set(info.get('nltk_resources', []))
-
+    if requirements:
+        logger.info('Installing requirements: ' + str(requirements))
+        pip_args = [sys.executable, '-m', 'pip', 'install']
+        for req in requirements:
+            pip_args.append(req)
+        process = subprocess.Popen(
+            pip_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        _log_subprocess_output(process)
+        exitcode = process.wait()
+        installed = True
+        if exitcode != 0:
+            raise models.Error(
+                "Dependencies not properly installed: {}".format(pip_args))
     installed |= download(list(nltk_resources))
     return installed
 
@@ -632,7 +761,7 @@ def from_info(info, root=None, install_on_fail=True, **kwargs):
 def parse_plugin_info(fpath):
     logger.debug("Parsing plugin info: {}".format(fpath))
     with open(fpath, 'r') as f:
-        info = yaml.load(f)
+        info = yaml.load(f, Loader=yaml.FullLoader)
     info['_path'] = fpath
     return info
 
@@ -688,14 +817,34 @@ def _from_loaded_module(module, info=None, **kwargs):
         yield instance
 
 
+cached_evs = {}
+
+
 def evaluate(plugins, datasets, **kwargs):
-    ev = gsitk_compat.Eval(
-        tuples=None,
-        datasets=datasets,
-        pipelines=[plugin.as_pipe() for plugin in plugins])
-    ev.evaluate()
-    results = ev.results
-    evaluations = evaluations_to_JSONLD(results, **kwargs)
+    for plug in plugins:
+        if not hasattr(plug, 'as_pipe'):
+            raise models.Error('Plugin {} cannot be evaluated'.format(plug.name))
+
+    tuples = list(product(plugins, datasets))
+    missing = []
+    for (p, d) in tuples:
+        if (p.id, d) not in cached_evs:
+            pipe = p.as_pipe()
+            missing.append(gsitk_compat.EvalPipeline(pipe, d))
+    if missing:
+        ev = gsitk_compat.Eval(tuples=missing, datasets=datasets)
+        ev.evaluate()
+        results = ev.results
+        new_ev = evaluations_to_JSONLD(results, **kwargs)
+        for ev in new_ev:
+            dataset = ev.evaluatesOn
+            model = ev.evaluates.rstrip('__' + dataset)
+            cached_evs[(model, dataset)] = ev
+    evaluations = []
+    print(tuples, 'Cached evs', cached_evs)
+    for (p, d) in tuples:
+        print('Adding', d, p)
+        evaluations.append(cached_evs[(p.id, d)])
     return evaluations
 
 
@@ -708,7 +857,7 @@ def evaluations_to_JSONLD(results, flatten=False):
     metric_names = ['accuracy', 'precision_macro', 'recall_macro',
                     'f1_macro', 'f1_weighted', 'f1_micro', 'f1_macro']
 
-    for index, row in results.iterrows():
+    for index, row in results.fillna('Not Available').iterrows():
         evaluation = models.Evaluation()
         if row.get('CV', True):
             evaluation['@type'] = ['StaticCV', 'Evaluation']
@@ -724,10 +873,29 @@ def evaluations_to_JSONLD(results, flatten=False):
             # We should probably discontinue this representation
             for name in metric_names:
                 metric = models.Metric()
-                metric['@id'] = 'Metric' + str(i)
                 metric['@type'] = name.capitalize()
                 metric.value = row[name]
                 evaluation.metrics.append(metric)
                 i += 1
         evaluations.append(evaluation)
     return evaluations
+
+
+class ScikitWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self, plugin=None):
+        self.plugin = plugin
+
+    def fit(self, X=None, y=None):
+        if self.plugin is not None and not self.plugin.is_activated:
+            self.plugin.activate()
+        return self
+
+    def transform(self, X):
+        return self.plugin.evaluate_func(X, None)
+
+    def predict(self, X):
+        return self.transform(X)
+
+    def fit_transform(self, X, y):
+        self.fit(X, y)
+        return self.transform(X)

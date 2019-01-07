@@ -130,7 +130,7 @@ textarea{
 
 .tab-content {
   padding: 1em;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-top: none;
 }
 #content-services, #content-resources {
@@ -144,8 +144,11 @@ textarea{
 .center-block {
     float:none;
 }
-#header {
+#header h3, #header h4, #header h5, #header h6 {
   font-family: 'Architects Daughter', cursive;
+}
+#header {
+    background-color: white;
 }
 
 #results-div {
@@ -196,7 +199,63 @@ textarea{
 
 }
 
+small pre {
+    font-size: smaller;
+    overflow: auto;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+
+/* NODES */
+.node {
+		stroke: #fff;
+		fill:#ddd;
+		stroke-width: 1.5px;
+}
+.link {
+		fill: none;
+		stroke: #999;
+		stroke-opacity: .6;
+		stroke-width: 1px;
+}
+marker {
+		stroke: #999;
+		fill:rgba(124,240,10,0);
+}
+.node-text {
+		font: 11px sans-serif;
+		fill:black;
+}
+.link-text {
+		font: 9px sans-serif;
+		fill:grey;
+}
+
+svg{
+		border:1px solid black;
+    background-color: white;
+    width: 100%;
+    height: 600px;
+}
+
+.ribbon {
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 9999;
+}
+
+pre {outline: 1px solid #ccc; padding: 1em; }
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: black; }
+
+#basic_params {
+    padding: 2em;
 }

@@ -1,5 +1,6 @@
 Examples
-------
+--------
+
 All the examples in this page use the :download:`the main schema <_static/schemas/definitions.json>`.
 
 Simple NIF annotation
@@ -17,6 +18,7 @@ Sentiment Analysis
 .....................
 Description
 ,,,,,,,,,,,
+
 This annotation corresponds to the sentiment analysis of an input. The example shows the sentiment represented according to Marl format.
 The sentiments detected are contained in the Sentiments array with their related part of the text.
 

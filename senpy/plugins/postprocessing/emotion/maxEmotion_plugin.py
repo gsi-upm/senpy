@@ -6,7 +6,7 @@ class MaxEmotion(PostProcessing):
     author = '@dsuarezsouto'
     version = '0.1'
 
-    def process_entry(self, entry, params):
+    def process_entry(self, entry, activity):
         if len(entry.emotions) < 1:
             yield entry
             return
@@ -32,7 +32,7 @@ class MaxEmotion(PostProcessing):
 
         entry.emotions[0]['onyx:hasEmotion'] = [max_emotion]
 
-        entry.emotions[0]['prov:wasGeneratedBy'] = "maxSentiment"
+        entry.emotions[0]['prov:wasGeneratedBy'] = activity.id
         yield entry
 
     def check(self, request, plugins):
@@ -43,12 +43,11 @@ class MaxEmotion(PostProcessing):
     #   2 Case to return a Neutral Emotion.
     test_cases = [
         {
-            "name":
-            "If there are several emotions within an emotion set, reduce it to one.",
+            "name": "If there are several emotions within an emotion set, reduce it to one.",
             "entry": {
                 "@type":
                 "entry",
-                "emotions": [
+                "onyx:hasEmotionSet": [
                     {
                         "@id":
                         "Emotions0",
@@ -94,7 +93,7 @@ class MaxEmotion(PostProcessing):
             'expected': {
                 "@type":
                 "entry",
-                "emotions": [
+                "onyx:hasEmotionSet": [
                     {
                         "@id":
                         "Emotions0",
@@ -107,9 +106,7 @@ class MaxEmotion(PostProcessing):
                                 "onyx:hasEmotionCategory": "joy",
                                 "onyx:hasEmotionIntensity": 0.3333333333333333
                             }
-                        ],
-                        "prov:wasGeneratedBy":
-                        'maxSentiment'
+                        ]
                     }
                 ],
                 "nif:isString":
@@ -122,7 +119,7 @@ class MaxEmotion(PostProcessing):
             "entry": {
                 "@type":
                 "entry",
-                "emotions": [{
+                "onyx:hasEmotionSet": [{
                     "@id":
                     "Emotions0",
                     "@type":
@@ -171,7 +168,7 @@ class MaxEmotion(PostProcessing):
             'expected': {
                 "@type":
                 "entry",
-                "emotions": [{
+                "onyx:hasEmotionSet": [{
                     "@id":
                     "Emotions0",
                     "@type":
@@ -181,9 +178,7 @@ class MaxEmotion(PostProcessing):
                         "@type": "emotion",
                         "onyx:hasEmotionCategory": "neutral",
                         "onyx:hasEmotionIntensity": 1
-                    }],
-                    "prov:wasGeneratedBy":
-                    'maxSentiment'
+                    }]
                 }],
                 "nif:isString":
                 "Test"

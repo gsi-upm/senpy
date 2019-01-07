@@ -1,25 +1,20 @@
-from senpy import SentimentBox, MappingMixin, easy_test
+from senpy import SentimentBox, easy_test
 
 from mypipeline import pipeline
 
 
-class PipelineSentiment(MappingMixin, SentimentBox):
-    '''
-    This is a pipeline plugin that wraps a classifier defined in another module
-    (mypipeline).
-    '''
+class PipelineSentiment(SentimentBox):
+    '''This is a pipeline plugin that wraps a classifier defined in another module
+(mypipeline).'''
     author = '@balkian'
     version = 0.1
     maxPolarityValue = 1
     minPolarityValue = -1
 
-    mappings = {
-        1: 'marl:Positive',
-        -1: 'marl:Negative'
-    }
-
-    def predict_one(self, input):
-        return pipeline.predict([input, ])[0]
+    def predict_one(self, features, **kwargs):
+        if pipeline.predict(features) > 0:
+            return [1, 0, 0]
+        return [0, 0, 1]
 
     test_cases = [
         {

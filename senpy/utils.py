@@ -77,6 +77,7 @@ def easy_test(plugin_list=None, debug=True):
             logger.info('Loading classes from {}'.format(__main__))
             from . import plugins
             plugin_list = plugins.from_module(__main__)
+        plugin_list = list(plugin_list)
         for plug in plugin_list:
             plug.test()
             plug.log.info('My tests passed!')
@@ -87,7 +88,7 @@ def easy_test(plugin_list=None, debug=True):
         pdb.post_mortem()
 
 
-def easy(host='0.0.0.0', port=5000, debug=True, **kwargs):
+def easy(host='0.0.0.0', port=5000, debug=False, **kwargs):
     '''
     Run a server with a specific plugin.
     '''

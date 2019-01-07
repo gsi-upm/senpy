@@ -12,6 +12,8 @@ standard_library.install_aliases()
 from future.utils import with_metaclass
 from past.builtins import basestring
 
+from jinja2 import Environment, BaseLoader
+
 import time
 import copy
 import json
@@ -21,6 +23,7 @@ from flask import Response as FlaskResponse
 from pyld import jsonld
 
 import logging
+import jmespath
 
 logging.getLogger('rdflib').setLevel(logging.WARN)
 logger = logging.getLogger(__name__)
@@ -31,8 +34,9 @@ from rdflib import Graph
 from .meta import BaseMeta, CustomDict, alias
 
 DEFINITIONS_FILE = 'definitions.json'
-CONTEXT_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 'schemas', 'context.jsonld')
+CONTEXT_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                            'schemas',
+                            'context.jsonld')
 
 
 def get_schema_path(schema_file, absolute=False):
@@ -132,13 +136,10 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
         if auto_id:
             self.id
 
-        if '@type' not in self:
-            logger.warning('Created an instance of an unknown model')
-
     @property
     def id(self):
         if '@id' not in self:
-            self['@id'] = '_:{}_{}'.format(type(self).__name__, time.time())
+            self['@id'] = 'prefix:{}_{}'.format(type(self).__name__, time.time())
         return self['@id']
 
     @id.setter
@@ -174,24 +175,33 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
             headers=headers,
             mimetype=mimetype)
 
-    def serialize(self, format='json-ld', with_mime=False, **kwargs):
-        js = self.jsonld(**kwargs)
-        content = json.dumps(js, indent=2, sort_keys=True)
-        if format == 'json-ld':
+    def serialize(self, format='json-ld', with_mime=False,
+                  template=None, prefix=None, fields=None, **kwargs):
+        js = self.jsonld(prefix=prefix, **kwargs)
+        if template is not None:
+            rtemplate = Environment(loader=BaseLoader).from_string(template)
+            content = rtemplate.render(**self)
+            mimetype = 'text'
+        elif fields is not None:
+            # Emulate field selection by constructing a template
+            content = json.dumps(jmespath.search(fields, js))
+            mimetype = 'text'
+        elif format == 'json-ld':
+            content = json.dumps(js, indent=2, sort_keys=True)
             mimetype = "application/json"
         elif format in ['turtle', 'ntriples']:
+            content = json.dumps(js, indent=2, sort_keys=True)
             logger.debug(js)
-            base = kwargs.get('prefix')
+            context = [self._context, {'prefix': prefix, '@base': prefix}]
             g = Graph().parse(
                 data=content,
                 format='json-ld',
-                base=base,
-                context=[self._context,
-                         {'@base': base}])
+                prefix=prefix,
+                context=context)
             logger.debug(
                 'Parsing with prefix: {}'.format(kwargs.get('prefix')))
             content = g.serialize(format=format,
-                                  base=base).decode('utf-8')
+                                  prefix=prefix).decode('utf-8')
             mimetype = 'text/{}'.format(format)
         else:
             raise Error('Unknown outformat: {}'.format(format))
@@ -204,14 +214,25 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
                with_context=False,
                context_uri=None,
                prefix=None,
-               expanded=False):
+               base=None,
+               expanded=False,
+               **kwargs):
 
-        result = self.serializable()
+        result = self.serializable(**kwargs)
 
         if expanded:
             result = jsonld.expand(
-                result, options={'base': prefix,
-                                 'expandContext': self._context})[0]
+                result,
+                options={
+                    'expandContext': [
+                        self._context,
+                        {
+                            'prefix': prefix,
+                            'endpoint': prefix
+                        }
+                    ]
+                }
+            )[0]
         if not with_context:
             try:
                 del result['@context']
@@ -239,7 +260,7 @@ def subtypes():
     return BaseMeta._subtypes
 
 
-def from_dict(indict, cls=None):
+def from_dict(indict, cls=None, warn=True):
     if not cls:
         target = indict.get('@type', None)
         cls = BaseModel
@@ -247,6 +268,10 @@ def from_dict(indict, cls=None):
             cls = subtypes()[target]
         except KeyError:
             pass
+
+    if cls == BaseModel and warn:
+        logger.warning('Created an instance of an unknown model')
+
     outdict = dict()
     for k, v in indict.items():
         if k == '@context':
@@ -266,22 +291,24 @@ def from_string(string, **kwargs):
     return from_dict(json.loads(string), **kwargs)
 
 
-def from_json(injson):
+def from_json(injson, **kwargs):
     indict = json.loads(injson)
-    return from_dict(indict)
+    return from_dict(indict, **kwargs)
 
 
 class Entry(BaseModel):
     schema = 'entry'
 
     text = alias('nif:isString')
+    sentiments = alias('marl:hasOpinion', [])
+    emotions = alias('onyx:hasEmotionSet', [])
 
 
 class Sentiment(BaseModel):
     schema = 'sentiment'
 
     polarity = alias('marl:hasPolarity')
-    polarityValue = alias('marl:hasPolarityValue')
+    polarityValue = alias('marl:polarityValue')
 
 
 class Error(BaseModel, Exception):
@@ -301,59 +328,121 @@ class Error(BaseModel, Exception):
         return Exception.__hash__(self)
 
 
-# Add the remaining schemas programmatically
+class AggregatedEvaluation(BaseModel):
+    schema = 'aggregatedEvaluation'
 
-def _class_from_schema(name, schema=None, schema_file=None, base_classes=None):
-    base_classes = base_classes or []
-    base_classes.append(BaseModel)
-    attrs = {}
-    if schema:
-        attrs['schema'] = schema
-    elif schema_file:
-        attrs['schema_file'] = schema_file
-    else:
-        attrs['schema'] = name
-    name = "".join((name[0].upper(), name[1:]))
-    return BaseMeta(name, base_classes, attrs)
+    evaluations = alias('senpy:evaluations', [])
 
 
-def _add_class_from_schema(*args, **kwargs):
-    generatedClass = _class_from_schema(*args, **kwargs)
-    globals()[generatedClass.__name__] = generatedClass
-    del generatedClass
+class Dataset(BaseModel):
+    schema = 'dataset'
 
 
-for i in [
-        'aggregatedEvaluation',
-        'dataset',
-        'datasets',
-        'emotion',
-        'emotionConversion',
-        'emotionConversionPlugin',
-        'emotionAnalysis',
-        'emotionModel',
-        'emotionPlugin',
-        'emotionSet',
-        'evaluation',
-        'entity',
-        'help',
-        'metric',
-        'parameter',
-        'plugins',
-        'response',
-        'results',
-        'sentimentPlugin',
-        'suggestion',
-        'topic',
+class Datasets(BaseModel):
+    schema = 'datasets'
 
-]:
-    _add_class_from_schema(i)
+    datasets = []
+
+
+class Emotion(BaseModel):
+    schema = 'emotion'
+
+
+class EmotionConversion(BaseModel):
+    schema = 'emotionConversion'
+
+
+class EmotionConversionPlugin(BaseModel):
+    schema = 'emotionConversionPlugin'
+
+
+class EmotionAnalysis(BaseModel):
+    schema = 'emotionAnalysis'
+
+
+class EmotionModel(BaseModel):
+    schema = 'emotionModel'
+    onyx__hasEmotionCategory = []
+
+
+class EmotionPlugin(BaseModel):
+    schema = 'emotionPlugin'
+
+
+class EmotionSet(BaseModel):
+    schema = 'emotionSet'
+
+    onyx__hasEmotion = []
+
+
+class Evaluation(BaseModel):
+    schema = 'evaluation'
+
+    metrics = alias('senpy:metrics', [])
+
+
+class Entity(BaseModel):
+    schema = 'entity'
+
+
+class Help(BaseModel):
+    schema = 'help'
+
+
+class Metric(BaseModel):
+    schema = 'metric'
+
+
+class Parameter(BaseModel):
+    schema = 'parameter'
+
+
+class Plugins(BaseModel):
+    schema = 'plugins'
+
+    plugins = []
+
+
+class Response(BaseModel):
+    schema = 'response'
+
+
+class Results(BaseModel):
+    schema = 'results'
+
+    _terse_keys = ['entries', ]
+
+    activities = []
+    entries = []
+
+    def activity(self, id):
+        for i in self.activities:
+            if i.id == id:
+                return i
+        return None
+
+
+class SentimentPlugin(BaseModel):
+    schema = 'sentimentPlugin'
+
+
+class Suggestion(BaseModel):
+    schema = 'suggestion'
+
+
+class Topic(BaseModel):
+    schema = 'topic'
 
 
 class Analysis(BaseModel):
+    '''
+    A prov:Activity that results of executing a Plugin on an entry with a set of
+    parameters.
+    '''
     schema = 'analysis'
 
-    parameters = alias('prov:used')
+    parameters = alias('prov:used', [])
+    algorithm = alias('prov:wasAssociatedWith', [])
 
     @property
     def params(self):
@@ -373,9 +462,11 @@ class Analysis(BaseModel):
             else:
                 self.parameters.append(Parameter(name=k, value=v))  # noqa: F821
 
-    @property
-    def algorithm(self):
-        return self['prov:wasAssociatedWith']
+    def param(self, key, default=None):
+        for param in self.parameters:
+            if param['name'] == key:
+                return param['value']
+        return default
 
     @property
     def plugin(self):
@@ -387,15 +478,39 @@ class Analysis(BaseModel):
         self['prov:wasAssociatedWith'] = value.id
 
     def run(self, request):
-        return self.plugin.process(request, self.params)
+        return self.plugin.process(request, self)
 
 
 class Plugin(BaseModel):
     schema = 'plugin'
+    extra_params = {}
 
-    def activity(self, parameters):
-        '''Generate a prov:Activity from this plugin and the '''
+    def activity(self, parameters=None):
+        '''Generate an Analysis (prov:Activity) from this plugin and the given parameters'''
         a = Analysis()
         a.plugin = self
-        a.params = parameters
+        if parameters:
+            a.params = parameters
         return a
+
+
+# More classes could be added programmatically
+
+def _class_from_schema(name, schema=None, schema_file=None, base_classes=None):
+    base_classes = base_classes or []
+    base_classes.append(BaseModel)
+    attrs = {}
+    if schema:
+        attrs['schema'] = schema
+    elif schema_file:
+        attrs['schema_file'] = schema_file
+    else:
+        attrs['schema'] = name
+    name = "".join((name[0].upper(), name[1:]))
+    return BaseMeta(name, base_classes, attrs)
+
+
+def _add_class_from_schema(*args, **kwargs):
+    generatedClass = _class_from_schema(*args, **kwargs)
+    globals()[generatedClass.__name__] = generatedClass
+    del generatedClass

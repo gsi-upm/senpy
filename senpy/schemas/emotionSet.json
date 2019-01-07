@@ -12,8 +12,7 @@
       "type": "array",
       "items": {
         "$ref": "emotion.json"
-      },
-      "default": []
+      }
     },
     "prov:wasGeneratedBy": {
       "type": "string",

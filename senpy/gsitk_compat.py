@@ -16,16 +16,16 @@ def raise_exception(*args, **kwargs):
 try:
     gsitk_distro = get_distribution("gsitk")
     GSITK_VERSION = parse_version(gsitk_distro.version)
-    GSITK_AVAILABLE = GSITK_VERSION > parse_version("0.1.9.1")  # Earlier versions have a bug
-except DistributionNotFound:
-    GSITK_AVAILABLE = False
-    GSITK_VERSION = ()
 
-if GSITK_AVAILABLE:
     from gsitk.datasets.datasets import DatasetManager
-    from gsitk.evaluation.evaluation import Evaluation as Eval
+    from gsitk.evaluation.evaluation import Evaluation as Eval  # noqa: F401
+    from gsitk.evaluation.evaluation import EvalPipeline  # noqa: F401
     from sklearn.pipeline import Pipeline
     modules = locals()
-else:
+    GSITK_AVAILABLE = True
+except (DistributionNotFound, ImportError) as err:
+    logger.debug('Error importing GSITK: {}'.format(err))
     logger.warning(IMPORTMSG)
+    GSITK_AVAILABLE = False
+    GSITK_VERSION = ()
     DatasetManager = Eval = Pipeline = raise_exception

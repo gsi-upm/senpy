@@ -28,6 +28,7 @@ test-3.5:
 
 test-2.7:
   <<: *test_definition
+  allow_failure: true
   variables:
     PYTHON_VERSION: "2.7"
 

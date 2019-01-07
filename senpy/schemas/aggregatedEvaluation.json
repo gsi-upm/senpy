@@ -11,14 +11,12 @@
           "$ref": "context.json"
         },
         "@type": {
-          "default": "AggregatedEvaluation"
         },
         "@id": {
           "description": "ID of the aggregated evaluation",
           "type": "string"
         },
         "evaluations": {
-          "default": [],
           "type": "array",
           "items": {
             "anyOf": [

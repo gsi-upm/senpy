@@ -2,7 +2,7 @@
   "@context": "http://mixedemotions-project.eu/ns/context.jsonld",
   "@id": "me:Result1",
   "@type": "results",
-  "analysis": [
+  "activities": [
     {
       "@id": "me:EmotionAnalysis1_Activity",
       "@type": "me:EmotionAnalysis1",

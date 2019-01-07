@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from senpy import easy_test, SentimentBox
 
@@ -12,15 +12,13 @@ class BasicBox(SentimentBox):
     author = '@balkian'
     version = '0.1'
 
-    mappings = {
-        'pos': 'marl:Positive',
-        'neg': 'marl:Negative',
-        'default': 'marl:Neutral'
-    }
-
-    def predict_one(self, input):
-        output = basic.get_polarity(input)
-        return self.mappings.get(output, self.mappings['default'])
+    def predict_one(self, features, **kwargs):
+        output = basic.get_polarity(features[0])
+        if output == 'pos':
+            return [1, 0, 0]
+        if output == 'neg':
+            return [0, 0, 1]
+        return [0, 1, 0]
 
     test_cases = [{
         'input': 'Hello :)',

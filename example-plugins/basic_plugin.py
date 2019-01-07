@@ -1,37 +1,36 @@
 #!/usr/local/bin/python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
-from senpy import easy_test, SentimentBox, MappingMixin
+from senpy import easy_test, SentimentBox
 
 import basic
 
 
-class Basic(MappingMixin, SentimentBox):
+class Basic(SentimentBox):
     '''Provides sentiment annotation using a lexicon'''
 
     author = '@balkian'
     version = '0.1'
 
-    mappings = {
-        'pos': 'marl:Positive',
-        'neg': 'marl:Negative',
-        'default': 'marl:Neutral'
-    }
-
-    def predict_one(self, input):
-        return basic.get_polarity(input)
+    def predict_one(self, features, **kwargs):
+        output = basic.get_polarity(features[0])
+        if output == 'pos':
+            return [1, 0, 0]
+        if output == 'neu':
+            return [0, 1, 0]
+        return [0, 0, 1]
 
     test_cases = [{
-        'input': 'Hello :)',
+        'input': u'Hello :)',
         'polarity': 'marl:Positive'
     }, {
-        'input': 'So sad :(',
+        'input': u'So sad :(',
         'polarity': 'marl:Negative'
     }, {
-        'input': 'Yay! Emojis  😁',
+        'input': u'Yay! Emojis  😁',
         'polarity': 'marl:Positive'
     }, {
-        'input': 'But no emoticons 😢',
+        'input': u'But no emoticons 😢',
         'polarity': 'marl:Negative'
     }]
 

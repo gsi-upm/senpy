@@ -7,7 +7,7 @@
   ],
   "@id": "me:Result1",
   "@type": "results",
-  "analysis": [
+  "activities": [
     {
       "@id": "me:HesamsAnalysis_Activity",
       "@type": "onyx:EmotionAnalysis",

@@ -32,27 +32,25 @@ If you want to install senpy globally, use sudo instead of the ``--user`` flag.
 
 Docker Image
 ************
-Build the image or use the pre-built one:   
+The base image of senpy comes with some builtin plugins that you can use:   
 
 .. code:: bash
 
-   docker run -ti -p 5000:5000 gsiupm/senpy --host 0.0.0.0 --default-plugins
+   docker run -ti -p 5000:5000 gsiupm/senpy --host 0.0.0.0
 
-To add custom plugins, use a docker volume: 
+To add your custom plugins, you can use a docker volume: 
     
 .. code:: bash
 
-   docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --host 0.0.0.0 --default-plugins -f /plugins
+   docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --host 0.0.0.0 --plugins -f /plugins
  
 
-Python 2
-........
 
-There is a Senpy version for python2 too:
+There is a Senpy image for **python 2**, too:
     
 .. code:: bash
 
-   docker run -ti -p 5000:5000 gsiupm/senpy:python2.7 --host 0.0.0.0 --default-plugins
+   docker run -ti -p 5000:5000 gsiupm/senpy:python2.7 --host 0.0.0.0
 
 
 Alias
@@ -62,7 +60,7 @@ If you are using the docker approach regularly, it is advisable to use a script 
 
 .. code:: bash
 
-   alias senpy='docker run --rm -ti -p 5000:5000 -v $PWD:/senpy-plugins gsiupm/senpy --default-plugins'
+   alias senpy='docker run --rm -ti -p 5000:5000 -v $PWD:/senpy-plugins gsiupm/senpy'
 
 
 Now, you may run senpy from any folder in your computer like so:

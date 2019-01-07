@@ -25,7 +25,7 @@ NIF API
         "@context":"http://127.0.0.1/api/contexts/Results.jsonld",
         "@id":"_:Results_11241245.22",
         "@type":"results"
-        "analysis": [
+        "activities": [
           "plugins/sentiment-140_0.1" 
         ],
         "entries": [
@@ -73,7 +73,7 @@ NIF API
 .. http:get:: /api/plugins
 
    Returns a list of installed plugins. 
-   **Example request**:
+   **Example request and response**:
 
    .. sourcecode:: http
 
@@ -81,10 +81,6 @@ NIF API
       Host: localhost
       Accept: application/json, text/javascript
 
-
-   **Example response**:
-
-   .. sourcecode:: http
 
       {
         "@id": "plugins/sentiment-140_0.1", 
@@ -143,18 +139,13 @@ NIF API
 .. http:get:: /api/plugins/<pluginname>
 
    Returns the information of a specific plugin.
-   **Example request**:
+   **Example request and response**:
 
    .. sourcecode:: http
 
-      GET /api/plugins/rand/ HTTP/1.1
+      GET /api/plugins/sentiment-random/ HTTP/1.1
       Host: localhost
       Accept: application/json, text/javascript
-
-
-   **Example response**:
-
-   .. sourcecode:: http
 
       {
         "@context": "http://127.0.0.1/api/contexts/ExamplePlugin.jsonld", 

@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from unittest import TestCase
-from senpy.api import (boolean, parse_params, get_extra_params, parse_analysis,
+from senpy.api import (boolean, parse_params, get_extra_params, parse_analyses,
                        API_PARAMS, NIF_PARAMS, WEB_PARAMS)
 from senpy.models import Error, Plugin
 
@@ -91,7 +91,7 @@ class APITest(TestCase):
         assert 'input' in p
         assert p['input'] == 'Aloha my friend'
 
-    def test_parse_analysis(self):
+    def test_parse_analyses(self):
         '''The API should parse user parameters and return them in a format that plugins can use'''
         plugins = [
             Plugin({
@@ -161,7 +161,7 @@ class APITest(TestCase):
             }
 
         ]
-        p = parse_analysis(call, plugins)
+        p = parse_analyses(call, plugins)
         for i, arg in enumerate(expected):
             params = p[i].params
             for k, v in arg.items():

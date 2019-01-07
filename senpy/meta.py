@@ -34,6 +34,7 @@ class BaseMeta(ABCMeta):
     def __new__(mcs, name, bases, attrs, **kwargs):
         register_afterwards = False
         defaults = {}
+        aliases = {}
 
         attrs = mcs.expand_with_schema(name, attrs)
         if 'schema' in attrs:
@@ -41,17 +42,21 @@ class BaseMeta(ABCMeta):
         for base in bases:
             if hasattr(base, '_defaults'):
                 defaults.update(getattr(base, '_defaults'))
+            if hasattr(base, '_aliases'):
+                aliases.update(getattr(base, '_aliases'))
 
         info, rest = mcs.split_attrs(attrs)
 
         for i in list(info.keys()):
             if isinstance(info[i], _Alias):
-                fget, fset, fdel = make_property(info[i].indict)
-                rest[i] = property(fget=fget, fset=fset, fdel=fdel)
+                aliases[i] = info[i].indict
+                if info[i].default is not None:
+                    defaults[i] = info[i].default
             else:
                 defaults[i] = info[i]
 
         rest['_defaults'] = defaults
+        rest['_aliases'] = aliases
 
         cls = super(BaseMeta, mcs).__new__(mcs, name, tuple(bases), rest)
 
@@ -86,7 +91,7 @@ class BaseMeta(ABCMeta):
 
         resolver = jsonschema.RefResolver(schema_path, schema)
         if '@type' not in attrs:
-            attrs['@type'] = "".join((name[0].lower(), name[1:]))
+            attrs['@type'] = name
         attrs['_schema_file'] = schema_file
         attrs['schema'] = schema
         attrs['_validator'] = jsonschema.Draft4Validator(schema, resolver=resolver)
@@ -140,9 +145,11 @@ class BaseMeta(ABCMeta):
         return temp
 
 
-def make_property(key):
+def make_property(key, default=None):
 
     def fget(self):
+        if default:
+            return self.get(key, copy.copy(default))
         return self[key]
 
     def fdel(self):
@@ -168,7 +175,7 @@ class CustomDict(MutableMapping, object):
     '''
 
     _defaults = {}
-    _map_attr_key = {'id': '@id'}
+    _aliases = {'id': '@id'}
 
     def __init__(self, *args, **kwargs):
         super(CustomDict, self).__init__()
@@ -177,13 +184,13 @@ class CustomDict(MutableMapping, object):
         for arg in args:
             self.update(arg)
         for k, v in kwargs.items():
-            self[self._attr_to_key(k)] = v
+            self[k] = v
         return self
 
-    def serializable(self):
+    def serializable(self, **kwargs):
         def ser_or_down(item):
             if hasattr(item, 'serializable'):
-                return item.serializable()
+                return item.serializable(**kwargs)
             elif isinstance(item, dict):
                 temp = dict()
                 for kp in item:
@@ -195,10 +202,9 @@ class CustomDict(MutableMapping, object):
             else:
                 return item
 
-        return ser_or_down(self.as_dict())
+        return ser_or_down(self.as_dict(**kwargs))
 
     def __getitem__(self, key):
-        key = self._key_to_attr(key)
         return self.__dict__[key]
 
     def __setitem__(self, key, value):
@@ -206,9 +212,23 @@ class CustomDict(MutableMapping, object):
         key = self._key_to_attr(key)
         return setattr(self, key, value)
 
-    def as_dict(self):
-        return {self._attr_to_key(k): v for k, v in self.__dict__.items()
-                if not self._internal_key(k)}
+    def __delitem__(self, key):
+        key = self._key_to_attr(key)
+        del self.__dict__[key]
+
+    def as_dict(self, verbose=True, aliases=False):
+        attrs = self.__dict__.keys()
+        if not verbose and hasattr(self, '_terse_keys'):
+            attrs = self._terse_keys + ['@type', '@id']
+        res = {k: getattr(self, k) for k in attrs
+               if not self._internal_key(k) and hasattr(self, k)}
+        if not aliases:
+            return res
+        for k, ok in self._aliases.items():
+            if ok in res:
+                res[k] = getattr(res, ok)
+                del res[ok]
+        return res
 
     def __iter__(self):
         return (k for k in self.__dict__ if not self._internal_key(k))
@@ -216,29 +236,38 @@ class CustomDict(MutableMapping, object):
     def __len__(self):
         return len(self.__dict__)
 
-    def __delitem__(self, key):
-        del self.__dict__[key]
-
     def update(self, other):
         for k, v in other.items():
             self[k] = v
 
     def _attr_to_key(self, key):
         key = key.replace("__", ":", 1)
-        key = self._map_attr_key.get(key, key)
+        key = self._aliases.get(key, key)
         return key
 
     def _key_to_attr(self, key):
         if self._internal_key(key):
             return key
-        key = key.replace(":", "__", 1)
+
+        if key in self._aliases:
+            key = self._aliases[key]
+        else:
+            key = key.replace(":", "__", 1)
         return key
 
     def __getattr__(self, key):
-        try:
-            return self.__dict__[self._attr_to_key(key)]
-        except KeyError:
-            raise AttributeError
+        nkey = self._attr_to_key(key)
+        if nkey in self.__dict__:
+            return self.__dict__[nkey]
+        elif nkey == key:
+            raise AttributeError("Key not found: {}".format(key))
+        return getattr(self, nkey)
+
+    def __setattr__(self, key, value):
+        super(CustomDict, self).__setattr__(self._attr_to_key(key), value)
+
+    def __delattr__(self, key):
+        super(CustomDict, self).__delattr__(self._attr_to_key(key))
 
     @staticmethod
     def _internal_key(key):
@@ -251,8 +280,8 @@ class CustomDict(MutableMapping, object):
         return json.dumps(self.serializable(), sort_keys=True, indent=4)
 
 
-_Alias = namedtuple('Alias', 'indict')
+_Alias = namedtuple('Alias', ['indict', 'default'])
 
 
-def alias(key):
-    return _Alias(key)
+def alias(key, default=None):
+    return _Alias(key, default)

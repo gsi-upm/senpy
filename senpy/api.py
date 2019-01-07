@@ -5,24 +5,31 @@ logger = logging.getLogger(__name__)
 
 boolean = [True, False]
 
+processors = {
+    'string_to_tuple': lambda p: p if isinstance(p, (tuple, list)) else tuple(p.split(','))
+}
+
 API_PARAMS = {
     "algorithm": {
         "aliases": ["algorithms", "a", "algo"],
         "required": True,
         "default": 'default',
+        "processor": 'string_to_tuple',
         "description": ("Algorithms that will be used to process the request."
                         "It may be a list of comma-separated names."),
     },
     "expanded-jsonld": {
         "@id": "expanded-jsonld",
-        "aliases": ["expanded"],
+        "description": "use JSON-LD expansion to get full URIs",
+        "aliases": ["expanded", "expanded_jsonld"],
         "options": boolean,
         "required": True,
         "default": False
     },
-    "with_parameters": {
+    "with-parameters": {
         "aliases": ['withparameters',
-                    'with-parameters'],
+                    'with_parameters'],
+        "description": "include initial parameters in the response",
         "options": boolean,
         "default": False,
         "required": True
@@ -31,8 +38,66 @@ API_PARAMS = {
         "@id": "outformat",
         "aliases": ["o"],
         "default": "json-ld",
+        "description": """The data can be semantically formatted (JSON-LD, turtle or n-triples),
+given as a list of comma-separated fields (see the fields option) or constructed from a Jinja2
+template (see the template option).""",
         "required": True,
         "options": ["json-ld", "turtle", "ntriples"],
+    },
+    "template": {
+        "@id": "template",
+        "required": False,
+        "description": """Jinja2 template for the result. The input data for the template will
+be the results as a dictionary.
+For example:
+
+Consider the results before templating:
+
+```
+[{
+    "@type": "entry",
+    "onyx:hasEmotionSet": [],
+    "nif:isString": "testing the template",
+    "marl:hasOpinion": [
+        {
+            "@type": "sentiment",
+            "marl:hasPolarity": "marl:Positive"
+        }
+    ]
+}]
+```
+
+
+And the template:
+
+```
+{% for entry in entries %}
+{{ entry["nif:isString"] | upper }},{{entry.sentiments[0]["marl:hasPolarity"].split(":")[1]}}
+{% endfor %}
+```
+
+The final result would be:
+
+```
+TESTING THE TEMPLATE,Positive
+```
+"""
+
+    },
+    "fields": {
+        "@id": "fields",
+        "required": False,
+        "description": """A jmespath selector, that can be used to extract a new dictionary, array or value
+from the results.
+jmespath is a powerful query language for json and/or dictionaries.
+It allows you to change the structure (and data) of your objects through queries.
+
+e.g., the following expression gets a list of `[emotion label, intensity]` for each entry:
+`entries[]."onyx:hasEmotionSet"[]."onyx:hasEmotion"[]["onyx:hasEmotionCategory","onyx:hasEmotionIntensity"]`
+
+For more information, see: https://jmespath.org
+
+"""
     },
     "help": {
         "@id": "help",
@@ -44,21 +109,39 @@ API_PARAMS = {
     },
     "verbose": {
         "@id": "verbose",
-        "description": ("Show all help, including the common API parameters, or "
-                        "only plugin-related info"),
+        "description": "Show all properties in the result",
         "aliases": ["v"],
         "required": True,
         "options": boolean,
-        "default": True
+        "default": False
     },
-    "emotionModel": {
+    "aliases": {
+        "@id": "aliases",
+        "description": "Replace JSON properties with their aliases",
+        "aliases": [],
+        "required": True,
+        "options": boolean,
+        "default": False
+    },
+    "emotion-model": {
         "@id": "emotionModel",
-        "aliases": ["emoModel"],
+        "description": """Emotion model to use in the response.
+Senpy will try to convert the output to this model automatically.
+
+Examples: `wna:liking` and `emoml:big6`.
+        """,
+        "aliases": ["emoModel", "emotionModel"],
         "required": False
     },
     "conversion": {
         "@id": "conversion",
-        "description": "How to show the elements that have (not) been converted",
+        "description": """How to show the elements that have (not) been converted.
+
+* full: converted and original elements will appear side-by-side
+* filtered: only converted elements will be shown
+* nested: converted elements will be shown, and they will include a link to the original element
+(using `prov:wasGeneratedBy`).
+""",
         "required": True,
         "options": ["filtered", "nested", "full"],
         "default": "full"
@@ -68,9 +151,10 @@ API_PARAMS = {
 EVAL_PARAMS = {
     "algorithm": {
         "aliases": ["plug", "p", "plugins", "algorithms", 'algo', 'a', 'plugin'],
-        "description": "Plugins to be evaluated",
+        "description": "Plugins to evaluate",
         "required": True,
-        "help": "See activated plugins in /plugins"
+        "help": "See activated plugins in /plugins",
+        "processor": API_PARAMS['algorithm']['processor']
     },
     "dataset": {
         "aliases": ["datasets", "data", "d"],
@@ -81,18 +165,19 @@ EVAL_PARAMS = {
 }
 
 PLUGINS_PARAMS = {
-    "plugin_type": {
+    "plugin-type": {
         "@id": "pluginType",
         "description": 'What kind of plugins to list',
-        "aliases": ["pluginType"],
+        "aliases": ["pluginType", "plugin_type"],
         "required": True,
         "default": 'analysisPlugin'
     }
 }
 
 WEB_PARAMS = {
-    "inHeaders": {
-        "aliases": ["headers"],
+    "in-headers": {
+        "aliases": ["headers", "inheaders", "inHeaders", "in-headers", "in_headers"],
+        "description": "Only include the JSON-LD context in the headers",
         "required": True,
         "default": False,
         "options": boolean
@@ -100,8 +185,8 @@ WEB_PARAMS = {
 }
 
 CLI_PARAMS = {
-    "plugin_folder": {
-        "aliases": ["folder"],
+    "plugin-folder": {
+        "aliases": ["folder", "plugin_folder"],
         "required": True,
         "default": "."
     },
@@ -116,6 +201,7 @@ NIF_PARAMS = {
     },
     "intype": {
         "@id": "intype",
+        "description": "input type",
         "aliases": ["t"],
         "required": False,
         "default": "direct",
@@ -123,6 +209,7 @@ NIF_PARAMS = {
     },
     "informat": {
         "@id": "informat",
+        "description": "input format",
         "aliases": ["f"],
         "required": False,
         "default": "text",
@@ -130,17 +217,20 @@ NIF_PARAMS = {
     },
     "language": {
         "@id": "language",
+        "description": "language of the input",
         "aliases": ["l"],
         "required": False,
     },
     "prefix": {
         "@id": "prefix",
+        "description": "prefix to use for new entities",
         "aliases": ["p"],
         "required": True,
         "default": "",
     },
     "urischeme": {
         "@id": "urischeme",
+        "description": "scheme for NIF URIs",
         "aliases": ["u"],
         "required": False,
         "default": "RFC5147String",
@@ -171,16 +261,19 @@ def parse_params(indict, *specs):
                 if alias in indict and alias != param:
                     outdict[param] = indict[alias]
                     del outdict[alias]
-                    continue
+                    break
             if param not in outdict:
                 if "default" in options:
                     # We assume the default is correct
                     outdict[param] = options["default"]
                 elif options.get("required", False):
                     wrong_params[param] = spec[param]
-            elif "options" in options:
+                continue
+            if 'processor' in options:
+                outdict[param] = processors[options['processor']](outdict[param])
+            if "options" in options:
                 if options["options"] == boolean:
-                    outdict[param] = str(outdict[param]).lower() in ['true', '1']
+                    outdict[param] = str(outdict[param]).lower() in ['true', '1', '']
                 elif outdict[param] not in options["options"]:
                     wrong_params[param] = spec[param]
     if wrong_params:
@@ -253,7 +346,7 @@ def get_extra_params(plugins):
     return params
 
 
-def parse_analysis(params, plugins):
+def parse_analyses(params, plugins):
     '''
     Parse the given parameters individually for each plugin, and get a list of the parameters that
     belong to each of the plugins. Each item can then be used in the plugin.analyse_entries method.
@@ -305,7 +398,7 @@ def parse_call(params):
     params = parse_params(params, NIF_PARAMS)
     if params['informat'] == 'text':
         results = Results()
-        entry = Entry(nif__isString=params['input'], id='#')  # Use @base
+        entry = Entry(nif__isString=params['input'], id='prefix:')  # Use @base
         results.entries.append(entry)
     elif params['informat'] == 'json-ld':
         results = from_string(params['input'], cls=Results)

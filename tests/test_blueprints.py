@@ -60,33 +60,33 @@ class BlueprintsTest(TestCase):
         The dummy plugin returns an empty response,\
         it should contain the context
         """
-        resp = self.client.get("/api/?i=My aloha mohame&with_parameters=True")
+        resp = self.client.get("/api/?i=My aloha mohame&verbose")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         logging.debug("Got response: %s", js)
         assert "@context" in js
         assert "entries" in js
-        assert len(js['analysis']) == 1
+        assert len(js['activities']) == 1
 
     def test_analysis_post(self):
         """
         The results for a POST request should be the same as for a GET request.
         """
         resp = self.client.post("/api/", data={'i': 'My aloha mohame',
-                                               'algorithm': 'rand',
-                                               'with_parameters': True})
+                                               'algorithm': 'sentiment-random',
+                                               'verbose': True})
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         logging.debug("Got response: %s", js)
         assert "@context" in js
         assert "entries" in js
-        assert len(js['analysis']) == 1
+        assert len(js['activities']) == 1
 
     def test_analysis_extra(self):
         """
         Extra params that have a default should use it
         """
-        resp = self.client.get("/api/?i=My aloha mohame&algo=Dummy&with_parameters=true")
+        resp = self.client.get("/api/?i=My aloha mohame&algo=Dummy&with-parameters=true")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         logging.debug("Got response: %s", js)
@@ -129,23 +129,23 @@ class BlueprintsTest(TestCase):
         """
         More than one algorithm can be specified. Plugins will then be chained
         """
-        resp = self.client.get("/api/Dummy?i=My aloha mohame")
+        resp = self.client.get("/api/Dummy?i=My aloha mohame&verbose")
         js = parse_resp(resp)
-        assert len(js['analysis']) == 1
+        assert len(js['activities']) == 1
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'[::-1]
 
-        resp = self.client.get("/api/Dummy/Dummy?i=My aloha mohame")
+        resp = self.client.get("/api/Dummy/Dummy?i=My aloha mohame&verbose")
         # Calling dummy twice, should return the same string
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert len(js['analysis']) == 2
+        assert len(js['activities']) == 2
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
 
-        resp = self.client.get("/api/Dummy+Dummy?i=My aloha mohame")
+        resp = self.client.get("/api/Dummy+Dummy?i=My aloha mohame&verbose")
         # Same with pluses instead of slashes
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert len(js['analysis']) == 2
+        assert len(js['activities']) == 2
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
 
     def test_analysis_chain_required(self):
@@ -153,9 +153,10 @@ class BlueprintsTest(TestCase):
         If a parameter is required and duplicated (because two plugins require it), specifying
         it once should suffice
         """
-        resp = self.client.get("/api/DummyRequired/DummyRequired?i=My aloha mohame&example=a")
+        resp = self.client.get(('/api/DummyRequired/DummyRequired?'
+                                'i=My aloha mohame&example=a&verbose'))
         js = parse_resp(resp)
-        assert len(js['analysis']) == 2
+        assert len(js['activities']) == 2
         assert js['entries'][0]['nif:isString'] == 'My aloha mohame'
         assert js['entries'][0]['reversed'] == 2
 
@@ -193,20 +194,21 @@ class BlueprintsTest(TestCase):
         # First, we split by sentence twice. Each call should generate 3 additional entries
         # (one per sentence in the original).
         resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.'
-                               '\nA new paragraph&delimiter=sentence')
+                               '\nA new paragraph&delimiter=sentence&verbose')
         js = parse_resp(resp)
-        assert len(js['analysis']) == 2
+        assert len(js['activities']) == 2
         assert len(js['entries']) == 7
 
         # Now, we split by sentence. This produces 3 additional entries.
         # Then, we split by paragraph. This should create 2 additional entries (One per paragraph
         # in the original text)
         resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.'
-                               '\nA new paragraph&0.delimiter=sentence&1.delimiter=paragraph')
+                               '\nA new paragraph&0.delimiter=sentence'
+                               '&1.delimiter=paragraph&verbose')
         # Calling dummy twice, should return the same string
         self.assertCode(resp, 200)
         js = parse_resp(resp)
-        assert len(js['analysis']) == 2
+        assert len(js['activities']) == 2
         assert len(js['entries']) == 6
 
     def test_error(self):
@@ -230,12 +232,12 @@ class BlueprintsTest(TestCase):
         assert 'plugins' in js
         plugins = js['plugins']
         assert len(plugins) > 1
-        assert list(p for p in plugins if p['name'] == "Dummy")
+        assert any(x['name'] == 'dummy' for x in plugins)
         assert "@context" in js
 
     def test_headers(self):
         for i, j in product(["/api/plugins/?nothing=", "/api/?i=test&"],
-                            ["inHeaders"]):
+                            ["in-headers"]):
             resp = self.client.get("%s" % (i))
             js = parse_resp(resp)
             assert "@context" in js
@@ -251,12 +253,12 @@ class BlueprintsTest(TestCase):
 
     def test_detail(self):
         """ Show only one plugin"""
-        resp = self.client.get("/api/plugins/Dummy/")
+        resp = self.client.get("/api/plugins/dummy/")
         self.assertCode(resp, 200)
         js = parse_resp(resp)
         logging.debug(js)
         assert "@id" in js
-        assert js["@id"] == "endpoint:plugins/Dummy_0.1"
+        assert js["@id"] == "endpoint:plugins/dummy_0.1"
 
     def test_default(self):
         """ Show only one plugin"""
@@ -265,7 +267,7 @@ class BlueprintsTest(TestCase):
         js = parse_resp(resp)
         logging.debug(js)
         assert "@id" in js
-        assert js["@id"] == "endpoint:plugins/Dummy_0.1"
+        assert js["@id"] == "endpoint:plugins/dummy_0.1"
 
     def test_context(self):
         resp = self.client.get("/api/contexts/context.jsonld")
@@ -290,5 +292,5 @@ class BlueprintsTest(TestCase):
 
     def test_conversion(self):
         self.app.config['TESTING'] = False  # Errors are expected in this case
-        resp = self.client.get("/api/?input=hello&algo=emoRand&emotionModel=DOES NOT EXIST")
+        resp = self.client.get("/api/?input=hello&algo=emotion-random&emotionModel=DOES NOT EXIST")
         self.assertCode(resp, 404)

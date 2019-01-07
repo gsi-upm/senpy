@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from senpy import easy_test, models, plugins
 
@@ -16,7 +16,7 @@ class Dictionary(plugins.SentimentPlugin):
 
     mappings = {'pos': 'marl:Positive', 'neg': 'marl:Negative'}
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, *args, **kwargs):
         polarity = basic.get_polarity(entry.text, self.dictionaries)
         if polarity in self.mappings:
             polarity = self.mappings[polarity]

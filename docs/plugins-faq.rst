@@ -1,61 +1,18 @@
-Developing new plugins
-----------------------
-This document contains the minimum to get you started with developing new analysis plugin.
-For an example of conversion plugins, see :doc:`conversion`.
-For a description of definition files, see :doc:`plugins-definition`.
-
-A more step-by-step tutorial with slides is available `here <https://lab.cluster.gsi.dit.upm.es/senpy/senpy-tutorial>`__ 
+F.A.Q.
+======
 
 .. contents:: :local:
 
-What is a plugin?
-=================
-
-A plugin is a python object that can process entries. Given an entry, it will modify it, add annotations to it, or generate new entries.
-
-
-What is an entry?
-=================
-
-Entries are objects that can be annotated.
-In general, they will be a piece of text.
-By default, entries are `NIF contexts <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core/nif-core.html>`_ represented in JSON-LD format.
-It is a dictionary/JSON object that looks like this:
-
-  .. code:: python
-
-            {
-               "@id": "<unique identifier or blank node name>",
-               "nif:isString": "input text",
-               "sentiments": [ {
-                     ...
-               }
-               ],
-               ...
-            }
-
-Annotations are added to the object like this:
-
-.. code:: python
-
-   entry = Entry()
-   entry.vocabulary__annotationName = 'myvalue'
-   entry['vocabulary:annotationName'] = 'myvalue'
-   entry['annotationNameURI'] = 'myvalue'
-
-Where vocabulary is one of the prefixes defined in the default senpy context, and annotationURI is a full URI.
-The value may be any valid JSON-LD dictionary.
-For simplicity, senpy includes a series of models by default in the ``senpy.models`` module.
 
 
 What are annotations?
-=====================
+#####################
 They are objects just like entries.
 Senpy ships with several default annotations, including: ``Sentiment``, ``Emotion``, ``EmotionSet``...jk bb
 
 
 What's a plugin made of?
-========================
+########################
 
 When receiving a query, senpy selects what plugin or plugins should process each entry, and in what order.
 It also makes sure the every entry and the parameters provided by the user meet the plugin requirements.
@@ -73,37 +30,25 @@ In practice, this is what a plugin looks like, tests included:
 The lines highlighted contain some information about the plugin.
 In particular, the following information is mandatory:
 
-* A unique name for the class. In our example, Rand.
+* A unique name for the class. In our example, sentiment-random.
 * The subclass/type of plugin. This is typically either `SentimentPlugin` or `EmotionPlugin`. However, new types of plugin can be created for different annotations. The only requirement is that these new types inherit from `senpy.Analysis`
 * A description of the plugin. This can be done simply by adding a doc to the class.
 * A version, which should get updated.
 * An author name.
 
 
-Plugins Code
-============
-
-The basic methods in a plugin are:
-
-* analyse_entry: called in every user requests. It takes two parameters: ``Entry``, the entry object, and ``params``, the parameters supplied by the user. It should yield one or more ``Entry`` objects.
-* activate: used to load memory-hungry resources. For instance, to train a classifier.
-* deactivate: used to free up resources when the plugin is no longer needed.
-
-Plugins are loaded asynchronously, so don't worry if the activate method takes too long. The plugin will be marked as activated once it is finished executing the method.
-
-
 How does senpy find modules?
-============================
+############################
 
 Senpy looks for files of two types:
 
 * Python files of the form `senpy_<NAME>.py` or `<NAME>_plugin.py`. In these files, it will look for: 1) Instances that inherit from `senpy.Plugin`, or subclasses of `senpy.Plugin` that can be initialized without a configuration file. i.e. classes that contain all the required attributes for a plugin.
-* Plugin definition files (see :doc:`advanced-plugins`)
+* Plugin definition files (see :doc:`plugins-definition`)
 
-Defining additional parameters
-==============================
+How can I define additional parameters for my plugin?
+#####################################################
 
-Your plugin may ask for additional parameters from the users of the service by using the attribute ``extra_params`` in your plugin definition.
+Your plugin may ask for additional parameters from users by using the attribute ``extra_params`` in your plugin definition.
 It takes a dictionary, where the keys are the name of the argument/parameter, and the value has the following fields:
 
 * aliases: the different names which can be used in the request to use the parameter.
@@ -124,8 +69,8 @@ It takes a dictionary, where the keys are the name of the argument/parameter, an
 
 
 
-Loading data and files
-======================
+How should I load external data and files
+#########################################
 
 Most plugins will need access to files (dictionaries, lexicons, etc.).
 These files are usually heavy or under a license that does not allow redistribution.
@@ -144,7 +89,7 @@ Plugins have a convenience function `self.open` which will automatically prepend
               file_in_data = <FILE PATH>
               file_in_sources = <FILE PATH>
 
-              def activate(self):
+              def on activate(self):
                   with self.open(self.file_in_data) as f:
                       self._classifier = train_from_file(f)
                   file_in_source = os.path.join(self.get_folder(), self.file_in_sources)
@@ -155,8 +100,8 @@ Plugins have a convenience function `self.open` which will automatically prepend
 It is good practice to specify the paths of these files in the plugin configuration, so the same code can be reused with different resources.
 
 
-Docker image
-============
+Can I build a docker image for my plugin?
+#########################################
 
 Add the following dockerfile to your project to generate a docker image with your plugin:
 
@@ -204,17 +149,15 @@ Adding data to the image:
    FROM gsiupm/senpy:1.0.1
    COPY data /
 
-F.A.Q.
-======
 What annotations can I use?
-???????????????????????????
+###########################
 
 You can add almost any annotation to an entry.
 The most common use cases are covered in the :doc:`apischema`.
 
 
 Why does the analyse function yield instead of return?
-??????????????????????????????????????????????????????
+######################################################
 
 This is so that plugins may add new entries to the response or filter some of them.
 For instance, a chunker may split one entry into several.
@@ -222,7 +165,7 @@ On the other hand, a conversion plugin may leave out those entries that do not c
 
 
 If I'm using a classifier, where should I train it?
-???????????????????????????????????????????????????
+###################################################
 
 Training a classifier can be time time consuming. To avoid running the training unnecessarily, you can use ShelfMixin to store the classifier. For instance:
 
@@ -256,7 +199,7 @@ A corrupt shelf prevents the plugin from loading.
 If you do not care about the data in the shelf, you can force your plugin to remove the corrupted file and load anyway, set the  'force_shelf' to True in your plugin and start it again.
 
 How can I turn an external service into a plugin?
-?????????????????????????????????????????????????
+#################################################
 
 This example ilustrate how to implement a plugin that accesses the Sentiment140 service.
 
@@ -292,8 +235,8 @@ This example ilustrate how to implement a plugin that accesses the Sentiment140 
                   yield entry
 
 
-Can I activate a DEBUG mode for my plugin?
-???????????????????????????????????????????
+How can I activate a DEBUG mode for my plugin?
+###############################################
 
 You can activate the DEBUG mode by the command-line tool using the option -d.
 
@@ -309,6 +252,6 @@ Additionally, with the ``--pdb`` option you will be dropped into a pdb post mort
    python -m pdb yourplugin.py
 
 Where can I find more code examples?
-????????????????????????????????????
+####################################
 
 See: `<http://github.com/gsi-upm/senpy-plugins-community>`_.

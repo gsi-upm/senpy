@@ -110,4 +110,4 @@ Now, in a file named ``helloworld.py``:
                   entry.sentiments.append(sentiment)
                   yield entry
 
-The complete code of the example plugin is available `here <https://lab.cluster.gsi.dit.upm.es/senpy/plugin-prueba>`__.
+The complete code of the example plugin is available `here <https://lab.gsi.upm.es/senpy/plugin-prueba>`__.

@@ -1,13 +1,12 @@
 import requests
 import json
 
-from senpy.plugins import SentimentPlugin
-from senpy.models import Sentiment
+from senpy.plugins import SentimentBox
 
 ENDPOINT = 'http://www.sentiment140.com/api/bulkClassifyJson'
 
 
-class Sentiment140(SentimentPlugin):
+class Sentiment140(SentimentBox):
     '''Connects to the sentiment140 free API: http://sentiment140.com'''
 
     author = "@balkian"
@@ -16,43 +15,40 @@ class Sentiment140(SentimentPlugin):
     extra_params = {
         'language': {
             "@id": 'lang_sentiment140',
+            'description': 'language of the text',
             'aliases': ['language', 'l'],
-            'required': False,
+            'required': True,
             'default': 'auto',
             'options': ['es', 'en', 'auto']
         }
     }
 
-    maxPolarityValue = 1
-    minPolarityValue = 0
+    classes = ['marl:Positive', 'marl:Neutral', 'marl:Negative']
+    binary = True
 
-    def analyse_entry(self, entry, params):
-        lang = params["language"]
+    def predict_many(self, features, activity):
+        lang = activity.params["language"]
+        data = []
+
+        for feature in features:
+            data.append({'text': feature[0]})
+
         res = requests.post(ENDPOINT,
                             json.dumps({
                                 "language": lang,
-                                "data": [{
-                                    "text": entry['nif:isString']
-                                }]
+                                "data": data
                             }))
-        p = params.get("prefix", None)
-        polarity_value = self.maxPolarityValue * int(
-            res.json()["data"][0]["polarity"]) * 0.25
-        polarity = "marl:Neutral"
-        neutral_value = self.maxPolarityValue / 2.0
-        if polarity_value > neutral_value:
-            polarity = "marl:Positive"
-        elif polarity_value < neutral_value:
-            polarity = "marl:Negative"
 
-        sentiment = Sentiment(
-            prefix=p,
-            marl__hasPolarity=polarity,
-            marl__polarityValue=polarity_value)
-        sentiment.prov__wasGeneratedBy = self.id
-        entry.sentiments.append(sentiment)
-        entry.language = lang
-        yield entry
+        for res in res.json()["data"]:
+            polarity = int(res['polarity'])
+            neutral_value = 2
+            if polarity > neutral_value:
+                yield [1, 0, 0]
+                continue
+            elif polarity < neutral_value:
+                yield [0, 0, 1]
+                continue
+            yield [0, 1, 0]
 
     test_cases = [
         {
@@ -62,7 +58,7 @@ class Sentiment140(SentimentPlugin):
             'params': {},
             'expected': {
                 "nif:isString": "I love Titanic",
-                'sentiments': [
+                'marl:hasOpinion': [
                     {
                         'marl:hasPolarity': 'marl:Positive',
                     }

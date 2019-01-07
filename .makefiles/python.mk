@@ -29,7 +29,7 @@ build: $(addprefix build-, $(PYVERSIONS)) ## Build all images / python versions
 	docker tag $(IMAGEWTAG)-python$(PYMAIN) $(IMAGEWTAG)
 
 build-%: version Dockerfile-%  ## Build a specific version (e.g. build-2.7)
-	docker build -t '$(IMAGEWTAG)-python$*' -f Dockerfile-$* .;
+	docker build --pull -t '$(IMAGEWTAG)-python$*' -f Dockerfile-$* .;
 
 dev-%: ## Launch a specific development environment using docker (e.g. dev-2.7)
 	@docker start $(NAME)-dev$* || (\

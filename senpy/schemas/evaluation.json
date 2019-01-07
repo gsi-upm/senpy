@@ -6,8 +6,7 @@
       "type": "string"
     },
     "@type": {
-      "type": "array",
-      "default": "Evaluation"
+      "type": "array"
 
     },
     "metrics": {
