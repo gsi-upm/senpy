@@ -62,7 +62,7 @@ class SentiWordNet(object):
         senti_scores = []
         synsets = wordnet.synsets(word,pos)
         for synset in synsets:
-            if self.pos_synset.has_key((synset.pos(), synset.offset())):
+            if (synset.pos(), synset.offset()) in self.pos_synset:
                 pos_val, neg_val = self.pos_synset[(synset.pos(), synset.offset())]
                 senti_scores.append({"pos":pos_val,"neg":neg_val,\
                 "obj": 1.0 - (pos_val - neg_val),'synset':synset})

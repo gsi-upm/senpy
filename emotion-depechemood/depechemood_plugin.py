@@ -3,6 +3,7 @@
 
 import os
 import re
+import sys
 import string
 import numpy as np
 import pandas as pd
@@ -10,6 +11,18 @@ from six.moves import urllib
 from nltk.corpus import stopwords
 
 from senpy import EmotionPlugin, TextBox, models
+
+
+def ignore(dchars):
+    deletechars = "".join(dchars)
+    if sys.version_info[0] >= 3:
+        tbl = str.maketrans("", "", deletechars)
+        ignore = lambda s: s.translate(tbl)
+    else:
+        from functools import partial
+        def ignore(s):
+            return string.translate(s, None, deletechars)
+    return ignore
 
 
 class DepecheMood(TextBox, EmotionPlugin):
@@ -32,19 +45,15 @@ class DepecheMood(TextBox, EmotionPlugin):
             'INSPIRED': 'wna:awe',
             'SAD': 'wna:sadness',
         }
-        self._noise = self.__noise() 
-        self._stop_words = stopwords.words('english') + ['']
+        self._denoise = ignore(set(string.punctuation)|set('«»'))
+        self._stop_words = []
         self._lex_vocab = None
         self._lex = None
-
-    def __noise(self):
-        noise = set(string.punctuation) | set('«»')
-        noise = {ord(c): None for c in noise}
-        return noise
 
     def activate(self):
         self._lex = self.download_lex()
         self._lex_vocab = set(list(self._lex.keys()))
+        self._stop_words = stopwords.words('english') + ['']
 
     def clean_str(self, string):
         string = re.sub(r"[^A-Za-z0-9().,!?\'\`]", " ", string)
@@ -67,7 +76,7 @@ class DepecheMood(TextBox, EmotionPlugin):
     def preprocess(self, text):
         if text is None:
             return None
-        tokens = self.clean_str(text).translate(self._noise).split(' ')
+        tokens = self._denoise(self.clean_str(text)).split(' ')
         tokens = [tok for tok in tokens if tok not in self._stop_words]
         return tokens   
 

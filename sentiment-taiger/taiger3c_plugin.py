@@ -41,7 +41,6 @@ class TaigerPlugin3cats(SentimentPlugin):
             value = 1
         else:
             raise ValueError('unknown polarity: {}'.format(value))
-        print(value, 'whatsup')
         return polarity, value
 
     def analyse_entry(self, entry, params):

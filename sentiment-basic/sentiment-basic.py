@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import os
+import sys
 import string
 import nltk
 import pickle
@@ -13,6 +14,9 @@ from os import path
 
 from senpy.plugins import SentimentPlugin, SenpyPlugin
 from senpy.models import Results, Entry, Sentiment
+
+if sys.version_info[0] >= 3:
+    unicode = str
 
 
 class SentimentBasic(SentimentPlugin):
@@ -43,7 +47,7 @@ class SentimentBasic(SentimentPlugin):
 
     def _load_pos_tagger(self):
         self.pos_path = self.find_file(self.pos_path)
-        with open(self.pos_path, 'r') as f:
+        with open(self.pos_path, 'rb') as f:
             tagger = pickle.load(f)
         return tagger
 

@@ -82,7 +82,7 @@ class ANEW(SentimentPlugin):
         self._stopwords = stopwords.words('english')
         dictionary={}
         dictionary['es'] = {}
-        with self.open(self.anew_path_es,'rb') as tabfile:
+        with self.open(self.anew_path_es,'r') as tabfile:
             reader = csv.reader(tabfile, delimiter='\t')
             for row in reader:
                 dictionary['es'][row[2]]={}
@@ -90,7 +90,7 @@ class ANEW(SentimentPlugin):
                 dictionary['es'][row[2]]['A']=row[5]
                 dictionary['es'][row[2]]['D']=row[7]
         dictionary['en'] = {}
-        with self.open(self.anew_path_en,'rb') as tabfile:
+        with self.open(self.anew_path_en,'r') as tabfile:
             reader = csv.reader(tabfile, delimiter='\t')
             for row in reader:
                 dictionary['en'][row[0]]={}
