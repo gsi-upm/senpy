@@ -19,7 +19,6 @@ def ignore(dchars):
         tbl = str.maketrans("", "", deletechars)
         ignore = lambda s: s.translate(tbl)
     else:
-        from functools import partial
         def ignore(s):
             return string.translate(s, None, deletechars)
     return ignore
