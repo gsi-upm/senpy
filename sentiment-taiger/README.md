@@ -1,6 +1,9 @@
 # Senpy Plugin Taiger
 
-Service that analyzes sentiments from social posts written in Spanish or English.
+Proxy for two of Taiger's sentiment analysis services for social media posts:
+
+* taiger-plugin: proxy for a service that normalizes the text, and gives both a polarity and a polarity value for the text. It works for Spanish and English text.
+* taiger3c-plugin: it uses a simpler service that only returns a polarity (positive, negative or none). It only works for Spanish.
 
 
 ## Usage
@@ -8,18 +11,19 @@ Service that analyzes sentiments from social posts written in Spanish or English
 To use this plugin, you should use a GET Requests with the following possible params:
 Params:	
 - Input: text to analyse.(required)
-- Endpoint: Enpoint to the Taiger service.
 
 ## Example of Usage
 
 Example request: 
 ```
-http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiment-taiger&inputText=This%20is%20amazing
+curl http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiment-taiger&inputText=This%20is%20amazing
+
+#Or, for the taiger3c plugin:
+curl http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiment-taiger3c&inputText=Me%20encanta
 ```
 
-Example respond: This plugin follows the standard for the senpy plugin response. For more information, please visit [senpy documentation](http://senpy.readthedocs.io). Specifically, NIF API section. 
-
-For example, this would be the example respond for the request done.
+This plugin follows the senpy schema and vocabularies, please visit [senpy documentation](http://senpy.readthedocs.io). Specifically, the NIF API section. 
+It should look like this:
 
 ```
 {
@@ -53,7 +57,8 @@ For example, this would be the example respond for the request done.
 }
 ```
 
-As it can be seen, this plugin analyzes sentiment givin three categories or tags: `marl:Positive`, `marl:Neutral` or `marl:Negative`, that will be held in the `marl:hasPolarity` field. Moreover, the plugin retrieves a `marl:polarityValue`.
+As can be seen, this plugin analyzes sentiment giving three categories or tags: `marl:Positive`, `marl:Neutral` or `marl:Negative`, that will be held in the `marl:hasPolarity` field.
+Moreover, the plugin retrieves a `marl:polarityValue` (a value between -1 and 1).
 This plugin supports **python2.7** and **python3**.
 
 ![alt GSI Logo][logoGSI]

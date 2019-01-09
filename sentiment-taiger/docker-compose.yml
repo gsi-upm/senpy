@@ -8,4 +8,4 @@ services:
         volumes:
             - ".:/senpy-plugins"
         environment:
-            TAIGER_ENDPOINT: 'http://34.244.91.7:8080/sentiment/classifyPositivity'
+            TAIGER_ENDPOINT: "${TAIGER_ENDPOINT:-http://somedi-taiger.hopto.org:5406/es_sentiment_analyzer_3classes}"

@@ -11,18 +11,18 @@ from senpy.plugins import SentimentPlugin
 from senpy.models import Results, Entry, Entity, Topic, Sentiment, Error
 
 
-TAIGER_ENDPOINT = os.environ.get("TAIGER_ENDPOINT", 'http://34.244.91.7:8080/sentiment/classifyPositivity')
+TAIGER_ENDPOINT = os.environ.get("TAIGER3C_ENDPOINT", 'http://somedi-taiger.hopto.org:5406/es_sentiment_analyzer_3classes')
 
 
-class TaigerPlugin(SentimentPlugin):
+class TaigerPlugin3cats(SentimentPlugin):
     '''
     Service that analyzes sentiments from social posts written in Spanish or English.
 
     Example request:
 
-    http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiment-taiger&inputText=This%20is%20amazing
+    http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiment-taiger3c&inputText=This%20is%20amazing
     '''
-    name = 'sentiment-taiger'
+    name = 'sentiment-taiger3c'
     author = 'GSI UPM'
     version = "0.1"
     maxPolarityValue = -1
@@ -30,40 +30,43 @@ class TaigerPlugin(SentimentPlugin):
 
     def _polarity(self, value):
 
-        if 'neu' in value:
+        if 'NONE' == value:
             polarity = 'marl:Neutral'
-        elif 'neg' in value:
+            value = 0
+        elif 'N' == value:
             polarity = 'marl:Negative'
-        elif 'pos' in value:
+            value = -1
+        elif 'P' == value:
             polarity = 'marl:Positive'
-        return polarity
+            value = 1
+        else:
+            raise ValueError('unknown polarity: {}'.format(value))
+        print(value, 'whatsup')
+        return polarity, value
 
     def analyse_entry(self, entry, params):
 
         txt = entry['nif:isString']
         api = TAIGER_ENDPOINT
         parameters = {
-            'inputText': txt
+            'text': txt
         }
         try:
             r = requests.get(
                 api, params=parameters, timeout=3)
-            api_response = r.json()
+            agg_polarity, value = self._polarity(r.text.strip())
         except requests.exceptions.Timeout:
             raise Error("No response from the API")
         except Exception as ex:
             raise Error("There was a problem with the endpoint: {}".format(ex))
-        if not api_response.get('positivityCategory'):
-            raise Error('No positive category in response: {}'.format(r.json()))
-        self.log.debug(api_response)
-        agg_polarity = self._polarity(api_response.get('positivityCategory'))
-        normalized_text = api_response.get('normalizedText', None)
+        if not agg_polarity:
+            raise Error('No category in response: {}'.format(ar.text))
+        self.log.debug(agg_polarity)
         agg_opinion = Sentiment(
             id="Opinion0",
             marl__hasPolarity=agg_polarity,
-            marl__polarityValue=api_response['positivityScore']
+            marl__polarityValue=value,
             )
-        agg_opinion["normalizedText"] = api_response['normalizedText']
         agg_opinion.prov(self)
         entry.sentiments.append(agg_opinion)
 
@@ -93,12 +96,7 @@ class TaigerPlugin(SentimentPlugin):
             'responses': [
                 {
                     'url': TAIGER_ENDPOINT,
-                    'json': {
-                      "inputText": "I hate to say this",
-                      "normalizedText": "I hate to say this",
-                      "positivityScore": -1.8951251587831475,
-                      "positivityCategory": "neg"
-                    }
+                    'body': 'N',
                 }
             ]
         },
@@ -125,12 +123,7 @@ class TaigerPlugin(SentimentPlugin):
             'responses': [
                 {
                     'url': TAIGER_ENDPOINT,
-                    'json': {
-                      "inputText": "This is amazing ",
-                      "normalizedText": "This is amazing",
-                      "positivityScore": -1.4646806570973374,
-                      "positivityCategory": "pos"
-                    }
+                    'body': 'P',
                 }
             ]
         },
@@ -157,12 +150,7 @@ class TaigerPlugin(SentimentPlugin):
             'responses': [
                 {
                     'url': TAIGER_ENDPOINT,
-                    'json': {
-                      "inputText": "The pillow is in the wardrobe",
-                      "normalizedText": "The pillow is in the wardrobe",
-                      "positivityScore": -2.723999097522657,
-                      "positivityCategory": "neu"
-                    }
+                    'body': 'NONE',
                 }
             ]
         }
@@ -173,4 +161,4 @@ class TaigerPlugin(SentimentPlugin):
 
 if __name__ == '__main__':
     from senpy import easy_test
-    easy_test()
+    easy_test(debug=False)
