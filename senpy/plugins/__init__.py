@@ -251,11 +251,15 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
                 return alternative
         raise IOError('File does not exist: {}'.format(fname))
 
+    def path(self, fpath):
+        if not os.path.isabs(fpath):
+            fpath = os.path.join(self.data_folder, fpath)
+        return fpath
+
     def open(self, fpath, mode='r'):
         if 'w' in mode:
             # When writing, only use absolute paths or data_folder
-            if not os.path.isabs(fpath):
-                fpath = os.path.join(self.data_folder, fpath)
+            fpath = self.path(fpath)
         else:
             fpath = self.find_file(fpath)
 
@@ -381,7 +385,9 @@ class SentimentPlugin(Analyser, Evaluable, models.SentimentPlugin):
             activity = self.activity(parameters)
         entries = []
         for feat in X:
-            entries.append(models.Entry(nif__isString=feat[0]))
+            if isinstance(feat, list):
+                feat = ' '.join(feat)
+            entries.append(models.Entry(nif__isString=feat))
         labels = []
         for e in self.process_entries(entries, activity):
             sent = e.sentiments[0].polarity

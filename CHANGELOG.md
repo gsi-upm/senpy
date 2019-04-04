@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.20
+
 ### Added
 * Objects can control the keys that will be used in `serialize`/`jsonld`/`as_dict` by specifying a list of keys in `terse_keys`.
 e.g.
@@ -27,6 +29,7 @@ e.g.
 * Plugin and parameter descriptions are now formatted with (showdown)[https://github.com/showdownjs/showdown].
 * The web UI requests extra_parameters from the server. This is useful for pipelines. See #52
 * First batch of semantic tests (using SPARQL)
+* `Plugin.path()` method to get a file path from a relative path (using the senpy data folder)
 
 ### Changed
 * `install_deps` now checks what requirements are already met before installing with pip.

@@ -320,24 +320,32 @@ class PluginsTest(TestCase):
         for i in range(50):
             testdata.append(["good", 1])
         for i in range(50):
-            testdata.append(["bad", 0])
+            testdata.append(["bad", -1])
         dataset = pd.DataFrame(testdata, columns=['text', 'polarity'])
 
         class DummyPlugin(plugins.SentimentBox):
             description = 'Plugin to test evaluation'
             version = 0
 
+            classes = ['marl:Positive', 'marl:Negative']
+
             def predict_one(self, features, **kwargs):
-                return 0
+                print(features[0])
+                return [0, 1]
 
         class SmartPlugin(plugins.SentimentBox):
             description = 'Plugin to test evaluation'
             version = 0
 
+            classes = ['marl:Positive', 'marl:Negative']
+
             def predict_one(self, features, **kwargs):
+                print(features[0])
                 if features[0] == 'good':
-                    return 1
-                return 0
+                    print('positive')
+                    return [1, 0]
+                print('negative')
+                return [0, 1]
 
         dpipe = DummyPlugin()
         results = plugins.evaluate(datasets={'testdata': dataset}, plugins=[dpipe], flatten=True)
