@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from vaderSentiment import sentiment
-from senpy.plugins import SentimentPlugin, SenpyPlugin
+from senpy.plugins import SentimentBox, SenpyPlugin
 from senpy.models import Results, Sentiment, Entry
 import logging
 
 
-class VaderSentimentPlugin(SentimentPlugin):
+class VaderSentimentPlugin(SentimentBox):
     '''
     Sentiment classifier using vaderSentiment module. Params accepted: Language: {en, es}. The output uses Marl ontology developed at GSI UPM for semantic web.
     '''
@@ -16,6 +16,7 @@ class VaderSentimentPlugin(SentimentPlugin):
     version = "0.1.1"
     extra_params = {
         "language": {
+          "description": "language of the input",
           "@id": "lang_rand",
           "aliases": ["language", "l"],
           "default": "auto",
@@ -23,55 +24,32 @@ class VaderSentimentPlugin(SentimentPlugin):
         },
 
         "aggregate": {
+            "description": "Show only the strongest sentiment (aggregate) or all sentiments",
             "aliases": ["aggregate","agg"],
-            "options": ["true", "false"],
+            "options": [True, False],
             "default": False
         }
 
     }
     requirements = {}
 
-    def analyse_entry(self, entry, params):
+    _VADER_KEYS = ['pos', 'neu', 'neg']
+    binary = False
 
-        self.log.debug("Analysing with params {}".format(params))
 
-        text_input = entry.text
-        aggregate = params['aggregate']
+    def predict_one(self, features, activity):
+        text_input = ' '.join(features)
+        scores = sentiment(text_input)
 
-        score = sentiment(text_input)
+        sentiments = []
+        for k in self._VADER_KEYS:
+            sentiments.append(scores[k])
 
-        opinion0 = Sentiment(id= "Opinion_positive",
-                             marl__hasPolarity= "marl:Positive",
-                             marl__algorithmConfidence= score['pos']
-            )
-        opinion0.prov(self)
-        opinion1 = Sentiment(id= "Opinion_negative",
-            marl__hasPolarity= "marl:Negative",
-            marl__algorithmConfidence= score['neg']
-            )
-        opinion1.prov(self)
-        opinion2 = Sentiment(id= "Opinion_neutral",
-            marl__hasPolarity = "marl:Neutral",
-            marl__algorithmConfidence = score['neu']
-            )
-        opinion2.prov(self)
+        if activity.param('aggregate'):
+            m = max(sentiments)
+            sentiments = [k if k==m else None for k in sentiments]
 
-        if aggregate == 'true':
-            res = None
-            confident = max(score['neg'],score['neu'],score['pos'])
-            if opinion0.marl__algorithmConfidence == confident:
-                res = opinion0
-            elif opinion1.marl__algorithmConfidence == confident:
-                res = opinion1
-            elif opinion2.marl__algorithmConfidence == confident:
-                res = opinion2
-            entry.sentiments.append(res)
-        else:
-            entry.sentiments.append(opinion0)
-            entry.sentiments.append(opinion1)
-            entry.sentiments.append(opinion2)
-
-        yield entry
+        return sentiments
 
     test_cases = []
 

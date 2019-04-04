@@ -1,49 +1,56 @@
 #!/usr/local/bin/python
 # coding: utf-8
 
+from future import standard_library
+standard_library.install_aliases()
+
 import os
 import re
 import sys
 import string
 import numpy as np
-import pandas as pd
 from six.moves import urllib
 from nltk.corpus import stopwords
 
-from senpy import EmotionPlugin, TextBox, models
+from senpy import EmotionBox, models
 
 
 def ignore(dchars):
     deletechars = "".join(dchars)
-    if sys.version_info[0] >= 3:
-        tbl = str.maketrans("", "", deletechars)
-        ignore = lambda s: s.translate(tbl)
-    else:
-        def ignore(s):
-            return string.translate(s, None, deletechars)
+    tbl = str.maketrans("", "", deletechars)
+    ignore = lambda s: s.translate(tbl)
     return ignore
 
 
-class DepecheMood(TextBox, EmotionPlugin):
-    '''Plugin that uses the DepecheMood++ emotion lexicon.'''
+class DepecheMood(EmotionBox):
+    '''
+    Plugin that uses the DepecheMood emotion lexicon.
+
+    DepecheMood is an emotion lexicon automatically generated from news articles where users expressed their associated emotions. It contains two languages (English and Italian), as well as three types of word representations (token, lemma and lemma#PoS). For English, the lexicon contains 165k tokens, while the Italian version contains 116k. Unsupervised techniques can be applied to generate simple but effective baselines. To learn more, please visit https://github.com/marcoguerini/DepecheMood and http://www.depechemood.eu/
+    '''
 
     author = 'Oscar Araque'
+    name = 'emotion-depechemood'
     version = '0.1'
+    requirements = ['pandas']
+    nltk_resources = ["stopwords"]
+
+    onyx__usesEmotionModel = 'wna:WNAModel'
+
+    EMOTIONS =  ['wna:negative-fear',
+                 'wna:amusement',
+                 'wna:anger',
+                 'wna:annoyance',
+                 'wna:indifference',
+                 'wna:joy',
+                 'wna:awe',
+                 'wna:sadness']
+
+    DM_EMOTIONS = ['AFRAID', 'AMUSED', 'ANGRY', 'ANNOYED', 'DONT_CARE', 'HAPPY', 'INSPIRED', 'SAD',]
 
     def __init__(self, *args, **kwargs):
         super(DepecheMood, self).__init__(*args, **kwargs)
         self.LEXICON_URL = "https://github.com/marcoguerini/DepecheMood/raw/master/DepecheMood%2B%2B/DepecheMood_english_token_full.tsv"
-        self.EMOTIONS = ['AFRAID', 'AMUSED', 'ANGRY', 'ANNOYED', 'DONT_CARE', 'HAPPY', 'INSPIRED', 'SAD',]
-        self._mapping = {
-            'AFRAID': 'wna:negative-fear',
-            'AMUSED': 'wna:amusement',
-            'ANGRY': 'wna:anger',
-            'ANNOYED': 'wna:annoyance',
-            'DONT_CARE': 'wna:indifference',
-            'HAPPY': 'wna:joy',
-            'INSPIRED': 'wna:awe',
-            'SAD': 'wna:sadness',
-        }
         self._denoise = ignore(set(string.punctuation)|set('«»'))
         self._stop_words = []
         self._lex_vocab = None
@@ -89,19 +96,21 @@ class DepecheMood(TextBox, EmotionPlugin):
         return S
 
     def estimate_all_emotions(self, tokens):
-        S = {}
+        S = []
         intersection = set(tokens) & self._lex_vocab
-        for emotion in self.EMOTIONS:
+        for emotion in self.DM_EMOTIONS:
             s = self.estimate_emotion(intersection, emotion)
-            emotion_mapped = self._mapping[emotion]
-            S[emotion_mapped] = s
+            S.append(s)
         return S
 
     def download_lex(self, file_path='DepecheMood_english_token_full.tsv', freq_threshold=10):
 
+        import pandas as pd
+
         try:
             file_path = self.find_file(file_path)
         except IOError:
+            file_path = self.path(file_path)
             filename, _ = urllib.request.urlretrieve(self.LEXICON_URL, file_path)
 
         lexicon = pd.read_csv(file_path, sep='\t', index_col=0)
@@ -110,18 +119,8 @@ class DepecheMood(TextBox, EmotionPlugin):
         lexicon = lexicon.T.to_dict()
         return lexicon
 
-    def output(self, output, entry, **kwargs):
-        s = models.EmotionSet()
-        s.prov__wasGeneratedBy = self.id
-        entry.emotions.append(s)
-        for label, value in output.items():
-            e = models.Emotion(onyx__hasEmotionCategory=label,
-                               onyx__hasEmotionIntensity=value)
-            s.onyx__hasEmotion.append(e)
-        return entry
-
-    def predict_one(self, input, **kwargs):
-        tokens = self.preprocess(input)
+    def predict_one(self, features, **kwargs):
+        tokens = self.preprocess(features[0])
         estimation = self.estimate_all_emotions(tokens)
         return estimation
 
@@ -131,26 +130,41 @@ class DepecheMood(TextBox, EmotionPlugin):
                 'nif:isString': 'My cat is very happy',
             },
             'expected': {
-                'emotions': [
+                'onyx:hasEmotionSet': [
                     {
-                        '@type': 'emotionSet',
                         'onyx:hasEmotion': [
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:negative-fear',
-                             'onyx:hasEmotionIntensity': 0.05278117640010922, },
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:amusement',
-                             'onyx:hasEmotionIntensity': 0.2114806151413433, },
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:anger',
-                             'onyx:hasEmotionIntensity': 0.05726119426520887, },
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:annoyance',
-                             'onyx:hasEmotionIntensity': 0.12295990731053638, },
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:indifference',
-                             'onyx:hasEmotionIntensity': 0.1860159893608025, },
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:joy',
-                             'onyx:hasEmotionIntensity': 0.12904050973724163, },
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:awe',
-                             'onyx:hasEmotionIntensity': 0.17973650399862967, },
-                            {'@type': 'emotion', 'onyx:hasEmotionCategory': 'wna:sadness',
-                                'onyx:hasEmotionIntensity': 0.060724103786128455, },
+                            {
+                             'onyx:hasEmotionCategory': 'wna:negative-fear',
+                             'onyx:hasEmotionIntensity': 0.05278117640010922
+                            },
+                            {
+                                'onyx:hasEmotionCategory': 'wna:amusement',
+                                'onyx:hasEmotionIntensity': 0.2114806151413433,
+                            },
+                            {
+                                'onyx:hasEmotionCategory': 'wna:anger',
+                                'onyx:hasEmotionIntensity': 0.05726119426520887
+                            },
+                            {
+                                'onyx:hasEmotionCategory': 'wna:annoyance',
+                                'onyx:hasEmotionIntensity': 0.12295990731053638,
+                            },
+                            {
+                                'onyx:hasEmotionCategory': 'wna:indifference',
+                                'onyx:hasEmotionIntensity': 0.1860159893608025,
+                            },
+                            {
+                                'onyx:hasEmotionCategory': 'wna:joy',
+                                'onyx:hasEmotionIntensity': 0.12904050973724163,
+                            },
+                            {
+                                'onyx:hasEmotionCategory': 'wna:awe',
+                                'onyx:hasEmotionIntensity': 0.17973650399862967,
+                            },
+                            {
+                                'onyx:hasEmotionCategory': 'wna:sadness',
+                                'onyx:hasEmotionIntensity': 0.060724103786128455,
+                            },
                         ]
                     }
                 ]
@@ -164,4 +178,4 @@ if __name__ == '__main__':
     # sp, app = easy_load()
     # for plug in sp.analysis_plugins:
     #     plug.test()
-    easy()
+    easy_test(debug=False)

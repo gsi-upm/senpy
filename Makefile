@@ -1,4 +1,4 @@
-PYVERSION=2.7
+PYVERSION=3.7
 NAME=senpycommunity
 REPO=gsiupm
 PLUGINS= $(filter %/, $(wildcard */))
@@ -19,7 +19,7 @@ test-fast: test-fast-/
 
 test: docker-build test-fast
 
-dev:
+dev: docker-build
 	docker run -p $(DEV_PORT):5000 $(DOCKER_FLAGS) -ti $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ --entrypoint /bin/bash -v $$PWD/data:/data/ --rm $(IMAGEWTAG)
 
 .PHONY:: test test-fast  dev

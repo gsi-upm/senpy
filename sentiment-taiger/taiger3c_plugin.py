@@ -43,7 +43,8 @@ class TaigerPlugin3cats(SentimentPlugin):
             raise ValueError('unknown polarity: {}'.format(value))
         return polarity, value
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
+        params = activity.params
 
         txt = entry['nif:isString']
         api = TAIGER_ENDPOINT
@@ -89,7 +90,7 @@ class TaigerPlugin3cats(SentimentPlugin):
             },
             'input': 'I hate to say this',
             'expected': {
-                'sentiments': [
+                'marl:hasOpinion': [
                     {'marl:hasPolarity': 'marl:Negative'}],
             },
             'responses': [
@@ -116,7 +117,7 @@ class TaigerPlugin3cats(SentimentPlugin):
             },
             'input': 'This is amazing',
             'expected': {
-                'sentiments': [
+                'marl:hasOpinion': [
                     {'marl:hasPolarity': 'marl:Positive'}],
             },
             'responses': [
@@ -143,7 +144,7 @@ class TaigerPlugin3cats(SentimentPlugin):
             },
             'input': 'The pillow is in the wardrobe',
             'expected': {
-                'sentiments': [
+                'marl:hasOpinion': [
                     {'marl:hasPolarity': 'marl:Neutral'}],
             },
             'responses': [

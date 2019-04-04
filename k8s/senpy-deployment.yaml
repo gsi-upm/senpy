@@ -15,11 +15,9 @@ spec:
       - name: senpy-latest
         image: $IMAGEWTAG
         imagePullPolicy: Always
-        args:
-          - "--default-plugins"
         resources:
           limits:
-            memory: "512Mi"
+            memory: "2048Mi"
             cpu: "1000m"
         ports:
           - name: web

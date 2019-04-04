@@ -19,11 +19,11 @@ from nltk.corpus import stopwords
 
 from pattern.en import parse as parse_en
 from pattern.es import parse as parse_es
-from senpy.plugins import SentimentPlugin, SenpyPlugin
+from senpy.plugins import EmotionPlugin, SenpyPlugin
 from senpy.models import Results, EmotionSet, Entry, Emotion
 
 
-class ANEW(SentimentPlugin):
+class ANEW(EmotionPlugin):
     description = "This plugin consists on an emotion classifier using ANEW lexicon dictionary to calculate VAD (valence-arousal-dominance) of the sentence and determinate which emotion is closer to this value. Each emotion has a centroid, calculated according to this article: http://www.aclweb.org/anthology/W10-0208. The plugin is going to look for the words in the sentence that appear in the ANEW dictionary and calculate the average VAD score for the sentence. Once this score is calculated, it is going to seek the emotion that is closest to this value."
     author = "@icorcuera"
     version = "0.5.1"
@@ -31,6 +31,7 @@ class ANEW(SentimentPlugin):
 
     extra_params = {
         "language": {
+            "description": "language of the input",
             "aliases": ["language", "l"],
             "required": True,
             "options": ["es","en"],
@@ -75,7 +76,7 @@ class ANEW(SentimentPlugin):
         "neutral": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#neutral-emotion",
         "sadness": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#sadness"
     }
-    onyx__usesEmotionModel = "emoml:big6"
+    onyx__usesEmotionModel = "emoml:pad"
     nltk_resources = ['stopwords']
 
     def activate(self, *args, **kwargs):
@@ -119,14 +120,13 @@ class ANEW(SentimentPlugin):
         return s
 
     def _extract_ngrams(self, text, lang):
-
         unigrams_lemmas = []
         unigrams_words = []
         pos_tagged = []
         if lang == 'es':
-            sentences = parse_es(text,lemmata=True).split()
+            sentences = list(parse_es(text, lemmata=True).split())
         else:
-            sentences = parse_en(text,lemmata=True).split()
+            sentences = list(parse_en(text, lemmata=True).split())
 
         for sentence in sentences:
             for token in sentence:
@@ -139,19 +139,6 @@ class ANEW(SentimentPlugin):
 
     def _find_ngrams(self, input_list, n):
         return zip(*[input_list[i:] for i in range(n)])
-
-    def _emotion_calculate(self, VAD):
-        emotion=''
-        value=10000000000000000000000.0
-        for state in self.centroids:
-            valence=VAD[0]-self.centroids[state]['V']
-            arousal=VAD[1]-self.centroids[state]['A']
-            dominance=VAD[2]-self.centroids[state]['D']
-            new_value=math.sqrt((valence*valence)+(arousal*arousal)+(dominance*dominance))
-            if new_value < value:
-                value=new_value
-                emotion=state
-        return emotion
 
     def _extract_features(self, tweet,dictionary,lang):
         feature_set={}
@@ -176,14 +163,13 @@ class ANEW(SentimentPlugin):
             emotion='neutral'
         else:
             totalVAD=[totalVAD[0]/matches,totalVAD[1]/matches,totalVAD[2]/matches]
-            emotion=self._emotion_calculate(totalVAD)
-        feature_set['emotion']=emotion
-        feature_set['V']=totalVAD[0]
-        feature_set['A']=totalVAD[1]
-        feature_set['D']=totalVAD[2]
+        feature_set['V'] = totalVAD[0]
+        feature_set['A'] = totalVAD[1]
+        feature_set['D'] = totalVAD[2]
         return feature_set
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
+        params = activity.params
 
         text_input = entry.text
 
@@ -196,13 +182,12 @@ class ANEW(SentimentPlugin):
         emotions.id = "Emotions0"
 
         emotion1 = Emotion(id="Emotion0")
-        emotion1["onyx:hasEmotionCategory"] = self.emotions_ontology[feature_set['emotion']]
         emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence"] = feature_set['V']
         emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal"] = feature_set['A']
         emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance"] = feature_set['D']
 
-        emotion1.prov(self)
-        emotions.prov(self)
+        emotion1.prov(activity)
+        emotions.prov(activity)
 
         emotions.onyx__hasEmotion.append(emotion1)
         entry.emotions = [emotions, ]
@@ -212,47 +197,64 @@ class ANEW(SentimentPlugin):
     ontology = "http://gsi.dit.upm.es/ontologies/wnaffect/ns#"
     test_cases = [
         {
+            'name': 'anger with VAD=(2.12, 6.95, 5.05)',
             'input': 'I hate you',
             'expected': {
-                'emotions': [{
+                'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        'onyx:hasEmotionCategory': ontology + 'anger',
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 6.95,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 5.05,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 2.12,
                     }]
                 }]
             }
         }, {
             'input': 'i am sad',
             'expected': {
-                'emotions': [{
+                'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        'onyx:hasEmotionCategory': ontology + 'sadness',
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 4.13,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 3.45,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 1.61,
+
                     }]
                 }]
             }
         }, {
+            'name': 'joy',
             'input': 'i am happy with my marks',
             'expected': {
-                'emotions': [{
+                'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        'onyx:hasEmotionCategory': ontology + 'joy',
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 6.49,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 6.63,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 8.21,
                     }]
                 }]
             }
         }, {
+            'name': 'negative-feat',
             'input': 'This movie is scary',
             'expected': {
-                'emotions': [{
+                'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        'onyx:hasEmotionCategory': ontology + 'negative-fear',
+                    "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 5.8100000000000005,
+                    "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 4.33,
+                    "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 5.050000000000001,
+
                     }]
                 }]
             }
         }, {
+            'name': 'negative-fear',
             'input': 'this cake is disgusting' ,
             'expected': {
-                'emotions': [{
+                'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        'onyx:hasEmotionCategory': ontology + 'negative-fear',
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 5.09,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 4.4,
+                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 5.109999999999999,
+
                     }]
                 }]
             }

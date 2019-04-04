@@ -9,4 +9,3 @@ requirements:
 - textblob
 - pattern
 - lxml
-onyx:usesEmotionModel: "emoml:big6"

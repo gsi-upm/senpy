@@ -25,6 +25,7 @@ class WNAffect(EmotionPlugin, ShelfMixin):
     extra_params = {
       'language': {
           "@id": 'lang_wnaffect',
+          'description': 'language of the input',
           'aliases': ['language', 'l'],
           'required': True,
           'options': ['en',]
@@ -223,7 +224,8 @@ class WNAffect(EmotionPlugin, ShelfMixin):
 
         return feature_set
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
+        params = activity.params
 
         text_input = entry['nif:isString']
 
@@ -262,14 +264,14 @@ class WNAffect(EmotionPlugin, ShelfMixin):
                   'algorithm': 'emotion-wnaffect'}
         
         self.activate()
-        res = next(self.analyse_entry(Entry(nif__isString="This text make me sad"), params))
         texts = {'I hate you': 'anger',
                  'i am sad': 'sadness',
                  'i am happy with my marks': 'joy',
                  'This movie is scary': 'negative-fear'}
 
         for text in texts:
-            response = next(self.analyse_entry(Entry(nif__isString=text), params))
+            response = next(self.analyse_entry(Entry(nif__isString=text),
+                                               self.activity(params)))
             expected = texts[text]
             emotionSet = response.emotions[0]
             max_emotion = max(emotionSet['onyx:hasEmotion'], key=lambda x: x['onyx:hasEmotionIntensity'])

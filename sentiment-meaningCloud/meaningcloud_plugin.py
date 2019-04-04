@@ -21,7 +21,7 @@ class MeaningCloudPlugin(SentimentPlugin):
     When you had obtained the meaningCloud API Key, you have to provide it to the plugin, using param apiKey.
     Example request:
 
-    http://senpy.cluster.gsi.dit.upm.es/api/?algo=meaningCloud&language=en&apiKey=<API key>&input=I%20love%20Madrid.
+    http://senpy.cluster.gsi.dit.upm.es/api/?algo=meaningCloud&language=en&apiKey=YOUR_API_KEY&input=I%20love%20Madrid.
     '''
     name = 'sentiment-meaningcloud'
     author = 'GSI UPM'
@@ -31,12 +31,14 @@ class MeaningCloudPlugin(SentimentPlugin):
 
     extra_params = {
         "language": {
+            "description": "language of the input",
             "aliases": ["language", "l"],
             "required": True,
             "options": ["en","es","ca","it","pt","fr","auto"],
             "default": "auto"
         },
         "apikey":{
+            "description": "API key for the meaningcloud service. See https://www.meaningcloud.com/developer/login",
             "aliases": ["apiKey", "meaningcloud-key", "meaningcloud-apikey"],
             "required": True
         }
@@ -55,7 +57,8 @@ class MeaningCloudPlugin(SentimentPlugin):
             polarityValue = 1
         return polarity, polarityValue
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
+        params = activity.params
 
         txt = entry['nif:isString']
         api = 'http://api.meaningcloud.com/'
@@ -129,7 +132,9 @@ class MeaningCloudPlugin(SentimentPlugin):
             sementity = sent_entity['sementity'].get('type', None).split(">")[-1]
             entity['@type'] = "ODENTITY_{}".format(sementity)
             entity.prov(self)
-            entry.entities.append(entity)
+            if 'senpy:hasEntity' not in entry:
+                entry['senpy:hasEntity'] = []
+            entry['senpy:hasEntity'].append(entity)
 
         for topic in api_response_topics['concept_list']:
             if 'semtheme_list' in topic:
@@ -139,7 +144,9 @@ class MeaningCloudPlugin(SentimentPlugin):
                     concept['@type'] = "ODTHEME_{}".format(theme['type'].split(">")[-1])
                     concept['fam:topic-reference'] = "http://dbpedia.org/resource/{}".format(theme['type'].split('>')[-1])
                     entry.prov(self)
-                    entry.topics.append(concept)
+                    if 'senpy:hasTopic' not in entry:
+                        entry['senpy:hasTopic'] = []
+                    entry['senpy:hasTopic'].append(concept)
         yield entry
 
     test_cases = [
@@ -160,11 +167,11 @@ class MeaningCloudPlugin(SentimentPlugin):
             },
             'input': 'Hello World Obama',
             'expected': {
-                'sentiments': [
+                'marl:hasOpinion': [
                     {'marl:hasPolarity': 'marl:Neutral'}],
-                'entities': [
+                'senpy:hasEntity': [
                     {'itsrdf:taIdentRef': 'http://dbpedia.org/resource/Obama'}],
-                'topics': [
+                'senpy:hasTopic': [
                     {'fam:topic-reference': 'http://dbpedia.org/resource/Astronomy'}]
             },
             'responses': [

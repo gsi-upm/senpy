@@ -38,7 +38,8 @@ class TaigerPlugin(SentimentPlugin):
             polarity = 'marl:Positive'
         return polarity
 
-    def analyse_entry(self, entry, params):
+    def analyse_entry(self, entry, activity):
+        params = activity.params
 
         txt = entry['nif:isString']
         api = TAIGER_ENDPOINT
@@ -77,7 +78,6 @@ class TaigerPlugin(SentimentPlugin):
                 'expanded-jsonld': 0,
                 'informat': 'text',
                 'prefix': '',
-                'plugin_type': 'analysisPlugin',
                 'urischeme': 'RFC5147String',
                 'outformat': 'json-ld',
                 'conversion': 'full',
@@ -87,7 +87,7 @@ class TaigerPlugin(SentimentPlugin):
             },
             'input': 'I hate to say this',
             'expected': {
-                'sentiments': [
+                'marl:hasOpinion': [
                     {'marl:hasPolarity': 'marl:Negative'}],
             },
             'responses': [
@@ -109,7 +109,6 @@ class TaigerPlugin(SentimentPlugin):
                 'expanded-jsonld': 0,
                 'informat': 'text',
                 'prefix': '',
-                'plugin_type': 'analysisPlugin',
                 'urischeme': 'RFC5147String',
                 'outformat': 'json-ld',
                 'conversion': 'full',
@@ -119,7 +118,7 @@ class TaigerPlugin(SentimentPlugin):
             },
             'input': 'This is amazing',
             'expected': {
-                'sentiments': [
+                'marl:hasOpinion': [
                     {'marl:hasPolarity': 'marl:Positive'}],
             },
             'responses': [
@@ -141,7 +140,6 @@ class TaigerPlugin(SentimentPlugin):
                 'expanded-jsonld': 0,
                 'informat': 'text',
                 'prefix': '',
-                'plugin_type': 'analysisPlugin',
                 'urischeme': 'RFC5147String',
                 'outformat': 'json-ld',
                 'conversion': 'full',
@@ -151,7 +149,7 @@ class TaigerPlugin(SentimentPlugin):
             },
             'input': 'The pillow is in the wardrobe',
             'expected': {
-                'sentiments': [
+                'marl:hasOpinion': [
                     {'marl:hasPolarity': 'marl:Neutral'}],
             },
             'responses': [
