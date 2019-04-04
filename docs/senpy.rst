@@ -18,10 +18,10 @@ And higher level features can be built on top of these services, such as automat
 
 These benefits are not limited to new services.
 The community has developed wrappers for some proprietary and commercial services (such as sentiment140 and Meaning Cloud), so you can consult them as.
-Senpy comes with a :ref:`built-in client`.
+Senpy comes with a built-in client in the client package.
 
 
 To achieve this goal, Senpy uses a Linked Data principled approach, based on the NIF (NLP Interchange Format) specification, and open vocabularies such as Marl and Onyx.
 You can learn more about this in :doc:`vocabularies`.
 
-Check out :doc:`plugins` if you have developed an analysis algorithm (e.g. sentiment analysis) and you want to publish it as a service.
+Check out :doc:`development` if you have developed an analysis algorithm (e.g. sentiment analysis) and you want to publish it as a service.

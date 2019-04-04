@@ -6,10 +6,10 @@ services:
 language: python
 
 env:
-  - PYV=3.3
   - PYV=3.4
   - PYV=3.5
   - PYV=3.6
   - PYV=3.7
+#  - PYV=3.3 # Apt fails in this docker image
 # run nosetests - Tests
 script: make test-$PYV
