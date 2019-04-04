@@ -203,8 +203,8 @@ $(document).ready(function() {
         draw_datasets();
     }
 
-    // $(window).on('hashchange', hashchanged);
-    // hashchanged();
+    $(window).on('hashchange', hashchanged);
+    hashchanged();
     $('.tooltip-form').tooltip();
 
     $('.nav-pills a').on('shown.bs.tab', function (e) {
