@@ -22,7 +22,7 @@ Hence, two parts are necessary: 1) the code that will process the entry, and 2) 
 In practice, this is what a plugin looks like, tests included:
 
 
-.. literalinclude:: ../senpy/plugins/example/rand_plugin.py
+.. literalinclude:: ../example-plugins/rand_plugin.py
    :emphasize-lines: 5-11
    :language: python
 
@@ -76,8 +76,9 @@ Most plugins will need access to files (dictionaries, lexicons, etc.).
 These files are usually heavy or under a license that does not allow redistribution.
 For this reason, senpy has a `data_folder` that is separated from the source files.
 The location of this folder is controlled programmatically or by setting the `SENPY_DATA` environment variable.
+You can use the `self.path(filepath)` function to get the path of a given `filepath` within the data folder.
 
-Plugins have a convenience function `self.open` which will automatically prepend the data folder to relative paths:
+Plugins have a convenience function `self.open` which will automatically look for the file if it exists, or open a new one if it doesn't:
 
 
 .. code:: python
@@ -132,7 +133,7 @@ And you can run it with:
    docker run -p 5000:5000 gsiupm/exampleplugin
 
 
-If the plugin uses non-source files (:ref:`loading data and files`), the recommended way is to use `SENPY_DATA` folder.
+If the plugin uses non-source files (:ref:`How should I load external data and files`), the recommended way is to use `SENPY_DATA` folder.
 Data can then be mounted in the container or added to the image.
 The former is recommended for open source plugins with licensed resources, whereas the latter is the most convenient and can be used for private images.
 

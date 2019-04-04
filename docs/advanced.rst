@@ -7,3 +7,4 @@ Advanced usage
     server-cli
     conversion
     commandline
+    development

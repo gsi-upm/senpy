@@ -25,10 +25,9 @@ To get familiar with the concepts behind Senpy, and what it can offer for servic
    :maxdepth: 2
 
    senpy
-   Quickstart
+   demo
+   Quickstart.ipynb
    installation
-   development
    apischema
    advanced
-   demo
    publications

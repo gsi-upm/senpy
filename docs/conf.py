@@ -38,6 +38,8 @@ extensions = [
     'sphinxcontrib.httpdomain',
     'sphinx.ext.coverage',
     'sphinx.ext.autosectionlabel',
+    'nbsphinx',
+    'sphinx.ext.mathjax',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -54,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Senpy'
-copyright = u'2016, J. Fernando Sánchez'
+copyright = u'2019, J. Fernando Sánchez'
 description = u'A framework for sentiment and emotion analysis services'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -79,7 +81,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -286,3 +288,13 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+nbsphinx_prolog = """
+.. note:: This page has been auto-generated from a Jupyter notebook using nbsphinx_.
+
+    The original source is available at: https://github.com/gsi-upm/senpy/tree/master/docs//{{ env.doc2path(env.docname, base=None) }}
+
+    .. _nbsphinx: https://nbsphinx.readthedocs.io/
+
+----
+"""
