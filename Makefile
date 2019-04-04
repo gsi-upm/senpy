@@ -12,12 +12,13 @@ ifdef SENPY_FOLDER
 
 all: build run
 
-test-fast-%:
+test-fast-%: docker-build
 	docker run $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ -v $$PWD/data:/data/ --rm $(IMAGEWTAG) --only-test $(TEST_FLAGS)
 
 test-fast: test-fast-/
 
-test: docker-build test-fast
+test: docker-build
+	docker run $(DOCKER_FLAGS) -v $$PWD/data:/data/ --rm $(IMAGEWTAG) --only-test $(TEST_FLAGS)
 
 dev: docker-build
 	docker run -p $(DEV_PORT):5000 $(DOCKER_FLAGS) -ti $(DOCKER_FLAGS) -v $$PWD/$*:/senpy-plugins/ --entrypoint /bin/bash -v $$PWD/data:/data/ --rm $(IMAGEWTAG)
