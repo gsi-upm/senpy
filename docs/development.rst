@@ -2,11 +2,7 @@ Developing new services
 -----------------------
 
 Developing web services can be hard.
-To illustrate it, the figure below summarizes the typical features in a text analysis service.
-
-.. image:: senpy-framework.png
-  :width: 60%
-  :align: center
+A text analysis service must implement all the typical features, such as: extraction of parameters, validation, format conversion, visualization...
 
 Senpy implements all the common blocks, so developers can focus on what really matters: great analysis algorithms that solve real problems.
 Among other things, Senpy takes care of these tasks:
@@ -25,3 +21,4 @@ Sharing your sentiment analysis with the world has never been easier!
 
     plugins-quickstart
     plugins-faq
+    plugins-definition

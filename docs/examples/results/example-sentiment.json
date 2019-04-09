@@ -17,10 +17,6 @@
         "nif:Context"
       ],
       "nif:isString": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
-      "entities": [
-      ],
-      "suggestions": [
-      ],
       "sentiments": [
         {
           "@id": "http://micro.blog/status1#char=80,97",
@@ -32,7 +28,7 @@
           "prov:wasGeneratedBy": "_:SAnalysis1_Activity"
         }
       ],
-      "emotionSets": [
+      "emotions": [
       ]
     }
   ]

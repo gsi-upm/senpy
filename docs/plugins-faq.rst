@@ -8,7 +8,7 @@ F.A.Q.
 What are annotations?
 #####################
 They are objects just like entries.
-Senpy ships with several default annotations, including: ``Sentiment``, ``Emotion``, ``EmotionSet``...jk bb
+Senpy ships with several default annotations, including ``Sentiment`` and ``Emotion``.
 
 
 What's a plugin made of?

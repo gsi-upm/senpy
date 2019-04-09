@@ -26,20 +26,7 @@ Representation
 ,,,,,,,,,,,,,,
 
 .. literalinclude:: examples/results/example-sentiment.json
-   :emphasize-lines: 5-10,25-33
-   :language: json-ld
-
-Suggestion Mining
-.................
-Description
-,,,,,,,,,,,
-The suggestions schema represented below shows the suggestions detected in the text. Within it, we can find the NIF fields highlighted that corresponds to the text of the detected suggestion. 
-
-Representation
-,,,,,,,,,,,,,,
-
-.. literalinclude:: examples/results/example-suggestion.json
-   :emphasize-lines: 5-8,22-27
+   :emphasize-lines: 5-11,20-30
    :language: json-ld
 
 Emotion Analysis
@@ -53,28 +40,6 @@ Representation
 
 .. literalinclude:: examples/results/example-emotion.json
    :language: json-ld
-   :emphasize-lines: 5-8,25-37
+   :emphasize-lines: 5-11,22-36
 
-Named Entity Recognition
-........................
-Description
-,,,,,,,,,,,
-The Named Entity Recognition is represented as follows. In this particular case, it can be seen within the entities array the entities recognised. For the example input, Microsoft and Windows Phone are the ones detected. 
-Representation
-,,,,,,,,,,,,,,
 
-.. literalinclude:: examples/results/example-ner.json
-   :emphasize-lines: 5-8,19-34
-   :language: json-ld
-
-Complete example
-................
-Description
-,,,,,,,,,,,
-This example covers all of the above cases, integrating all the annotations in the same document.
-
-Representation
-,,,,,,,,,,,,,,
-
-.. literalinclude:: examples/results/example-complete.json
-   :language: json-ld
