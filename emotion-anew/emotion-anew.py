@@ -76,7 +76,7 @@ class ANEW(EmotionPlugin):
         "neutral": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#neutral-emotion",
         "sadness": "http://gsi.dit.upm.es/ontologies/wnaffect/ns#sadness"
     }
-    onyx__usesEmotionModel = "emoml:pad"
+    onyx__usesEmotionModel = "emoml:pad-dimensions"
     nltk_resources = ['stopwords']
 
     def activate(self, *args, **kwargs):
@@ -182,9 +182,9 @@ class ANEW(EmotionPlugin):
         emotions.id = "Emotions0"
 
         emotion1 = Emotion(id="Emotion0")
-        emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence"] = feature_set['V']
-        emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal"] = feature_set['A']
-        emotion1["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance"] = feature_set['D']
+        emotion1["emoml:pad-dimensions_pleasure"] = feature_set['V']
+        emotion1["emoml:pad-dimensions_arousal"] = feature_set['A']
+        emotion1["emoml:pad-dimensions_dominance"] = feature_set['D']
 
         emotion1.prov(activity)
         emotions.prov(activity)
