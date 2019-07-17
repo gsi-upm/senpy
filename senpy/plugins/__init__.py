@@ -1,5 +1,21 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
+#
+#    Copyright 2014 Grupo de Sistemas Inteligentes (GSI) DIT, UPM
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+
 from future import standard_library
 standard_library.install_aliases()
 
@@ -45,7 +61,7 @@ class PluginMeta(models.BaseMeta):
         plugin_type.add(name)
         alias = attrs.get('name', name).lower()
         attrs['_plugin_type'] = plugin_type
-        logger.debug('Adding new plugin class', name, bases, attrs, plugin_type)
+        logger.debug('Adding new plugin class: %s %s %s %s', name, bases, attrs, plugin_type)
         attrs['name'] = alias
         if 'description' not in attrs:
             doc = attrs.get('__doc__', None)
@@ -94,7 +110,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         Provides a canonical name for plugins and serves as base for other
         kinds of plugins.
         """
-        logger.debug("Initialising {}".format(info))
+        logger.debug("Initialising %s", info)
         super(Plugin, self).__init__(**kwargs)
         if info:
             self.update(info)
@@ -164,8 +180,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
 
     def process_entries(self, entries, activity):
         for entry in entries:
-            self.log.debug('Processing entry with plugin {}: {}'.format(
-                self, entry))
+            self.log.debug('Processing entry with plugin %s: %s', self, entry)
             results = self.process_entry(entry, activity)
             if inspect.isgenerator(results):
                 for result in results:
@@ -346,6 +361,9 @@ class Evaluable(Plugin):
 
     def evaluate_func(self, X, activity=None):
         raise Exception('Implement the evaluate_func function')
+
+    def evaluate(self, *args, **kwargs):
+        return evaluate([self], *args, **kwargs)
 
 
 class SentimentPlugin(Analyser, Evaluable, models.SentimentPlugin):
@@ -831,6 +849,9 @@ def evaluate(plugins, datasets, **kwargs):
         if not hasattr(plug, 'as_pipe'):
             raise models.Error('Plugin {} cannot be evaluated'.format(plug.name))
 
+    if not isinstance(datasets, dict):
+        datasets = gsitk_compat.prepare(datasets, download=True)
+
     tuples = list(product(plugins, datasets))
     missing = []
     for (p, d) in tuples:
@@ -844,12 +865,12 @@ def evaluate(plugins, datasets, **kwargs):
         new_ev = evaluations_to_JSONLD(results, **kwargs)
         for ev in new_ev:
             dataset = ev.evaluatesOn
-            model = ev.evaluates.rstrip('__' + dataset)
+            model = ev.evaluates
             cached_evs[(model, dataset)] = ev
     evaluations = []
-    print(tuples, 'Cached evs', cached_evs)
+    logger.debug('%s. Cached evs: %s', tuples, cached_evs)
     for (p, d) in tuples:
-        print('Adding', d, p)
+        logger.debug('Adding %s, %s', d, p)
         evaluations.append(cached_evs[(p.id, d)])
     return evaluations
 
@@ -868,7 +889,7 @@ def evaluations_to_JSONLD(results, flatten=False):
         if row.get('CV', True):
             evaluation['@type'] = ['StaticCV', 'Evaluation']
         evaluation.evaluatesOn = row['Dataset']
-        evaluation.evaluates = row['Model']
+        evaluation.evaluates = row['Model'].rstrip('__' + row['Dataset'])
         i = 0
         if flatten:
             metric = models.Metric()

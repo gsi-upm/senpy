@@ -174,10 +174,18 @@ function add_plugin_pipeline(){
 
 function draw_datasets(){
     html = "";
-    repeated_html = "<input class=\"checks-datasets\" type=\"checkbox\" value=\"";
     for (dataset in datasets){
-        html += repeated_html+datasets[dataset]["@id"]+"\">"+datasets[dataset]["@id"];
-        html += "<br>"
+        ds = datasets[dataset]
+
+        // html += repeated_html+datasets[dataset]["@id"]+"\">"+datasets[dataset]["@id"];
+        html += `
+                <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Instances: ${ds["stats"]["instances"]}">
+                <div class="form-check form-check-inline">
+                                    <input class="form-check-input checks-datasets" type="checkbox" value="${ds["@id"]}">
+                                    <label class="form-check-label" for="defaultCheck1">${ds["@id"]}</label>
+                                </div>
+                </span>
+`
     }
     document.getElementById("datasets").innerHTML = html;
 }

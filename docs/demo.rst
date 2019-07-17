@@ -2,7 +2,7 @@ Demo
 ----
 
 There is a demo available on http://senpy.gsi.upm.es/, where you can test a live instance of Senpy, with several open source plugins.
-You can use the playground (a web interface) or make HTTP requests to the service API.
+You can use the playground (a web interface) or the HTTP API.
 
 .. image:: playground-0.20.png
   :target: http://senpy.gsi.upm.es

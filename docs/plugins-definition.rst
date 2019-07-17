@@ -9,20 +9,21 @@ Lastly, it is also possible to add new plugins programmatically.
 
 .. contents:: :local:
 
-What is a plugin?
-=================
+..
+   What is a plugin?
+   =================
 
-A plugin is a program that, given a text, will add annotations to it.
-In practice, a plugin consists of at least two files:
+   A plugin is a program that, given a text, will add annotations to it.
+   In practice, a plugin consists of at least two files:
 
-- Definition file: a `.senpy` file that describes the plugin (e.g. what input parameters it accepts, what emotion model it uses).
-- Python module: the actual code that will add annotations to each input.
+   - Definition file: a `.senpy` file that describes the plugin (e.g. what input parameters it accepts, what emotion model it uses).
+   - Python module: the actual code that will add annotations to each input.
 
-This separation allows us to deploy plugins that use the same code but employ different parameters.
-For instance, one could use the same classifier and processing in several plugins, but train with different datasets.
-This scenario is particularly useful for evaluation purposes.
+   This separation allows us to deploy plugins that use the same code but employ different parameters.
+   For instance, one could use the same classifier and processing in several plugins, but train with different datasets.
+   This scenario is particularly useful for evaluation purposes.
 
-The only limitation is that the name of each plugin needs to be unique.
+   The only limitation is that the name of each plugin needs to be unique.
 
 Definition files
 ================
@@ -109,5 +110,3 @@ Now, in a file named ``helloworld.py``:
                       sentiment['marl:hasPolarity'] = 'marl:Negative'
                   entry.sentiments.append(sentiment)
                   yield entry
-
-The complete code of the example plugin is available `here <https://lab.gsi.upm.es/senpy/plugin-prueba>`__.

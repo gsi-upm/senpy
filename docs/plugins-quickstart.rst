@@ -37,7 +37,8 @@ The framework consists of two main modules: Senpy core, which is the building bl
 What is a plugin?
 #################
 
-A plugin is a python object that can process entries. Given an entry, it will modify it, add annotations to it, or generate new entries.
+A plugin is a python object that can process entries.
+Given an entry, it will modify it, add annotations to it, or generate new entries.
 
 
 What is an entry?

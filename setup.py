@@ -1,8 +1,29 @@
-from setuptools import setup
+'''
+Copyright 2014 GSI DIT UPM
 
-with open('senpy/VERSION') as f:
-    __version__ = f.read().strip()
-    assert __version__
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+'''
+
+from setuptools import setup
+from os import path
+
+try:
+    with open('senpy/VERSION') as f:
+        __version__ = f.read().strip()
+        assert __version__
+except IOError:  # pragma: no cover
+    print('Installing a development version of senpy. Proceed with caution!')
+    __version__ = 'devel'
 
 
 def parse_requirements(filename):
@@ -10,6 +31,11 @@ def parse_requirements(filename):
     with open(filename, 'r') as f:
         lineiter = list(line.strip() for line in f)
     return [line for line in lineiter if line and not line.startswith("#")]
+
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
 
 
 install_reqs = parse_requirements("requirements.txt")
@@ -25,6 +51,8 @@ setup(
     description=('A sentiment analysis server implementation. '
                  'Designed to be extensible, so new algorithms '
                  'and sources can be used.'),
+    long_description=long_description,
+    long_description_content_type='text/x-rst',
     author='J. Fernando Sanchez',
     author_email='balkian@gmail.com',
     url='https://github.com/gsi-upm/senpy',  # use the URL to the github repo

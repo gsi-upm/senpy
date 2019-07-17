@@ -233,28 +233,43 @@ In Data Science and Advanced Analytics (DSAA),
                 <div class="tab-pane" role="tabpanel" aria-labelledby="nav-evaluate" id="evaluate">
                     <div class="card my-2">
                         <div class="card-body">
+                                <p>Automatically evaluate the classification performance of your plugin in several public datasets, and compare it with other plugins.</p>
+                                <p>The datasets will be automatically downloaded if they are not already available locally. Depending on the size of the dataset and the speed of the plugin, the evaluation may take a long time.</p>
                             
                             <form id="form" class="container" onsubmit="" accept-charset="utf-8">
-                                <div>
-                                    <p>Automatically evaluate the classification performance of your plugin in several public datasets, and compare it with other plugins.</p>
-                                    <p>The datasets will be automatically downloaded if they are not already available locally. Depending on the size of the dataset and the speed of the plugin, the evaluation may take a long time.</p>
-                                    <label>Select the plugin:</label>
-                                    <select id="plugins-eval" name="plugins-eval" class=plugin onchange="draw_extra_parameters()">
-                                    </select>
-                                </div>
-                                <div>
-                                    <label>Select the datasets:</label>
-                                    <div id="datasets" name="datasets" >
-                                    </select>
+                                <div class="card my-2">
+                                    <div class="card-header">
+                                        <h5>
+                                            Select the plugin.
+                                        </h5>
                                     </div>
-                                    
-                                    <button id="doevaluate" class="btn btn-lg btn-primary" onclick="evaluate_JSON()">Evaluate Plugin</button>
-                                    <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
+                                    <div id="plugin_selection" class="card-body">
+                                        <select id="plugins-eval" name="plugins-eval" class=plugin onchange="draw_extra_parameters()">
+                                        </select>
+                                    </div>
                                 </div>
+
+                                <div class="card my-2">
+                                    <div class="card-header">
+                                        <h5>
+                                            Select the dataset.
+                                        </h5>
+                                    </div>
+                                    <div id="dataset_selection" class="card-body">
+                                        <div id="datasets" name="datasets" >
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!--<button id="visualise" name="type" type="button">Visualise!</button>-->
+                                    <button id="doevaluate" class="btn btn-lg btn-primary" onclick="evaluate_JSON()">Evaluate Plugin</button>
                             </form>
                         </div>
+                    </div>
+                    
+                    <div class="card my-2">
                         <div id="loading-results" class="loading"></div>
-                        <span id="input_request_eval"></span>
+                        <div id="input_request_eval"></div>
                         <div id="evaluate-div">
                             <ul class="nav nav-pills" role="tablist">
 
@@ -273,23 +288,25 @@ In Data Science and Advanced Analytics (DSAA),
                                     </div>
                                 </div>
                                 <div class="tab-pane" role="tabpanel" aria-labelledby=""  id="evaluate-table">
-                                    <table id="eval_table" class="table table-condensed">
-                                        <thead>
-                                            <tr>
-                                                <th>Plugin</th>
-                                                <th>Dataset</th>
-                                                <th>Accuracy</th>
-                                                <th>Precision_macro</th>
-                                                <th>Recall_macro</th>
-                                                <th>F1_macro</th>
-                                                <th>F1_weighted</th>
-                                                <th>F1_micro</th>
-                                                <th>F1</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        </tbody>
-                                    </table>
+                                    <div>
+                                        <table id="eval_table" class="table table-condensed">
+                                            <thead>
+                                                <tr>
+                                                    <th>Plugin</th>
+                                                    <th>Dataset</th>
+                                                    <th>Accuracy</th>
+                                                    <th>Precision_macro</th>
+                                                    <th>Recall_macro</th>
+                                                    <th>F1_macro</th>
+                                                    <th>F1_weighted</th>
+                                                    <th>F1_micro</th>
+                                                    <th>F1</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>

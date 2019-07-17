@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#    Copyright 2014 J. Fernando Sánchez Rada - Grupo de Sistemas Inteligentes
-#                                                       DIT, UPM
+#    Copyright 2014 Grupo de Sistemas Inteligentes (GSI) DIT, UPM
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.

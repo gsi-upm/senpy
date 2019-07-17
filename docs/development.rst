@@ -19,6 +19,7 @@ Sharing your sentiment analysis with the world has never been easier!
 .. toctree::
     :maxdepth: 1
 
+    server-cli
     plugins-quickstart
     plugins-faq
     plugins-definition

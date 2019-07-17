@@ -1,19 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright 2014 J. Fernando Sánchez Rada - Grupo de Sistemas Inteligentes
-# DIT, UPM
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#    Copyright 2014 Grupo de Sistemas Inteligentes (GSI) DIT, UPM
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
 #
-# Unless required by applicable law or agreed to in writing, software
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+#
 """
 Blueprints for Senpy
 """
@@ -24,7 +25,7 @@ from . import api
 from .version import __version__
 from functools import wraps
 
-from .gsitk_compat import GSITK_AVAILABLE
+from .gsitk_compat import GSITK_AVAILABLE, datasets
 
 import logging
 import json
@@ -272,8 +273,6 @@ def plugin(plugin):
 
 @api_blueprint.route('/datasets/', methods=['POST', 'GET'])
 @basic_api
-def datasets():
-    sp = current_app.senpy
-    datasets = sp.datasets
+def get_datasets():
     dic = Datasets(datasets=list(datasets.values()))
     return dic

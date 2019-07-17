@@ -23,7 +23,7 @@ In practice, this is what a plugin looks like, tests included:
 
 
 .. literalinclude:: ../example-plugins/rand_plugin.py
-   :emphasize-lines: 5-11
+   :emphasize-lines: 21-28
    :language: python
 
 

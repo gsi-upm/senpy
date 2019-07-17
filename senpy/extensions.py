@@ -1,3 +1,18 @@
+#
+#    Copyright 2014 Grupo de Sistemas Inteligentes (GSI) DIT, UPM
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
 """
 Main class for Senpy.
 It orchestrates plugin (de)activation and analysis.
@@ -274,36 +289,16 @@ class Senpy(object):
         return response
 
     def _get_datasets(self, request):
-        if not self.datasets:
-            raise Error(
-                status=404,
-                message=("No datasets found."
-                         " Please verify DatasetManager"))
         datasets_name = request.parameters.get('dataset', None).split(',')
         for dataset in datasets_name:
-            if dataset not in self.datasets:
+            if dataset not in gsitk_compat.datasets:
                 logger.debug(("The dataset '{}' is not valid\n"
                               "Valid datasets: {}").format(
-                                  dataset, self.datasets.keys()))
+                                  dataset, gsitk_compat.datasets.keys()))
                 raise Error(
                     status=404,
                     message="The dataset '{}' is not valid".format(dataset))
-        dm = gsitk_compat.DatasetManager()
-        datasets = dm.prepare_datasets(datasets_name)
-        return datasets
-
-    @property
-    def datasets(self):
-        self._dataset_list = {}
-        dm = gsitk_compat.DatasetManager()
-        for item in dm.get_datasets():
-            for key in item:
-                if key in self._dataset_list:
-                    continue
-                properties = item[key]
-                properties['@id'] = key
-                self._dataset_list[key] = properties
-        return self._dataset_list
+        return datasets_name
 
     def evaluate(self, params):
         logger.debug("evaluating request: {}".format(params))

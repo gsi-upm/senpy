@@ -17,18 +17,20 @@ Through PIP
 
 .. code:: bash
 
+   pip install senpy
+
+   # Or with --user if you get permission errors:
+
    pip install --user senpy
-
    
-Alternatively, you can use the development version:
- 
-.. code:: bash
+..
+   Alternatively, you can use the development version:
 
-   git clone git@github.com:gsi-upm/senpy
-   cd senpy
-   pip install --user .
+   .. code:: bash
 
-If you want to install senpy globally, use sudo instead of the ``--user`` flag.
+      git clone git@github.com:gsi-upm/senpy
+      cd senpy
+      pip install --user .
 
 Docker Image
 ************

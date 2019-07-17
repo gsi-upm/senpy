@@ -130,6 +130,7 @@ html_theme_options = {
     'github_user': 'gsi-upm',
     'github_repo': 'senpy',
     'github_banner': True,
+    'sidebar_collapse': True,
 }
 
 

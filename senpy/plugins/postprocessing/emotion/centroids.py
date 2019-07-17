@@ -1,3 +1,19 @@
+#
+#    Copyright 2014 Grupo de Sistemas Inteligentes (GSI) DIT, UPM
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+
 from senpy.plugins import EmotionConversionPlugin
 from senpy.models import EmotionSet, Emotion, Error
 
@@ -85,7 +101,13 @@ class CentroidConversion(EmotionConversionPlugin):
         def distance(centroid):
             return sum(distance_k(centroid, original, k) for k in dimensions)
 
-        emotion = min(centroids, key=lambda x: distance(centroids[x]))
+        distances = {k: distance(centroids[k]) for k in centroids}
+
+        logger.debug('Converting %s', original)
+        logger.debug('Centroids: %s', centroids)
+        logger.debug('Distances: %s', distances)
+
+        emotion = min(distances, key=lambda x: distances[x])
 
         result = Emotion(onyx__hasEmotionCategory=emotion)
         result.onyx__algorithmConfidence = distance(centroids[emotion])

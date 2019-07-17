@@ -1,5 +1,8 @@
-Server
-======
+Command line tool
+=================
+
+Basic usage
+-----------
 
 The senpy server is launched via the `senpy` command:
 
@@ -70,3 +73,14 @@ For instance, to accept connections on port 6000 on any interface:
     senpy --host 0.0.0.0 --port 6000
 
 For more options, see the `--help` page.
+
+Sentiment analysis in the command line
+--------------------------------------
+
+Although the main use of senpy is to publish services, the tool can also be used locally to analyze text in the command line.
+This is a short video demonstration:
+
+.. image:: https://asciinema.org/a/9uwef1ghkjk062cw2t4mhzpyk.png
+   :width: 100%
+   :target: https://asciinema.org/a/9uwef1ghkjk062cw2t4mhzpyk
+   :alt: CLI demo

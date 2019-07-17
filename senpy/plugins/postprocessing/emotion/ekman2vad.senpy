@@ -9,30 +9,30 @@ centroids:
   anger:
     A: 6.95
     D: 5.1
-    V: 2.7
+    P: 2.7
   disgust:
     A: 5.3
     D: 8.05
-    V: 2.7
+    P: 2.7
   fear:
     A: 6.5
     D: 3.6
-    V: 3.2
+    P: 3.2
   happiness:
     A: 7.22
     D: 6.28
-    V: 8.6
+    P: 8.6
   sadness:
     A: 5.21
     D: 2.82
-    V: 2.21
+    P: 2.21
 centroids_direction:
   - emoml:big6
-  - emoml:pad
+  - emoml:pad-dimensions
 aliases: # These are aliases for any key in the centroid, to avoid repeating a long name several times
-  A: emoml:pad-dimensions:arousal
-  V: emoml:pad-dimensions:valence
-  D: emoml:pad-dimensions:dominance
+  P: emoml:pad-dimensions_pleasure
+  A: emoml:pad-dimensions_arousal
+  D: emoml:pad-dimensions_dominance
   anger: emoml:big6anger
   disgust: emoml:big6disgust
   fear: emoml:big6fear

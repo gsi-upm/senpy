@@ -2,7 +2,7 @@ Publications
 ============
 
 
-If you use Senpy in your research, please cite `Senpy: A Pragmatic Linked Sentiment Analysis Framework <http://gsi.dit.upm.es/index.php/es/investigacion/publicaciones?view=publication&task=show&id=417>`__ (`BibTex <http://gsi.dit.upm.es/index.php/es/investigacion/publicaciones?controller=publications&task=export&format=bibtex&id=417>`__):
+And if you use Senpy in your research, please cite `Senpy: A Pragmatic Linked Sentiment Analysis Framework <http://gsi.dit.upm.es/index.php/es/investigacion/publicaciones?view=publication&task=show&id=417>`__ (`BibTex <http://gsi.dit.upm.es/index.php/es/investigacion/publicaciones?controller=publications&task=export&format=bibtex&id=417>`__):
 
 .. code-block:: text
 
@@ -10,7 +10,6 @@ If you use Senpy in your research, please cite `Senpy: A Pragmatic Linked Sentim
 	Senpy: A Pragmatic Linked Sentiment Analysis Framework.
 	In Data Science and Advanced Analytics (DSAA),
 	2016 IEEE International Conference on (pp. 735-742). IEEE.
-
 
 
 Senpy uses Onyx for emotion representation, first introduced in:
@@ -27,15 +26,6 @@ Senpy uses Marl for sentiment representation, which was presented in:
 
     Westerski, A., Iglesias Fernandez, C. A., & Tapia Rico, F. (2011).
     Linked opinions: Describing sentiments on the structured web of data.
-
-
-Senpy has been used extensively in the toolbox of the MixedEmotions project:
-
-.. code-block:: text
-
-    Buitelaar, P., Wood, I. D., Arcan, M., McCrae, J. P., Abele, A., Robin, C., … Tummarello, G. (2018). 
-    MixedEmotions: An Open-Source Toolbox for Multi-Modal Emotion Analysis.
-    IEEE Transactions on Multimedia.
 
 The representation models, formats and challenges are partially covered in a chapter of the book Sentiment Analysis in Social Networks:
 
