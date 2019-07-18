@@ -293,11 +293,10 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 nbsphinx_prolog = """
-.. note:: This page has been auto-generated from a Jupyter notebook using nbsphinx_.
+.. note:: This is an `auto-generated <https://nbsphinx.readthedocs.io>`_ static view of a Jupyter notebook.
 
-    The original source is available at: https://github.com/gsi-upm/senpy/tree/master/docs//{{ env.doc2path(env.docname, base=None) }}
+    To run the code examples in your computer, you may download the original notebook from the repository: https://github.com/gsi-upm/senpy/tree/master/docs/{{ env.doc2path(env.docname, base=None) }}
 
-    .. _nbsphinx: https://nbsphinx.readthedocs.io/
 
 ----
 """

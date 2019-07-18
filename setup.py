@@ -16,9 +16,10 @@ limitations under the License.
 
 from setuptools import setup
 from os import path
+import io
 
 try:
-    with open('senpy/VERSION') as f:
+    with io.open('senpy/VERSION') as f:
         __version__ = f.read().strip()
         assert __version__
 except IOError:  # pragma: no cover
@@ -28,13 +29,13 @@ except IOError:  # pragma: no cover
 
 def parse_requirements(filename):
     """ load requirements from a pip requirements file """
-    with open(filename, 'r') as f:
+    with io.open(filename, 'r') as f:
         lineiter = list(line.strip() for line in f)
     return [line for line in lineiter if line and not line.startswith("#")]
 
 
 this_directory = path.abspath(path.dirname(__file__))
-with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
+with io.open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 
