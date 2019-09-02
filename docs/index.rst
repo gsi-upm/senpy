@@ -5,10 +5,8 @@ Welcome to Senpy's documentation!
   :target: http://senpy.readthedocs.io/en/latest/
 .. image:: https://badge.fury.io/py/senpy.svg
   :target: https://badge.fury.io/py/senpy
-.. image:: https://lab.gsi.upm.es/senpy/senpy/badges/master/build.svg
-  :target: https://lab.gsi.upm.es/senpy/senpy/commits/master
-.. image:: https://lab.gsi.upm.es/senpy/senpy/badges/master/coverage.svg
-  :target: https://lab.gsi.upm.es/senpy/senpy/commits/master
+.. image:: https://travis-ci.org/gsi-upm/senpy.svg
+  :target: https://github.com/gsi-upm/senpy/senpy/tree/master
 .. image:: https://img.shields.io/pypi/l/requests.svg
   :target: https://lab.gsi.upm.es/senpy/senpy/
 

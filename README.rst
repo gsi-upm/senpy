@@ -2,23 +2,21 @@
    :width: 100%
    :target: http://senpy.gsi.upm.es
 
-.. image:: https://travis-ci.org/gsi-upm/senpy.svg?branch=master
-   :target: https://travis-ci.org/gsi-upm/senpy
-
-.. image:: https://lab.gsi.upm.es/senpy/senpy/badges/master/pipeline.svg
-   :target: https://lab.gsi.upm.es/senpy/senpy/commits/master
-
-.. image:: https://lab.gsi.upm.es/senpy/senpy/badges/master/coverage.svg
-   :target: https://lab.gsi.upm.es/senpy/senpy/commits/master
-
+.. image:: https://readthedocs.org/projects/senpy/badge/?version=latest
+  :target: http://senpy.readthedocs.io/en/latest/
+.. image:: https://badge.fury.io/py/senpy.svg
+  :target: https://badge.fury.io/py/senpy
+.. image:: https://travis-ci.org/gsi-upm/senpy.svg
+  :target: https://github.com/gsi-upm/senpy/senpy/tree/master
 .. image:: https://img.shields.io/pypi/l/requests.svg
-   :target: https://lab.gsi.upm.es/senpy/senpy/
+  :target: https://lab.gsi.upm.es/senpy/senpy/
 
+     
 Senpy lets you create sentiment analysis web services easily, fast and using a well known API.
-As a bonus, senpy services use semantic vocabularies (e.g. `NIF <http://persistence.uni-leipzig.org/nlp2rdf/>`_, `Marl <http://www.gsi.dit.upm.es/ontologies/marl>`_, `Onyx <http://www.gsi.dit.upm.es/ontologies/onyx>`_) and formats (turtle, JSON-LD, xml-rdf).
+As a bonus, Senpy services use semantic vocabularies (e.g. `NIF <http://persistence.uni-leipzig.org/nlp2rdf/>`_, `Marl <http://www.gsi.dit.upm.es/ontologies/marl>`_, `Onyx <http://www.gsi.dit.upm.es/ontologies/onyx>`_) and formats (turtle, JSON-LD, xml-rdf).
 
 Have you ever wanted to turn your sentiment analysis algorithms into a service?
-With senpy, now you can.
+With Senpy, now you can.
 It provides all the tools so you just have to worry about improving your algorithms:
 
 `See it in action. <http://senpy.gsi.upm.es/>`_
@@ -43,20 +41,36 @@ Alternatively, you can use the development version:
    cd senpy
    pip install --user .
 
-If you want to install senpy globally, use sudo instead of the ``--user`` flag.
+If you want to install Senpy globally, use sudo instead of the ``--user`` flag.
 
 Docker Image
 ************
 Build the image or use the pre-built one: ``docker run -ti -p 5000:5000 gsiupm/senpy``.
 
-To add custom plugins, add a volume and tell senpy where to find the plugins: ``docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy -f /plugins``
+To add custom plugins, add a volume and tell Senpy where to find the plugins: ``docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy -f /plugins``
 
+
+Compatibility
+-------------
+
+Senpy should work in any major operating system.
+Its code is pure Python, and the only limitations are imposed by its dependencies (e.g., nltk, pandas).
+
+Currently, the CI/CD pipeline tests the code on:
+
+* GNU/Linux with Python versions 3.4, 3.5, 3.6 and 3.7
+* MacOS and homebrew's python3
+* Windows 10 and chocolatey's python3
+
+The latest PyPI package is verified to install on Ubuntu, Debian and Arch Linux.
+
+If you have trouble installing Senpy in your platform, see `Having problems?`_.
 
 Developing
 ----------
 
-Developing/debugging
-********************
+Running/debugging
+*****************
 This command will run the senpy container using the latest image available, mounting your current folder so you get your latest code:
 
 .. code:: bash
@@ -119,15 +133,12 @@ or, alternatively:
 This will create a server with any modules found in the current path.
 For more options, see the `--help` page.
 
-Alternatively, you can use the modules included in senpy to build your own application.
+Alternatively, you can use the modules included in Senpy to build your own application.
 
 Deploying on Heroku
 -------------------
 Use a free heroku instance to share your service with the world.
 Just use the example Procfile in this repository, or build your own.
-
-
-`DEMO on heroku <http://senpy.herokuapp.com>`_
 
 
 For more information, check out the `documentation <http://senpy.readthedocs.org>`_.
@@ -144,16 +155,16 @@ Instead, the maintainers will focus their efforts on keeping the codebase compat
 We apologize for the inconvenience.
 
 
-Having problems with senpy?
----------------------------
+Having problems?
+----------------
 
 Please, file a new issue `on GitHub <https://github.com/gsi-upm/senpy/issues>`_ including enough details to reproduce the bug, including:
 
-  * Operating system
-  * Version of senpy (or docker tag)
-  * Installed libraries
-  * Relevant logs
-  * A simple code example
+* Operating system
+* Version of Senpy (or docker tag)
+* Installed libraries
+* Relevant logs
+* A simple code example
 
 Acknowledgement
 ---------------
