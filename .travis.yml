@@ -1,15 +1,43 @@
 sudo: required
 
-services:
-  - docker
-
-language: python
-
-env:
-  - PYV=3.4
-  - PYV=3.5
-  - PYV=3.6
-  - PYV=3.7
-#  - PYV=3.3 # Apt fails in this docker image
-# run nosetests - Tests
-script: make test-$PYV
+matrix:
+  allow_failures:
+    # Windows is experimental in Travis.
+    # As of this writing, senpy installs but hangs on tests that use the flask test client (e.g. blueprints)
+    - os: windows
+  include:
+    - os: linux
+      language: python
+      python: 3.4
+      before_install:
+        - pip install --upgrade --force-reinstall pandas
+    - os: linux
+      language: python
+      python: 3.5
+    - os: linux
+      language: python
+      python: 3.6
+    - os: linux
+      language: python
+      python: 3.7
+    - os: osx
+      language: generic
+      addons:
+        homebrew:
+          # update: true
+          packages: python3
+      before_install:
+        - python3 -m pip install --upgrade virtualenv
+        - virtualenv -p python3 --system-site-packages "$HOME/venv"
+        - source "$HOME/venv/bin/activate"
+    - os: windows
+      language: bash
+      before_install:
+        - choco install -y python3
+        - python -m pip install --upgrade pip
+      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+# command to run tests
+# 'python' points to Python 2.7 on macOS but points to Python 3.7 on Linux and Windows
+# 'python3' is a 'command not found' error on Windows but 'py' works on Windows only
+script:
+  - python3 setup.py test || python setup.py test

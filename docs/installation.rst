@@ -1,10 +1,10 @@
 Installation
 ------------
-The stable version can be used in two ways: as a system/user library through pip, or as a docker image.
+The stable version can be used in two ways: as a system/user library through pip, or from a docker image.
 
-The docker image is the recommended way because it is self-contained and isolated from the system, which means:
+Using docker is recommended because the image is self-contained, reproducible and isolated from the system, which means:
 
-  * Downloading and using it is just one command
+  * It can be downloaded and run with just one simple command
   * All dependencies are included
   * It is OS-independent (MacOS, Windows, GNU/Linux)
   * Several versions may coexist in the same machine without additional virtual environments
@@ -32,27 +32,24 @@ Through PIP
       cd senpy
       pip install --user .
 
+Each version is automatically tested in GNU/Linux, macOS and Windows 10.
+If you have trouble with the installation, please file an `issue on GitHub <https://github.com/gsi-upm/senpy/issues>`_.
+
+
 Docker Image
 ************
-The base image of senpy comes with some builtin plugins that you can use:   
+
+The base image of senpy comes with some built-in plugins that you can use:   
 
 .. code:: bash
 
    docker run -ti -p 5000:5000 gsiupm/senpy --host 0.0.0.0
 
-To add your custom plugins, you can use a docker volume: 
+To use your custom plugins, you can add volume to the container: 
     
 .. code:: bash
 
    docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --host 0.0.0.0 --plugins -f /plugins
- 
-
-
-There is a Senpy image for **python 2**, too:
-    
-.. code:: bash
-
-   docker run -ti -p 5000:5000 gsiupm/senpy:python2.7 --host 0.0.0.0
 
 
 Alias

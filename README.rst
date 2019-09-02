@@ -144,6 +144,17 @@ Instead, the maintainers will focus their efforts on keeping the codebase compat
 We apologize for the inconvenience.
 
 
+Having problems with senpy?
+---------------------------
+
+Please, file a new issue `on GitHub <https://github.com/gsi-upm/senpy/issues>`_ including enough details to reproduce the bug, including:
+
+  * Operating system
+  * Version of senpy (or docker tag)
+  * Installed libraries
+  * Relevant logs
+  * A simple code example
+
 Acknowledgement
 ---------------
 This development has been partially funded by the European Union through the MixedEmotions Project (project number H2020 655632), as part of the `RIA ICT 15 Big data and Open Data Innovation and take-up` programme.
