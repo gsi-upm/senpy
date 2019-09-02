@@ -24,7 +24,7 @@ from senpy.models import Results, EmotionSet, Entry, Emotion
 
 
 class ANEW(EmotionPlugin):
-    description = "This plugin consists on an emotion classifier using ANEW lexicon dictionary to calculate VAD (valence-arousal-dominance) of the sentence and determinate which emotion is closer to this value. Each emotion has a centroid, calculated according to this article: http://www.aclweb.org/anthology/W10-0208. The plugin is going to look for the words in the sentence that appear in the ANEW dictionary and calculate the average VAD score for the sentence. To obtain a categorical value (e.g., happy) use the emotion conversion API (e.g., `emotion-model=emoml:big6`)."
+    description = "This plugin consists on an emotion classifier using ANEW lexicon dictionary. It averages the VAD (valence-arousal-dominance) value of each word in the text that is also in the ANEW dictionary. To obtain a categorical value (e.g., happy) use the emotion conversion API (e.g., `emotion-model=emoml:big6`)."
     author = "@icorcuera"
     version = "0.5.2"
     name = "emotion-anew"
