@@ -32,7 +32,7 @@ Through PIP
       cd senpy
       pip install --user .
 
-Each version is automatically tested in GNU/Linux, macOS and Windows 10.
+Each version is automatically tested on GNU/Linux, macOS and Windows 10.
 If you have trouble with the installation, please file an `issue on GitHub <https://github.com/gsi-upm/senpy/issues>`_.
 
 

@@ -64,7 +64,7 @@ Currently, the CI/CD pipeline tests the code on:
 
 The latest PyPI package is verified to install on Ubuntu, Debian and Arch Linux.
 
-If you have trouble installing Senpy in your platform, see `Having problems?`_.
+If you have trouble installing Senpy on your platform, see `Having problems?`_.
 
 Developing
 ----------
