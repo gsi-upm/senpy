@@ -53,7 +53,7 @@ To add custom plugins, add a volume and tell Senpy where to find the plugins: ``
 Compatibility
 -------------
 
-Senpy should work in any major operating system.
+Senpy should run on any major operating system.
 Its code is pure Python, and the only limitations are imposed by its dependencies (e.g., nltk, pandas).
 
 Currently, the CI/CD pipeline tests the code on:
