@@ -14,7 +14,7 @@
 #    limitations under the License.
 #
 from . import models, __version__
-from collections import MutableMapping
+from collections.abc import MutableMapping
 import pprint
 import pdb
 

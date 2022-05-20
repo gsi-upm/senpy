@@ -23,7 +23,8 @@ import inspect
 import copy
 
 from abc import ABCMeta
-from collections import MutableMapping, namedtuple
+from collections import namedtuple
+from collections.abc import MutableMapping
 
 
 class BaseMeta(ABCMeta):
