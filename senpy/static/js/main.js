@@ -1,4 +1,4 @@
-var ONYX = "http://www.gsi.dit.upm.es/ontologies/onyx/ns#";
+var ONYX = "http://www.gsi.upm.es/ontologies/onyx/ns#";
 var RDF_TYPE =  "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 var plugins_params = default_params = {};
 var plugins = [];

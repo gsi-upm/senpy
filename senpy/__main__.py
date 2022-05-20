@@ -42,6 +42,11 @@ def main():
         default="INFO",
         help='Logging level')
     parser.add_argument(
+        '--no-proxy-fix',
+        action='store_true',
+        default=False,
+        help='Do not assume senpy will be running behind a proxy (e.g., nginx)')
+    parser.add_argument(
         '--log-format',
         metavar='log_format',
         type=str,
@@ -127,6 +132,12 @@ def main():
         action='store_true',
         default=False,
         help='Do not exit if some plugins fail to activate')
+    parser.add_argument(
+        '--enable-cors',
+        '--cors',
+        action='store_true',
+        default=False,
+        help='Enable CORS for all domains (requires flask-cors to be installed)')
     args = parser.parse_args()
     print('Senpy version {}'.format(senpy.__version__))
     print(sys.version)
@@ -141,6 +152,7 @@ def main():
 
     app = Flask(__name__)
     app.debug = args.debug
+
     sp = Senpy(app,
                plugin_folder=None,
                default_plugins=not args.no_default_plugins,
@@ -177,6 +189,14 @@ def main():
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                             args.port))
+    if args.enable_cors:
+        from flask_cors import CORS
+        CORS(app)
+
+    if not args.no_proxy_fix:
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app)
+
     try:
         app.run(args.host,
                 args.port,

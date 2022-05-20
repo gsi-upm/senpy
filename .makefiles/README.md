@@ -2,7 +2,7 @@ These makefiles are recipes for several common tasks in different types of proje
 To add them to your project, simply do:
 
 ```
-git remote add makefiles ssh://git@lab.cluster.gsi.dit.upm.es:2200/docs/templates/makefiles.git
+git remote add makefiles ssh://git@lab.gsi.upm.es:2200/docs/templates/makefiles.git
 git subtree add --prefix=.makefiles/ makefiles master
 touch Makefile
 echo "include .makefiles/base.mk" >> Makefile
@@ -16,7 +16,7 @@ include .makefiles/python.mk
 ```
 
 You may need to set special variables like the name of your project or the python versions you're targetting.
-Take a look at each specific `.mk` file for more information, and the `Makefile` in the [senpy](https://lab.cluster.gsi.dit.upm.es/senpy/senpy) project for a real use case.
+Take a look at each specific `.mk` file for more information, and the `Makefile` in the [senpy](https://lab.gsi.upm.es/senpy/senpy) project for a real use case.
 
 If you update the makefiles from your repository, make sure to push the changes for review in upstream (this repository):
 

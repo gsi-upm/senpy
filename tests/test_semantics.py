@@ -75,9 +75,9 @@ class SemanticsTest(TestCase):
         assert g
         qres = g.query("""
     PREFIX prov: <http://www.w3.org/ns/prov#>
-    PREFIX marl: <http://www.gsi.dit.upm.es/ontologies/marl/ns#>
+    PREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>
     PREFIX nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>
-    PREFIX onyx: <http://www.gsi.dit.upm.es/ontologies/onyx/ns#>
+    PREFIX onyx: <http://www.gsi.upm.es/ontologies/onyx/ns#>
     PREFIX senpy: <http://www.gsi.upm.es/onto/senpy/ns#>
 
     SELECT DISTINCT ?entry ?text ?sentiment
@@ -109,9 +109,9 @@ class SemanticsTest(TestCase):
         g = parse_resp(resp, 'ttl')
         qres = g.query("""
     PREFIX prov: <http://www.w3.org/ns/prov#>
-    PREFIX marl: <http://www.gsi.dit.upm.es/ontologies/marl/ns#>
+    PREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>
     PREFIX nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>
-    PREFIX onyx: <http://www.gsi.dit.upm.es/ontologies/onyx/ns#>
+    PREFIX onyx: <http://www.gsi.upm.es/ontologies/onyx/ns#>
     PREFIX senpy: <http://www.gsi.upm.es/onto/senpy/ns#>
 
     SELECT DISTINCT ?entry ?text ?sentiment

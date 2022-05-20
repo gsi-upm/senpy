@@ -5,7 +5,7 @@ metadata:
   name: senpy-ingress
 spec:
   rules:
-  - host: latest.senpy.cluster.gsi.dit.upm.es
+  - host: latest.senpy.gsi.upm.es
     http:
       paths:
       - path: /

@@ -292,7 +292,7 @@ class BlueprintsTest(TestCase):
         assert "@context" in js
         assert check_dict(
             js["@context"],
-            {"marl": "http://www.gsi.dit.upm.es/ontologies/marl/ns#"})
+            {"marl": "http://www.gsi.upm.es/ontologies/marl/ns#"})
 
     def test_schema(self):
         resp = self.client.get("/api/schemas/definitions.json")

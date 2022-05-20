@@ -216,7 +216,7 @@ class BaseModel(with_metaclass(BaseMeta, CustomDict)):
             logger.debug(
                 'Parsing with prefix: {}'.format(kwargs.get('prefix')))
             content = g.serialize(format=format,
-                                  prefix=prefix).decode('utf-8')
+                                  prefix=prefix)
             mimetype = 'text/{}'.format(format)
         else:
             raise Error('Unknown outformat: {}'.format(format))

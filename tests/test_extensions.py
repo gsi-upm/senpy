@@ -69,8 +69,9 @@ class ExtensionsTest(TestCase):
 
     def test_adding_folder(self):
         """ It should be possible for senpy to look for plugins in more folders. """
+        app = Flask('test_adding_folder')
         senpy = Senpy(plugin_folder=None,
-                      app=self.app,
+                      app=app,
                       default_plugins=False)
         assert not senpy.analysis_plugins()
         senpy.add_folder(self.examples_dir)
@@ -141,8 +142,9 @@ class ExtensionsTest(TestCase):
 
     def test_analyse_empty(self):
         """ Trying to analyse when no plugins are installed should raise an error."""
+        app = Flask('test_adding_folder')
         senpy = Senpy(plugin_folder=None,
-                      app=self.app,
+                      app=app,
                       default_plugins=False)
         self.assertRaises(Error, senpy.analyse, Results(), [])
 

@@ -1,7 +1,7 @@
 ns = {
-    'http://www.gsi.dit.upm.es/ontologies/marl/ns#': 'marl',
-    'http://www.gsi.dit.upm.es/ontologies/onyx/ns#': 'onyx',
-    'http://www.gsi.dit.upm.es/ontologies/senpy/ns#': 'onyx',
+    'http://www.gsi.upm.es/ontologies/marl/ns#': 'marl',
+    'http://www.gsi.upm.es/ontologies/onyx/ns#': 'onyx',
+    'http://www.gsi.upm.es/ontologies/senpy/ns#': 'onyx',
     'http://www.gsi.upm.es/onto/senpy/ns#': 'senpy',
     'http://www.w3.org/ns/prov#': 'prov',
     'http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#': 'nif'

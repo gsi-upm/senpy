@@ -2,7 +2,7 @@
 "@context": [
              "http://mixedemotions-project.eu/ns/context.jsonld",
              {
-               "emovoc": "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#"
+               "emovoc": "http://www.gsi.upm.es/ontologies/onyx/vocabularies/emotionml/ns#"
              }
   ],
   "@id": "me:Result1",

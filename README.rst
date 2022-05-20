@@ -13,7 +13,7 @@
 
      
 Senpy lets you create sentiment analysis web services easily, fast and using a well known API.
-As a bonus, Senpy services use semantic vocabularies (e.g. `NIF <http://persistence.uni-leipzig.org/nlp2rdf/>`_, `Marl <http://www.gsi.dit.upm.es/ontologies/marl>`_, `Onyx <http://www.gsi.dit.upm.es/ontologies/onyx>`_) and formats (turtle, JSON-LD, xml-rdf).
+As a bonus, Senpy services use semantic vocabularies (e.g. `NIF <http://persistence.uni-leipzig.org/nlp2rdf/>`_, `Marl <http://www.gsi.upm.es/ontologies/marl>`_, `Onyx <http://www.gsi.upm.es/ontologies/onyx>`_) and formats (turtle, JSON-LD, xml-rdf).
 
 Have you ever wanted to turn your sentiment analysis algorithms into a service?
 With Senpy, now you can.

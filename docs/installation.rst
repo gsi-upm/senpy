@@ -49,7 +49,7 @@ To use your custom plugins, you can add volume to the container:
     
 .. code:: bash
 
-   docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --host 0.0.0.0 --plugins -f /plugins
+   docker run -ti -p 5000:5000 -v <PATH OF PLUGINS>:/plugins gsiupm/senpy --host 0.0.0.0 --plugins-folder /plugins
 
 
 Alias

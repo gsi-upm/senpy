@@ -67,7 +67,7 @@ You can analyze the same sentence using a different sentiment service (e.g. Vade
 
    @prefix : <http://www.gsi.upm.es/onto/senpy/ns#> .
    @prefix endpoint: <http://senpy.gsi.upm.es/api/> .
-   @prefix marl: <http://www.gsi.dit.upm.es/ontologies/marl/ns#> .
+   @prefix marl: <http://www.gsi.upm.es/ontologies/marl/ns#> .
    @prefix nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#> .
    @prefix prefix: <http://senpy.invalid/> .
    @prefix prov: <http://www.w3.org/ns/prov#> .

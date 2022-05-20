@@ -1,5 +1,5 @@
 makefiles-remote:
-	git ls-remote --exit-code  makefiles 2> /dev/null || git remote add makefiles ssh://git@lab.cluster.gsi.dit.upm.es:2200/docs/templates/makefiles.git
+	git ls-remote --exit-code  makefiles 2> /dev/null || git remote add makefiles ssh://git@lab.gsi.upm.es:2200/docs/templates/makefiles.git
 
 makefiles-commit: makefiles-remote
 	git add -f .makefiles

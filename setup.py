@@ -46,7 +46,7 @@ extra_reqs = parse_requirements("extra-requirements.txt")
 
 setup(
     name='senpy',
-    python_requires='>3.3',
+    python_requires='>3.6',
     packages=['senpy'],  # this must be the same as the name above
     version=__version__,
     description=('A sentiment analysis server implementation. '
@@ -67,7 +67,8 @@ setup(
     tests_require=test_reqs,
     setup_requires=['pytest-runner', ],
     extras_require={
-        'evaluation': extra_reqs
+        'evaluation': extra_reqs,
+        'extras': extra_reqs
     },
     include_package_data=True,
     entry_points={

@@ -13,9 +13,9 @@ An overview of the vocabularies and their use can be found in [4].
 
 [1] Guidelines for developing NIF-based NLP services, Final Community Group Report 22 December 2015 Available at: https://www.w3.org/2015/09/bpmlod-reports/nif-based-nlp-webservices/
 
-[2] Marl Ontology Specification, available at http://www.gsi.dit.upm.es/ontologies/marl/
+[2] Marl Ontology Specification, available at http://www.gsi.upm.es/ontologies/marl/
 
-[3] Onyx Ontology Specification, available at http://www.gsi.dit.upm.es/ontologies/onyx/
+[3] Onyx Ontology Specification, available at http://www.gsi.upm.es/ontologies/onyx/
 
 [4] Iglesias, C. A., Sánchez-Rada, J. F., Vulcu, G., & Buitelaar, P. (2017). Linked Data Models for Sentiment and Emotion Analysis in Social Networks. In Sentiment Analysis in Social Networks (pp. 49-69).
 
