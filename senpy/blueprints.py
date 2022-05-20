@@ -240,7 +240,7 @@ def api_root(plugins):
     return results
 
 
-@api_blueprint.route('/evaluate/', methods=['POST', 'GET'])
+@api_blueprint.route('/evaluate', methods=['POST', 'GET'], strict_slashes=False)
 @basic_api
 def evaluate():
     if request.parameters['help']:
@@ -253,7 +253,7 @@ def evaluate():
         return response
 
 
-@api_blueprint.route('/plugins/', methods=['POST', 'GET'])
+@api_blueprint.route('/plugins', methods=['POST', 'GET'], strict_slashes=False)
 @basic_api
 def plugins():
     sp = current_app.senpy
@@ -264,14 +264,14 @@ def plugins():
     return dic
 
 
-@api_blueprint.route('/plugins/<plugin>/', methods=['POST', 'GET'])
+@api_blueprint.route('/plugins/<plugin>', methods=['POST', 'GET'], strict_slashes=False)
 @basic_api
 def plugin(plugin):
     sp = current_app.senpy
     return sp.get_plugin(plugin)
 
 
-@api_blueprint.route('/datasets/', methods=['POST', 'GET'])
+@api_blueprint.route('/datasets', methods=['POST', 'GET'], strict_slashes=False)
 @basic_api
 def get_datasets():
     dic = Datasets(datasets=list(datasets.values()))
