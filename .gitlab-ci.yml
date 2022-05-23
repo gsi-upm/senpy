@@ -101,12 +101,12 @@ latest-demo:
   stage: deploy
   environment: production
   variables:
-    KUBECONFIG_FILE: "/kubeconfig"
+    KUBECONFIG: "/kubeconfig"
     IMAGEWTAG: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
     KUBEAPP: "senpy"
   script:
-  - cat ${KUBECONFIG} > $KUBECONFIG_FILE
+  - echo "${KUBECONFIG_RAW}" > $KUBECONFIG
   - kubectl version
   - cd k8s/
-  - cat *.yaml *.tmpl 2>/dev/null | envsubst | kubectl --kubeconfig $KUBECONFIG_FILE apply --namespace ${KUBENS:-default} -f -
-  - kubectl --kubeconfig $KUBECONFIG_FILE get all,ing -l app=${KUBEAPP} --namespace=${KUBENS:-default}
+  - cat *.yaml *.tmpl 2>/dev/null | envsubst | kubectl --kubeconfig $KUBECONFIG apply --namespace ${KUBENS:-default} -f -
+  - kubectl --kubeconfig $KUBECONFIG get all,ing -l app=${KUBEAPP} --namespace=${KUBENS:-default}
