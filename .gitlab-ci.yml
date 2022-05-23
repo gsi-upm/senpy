@@ -7,7 +7,10 @@
 stages:
   - test
   - publish
-  - check_published
+  - deploy
+
+variables:
+  KUBENS: senpy
 
 docker:
   stage: publish
@@ -63,9 +66,29 @@ check_pypi:
   tags:
     - docker
   image: python:3.7
-  stage: check_published
+  stage: deploy
   script:
     - pip install senpy==$CI_COMMIT_TAG
   # Allow PYPI to update its index before we try to install 
   when: delayed
   start_in: 10 minutes
+
+deploy:
+  only:
+    refs:
+      - master
+  tags:
+    - docker
+  image: alpine/k8s:1.22.6
+  stage: deploy
+  environment: production
+  variables:
+    KUBECONFIG_FILE: "/kubeconfig"
+    IMAGEWTAG: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
+    KUBEAPP: "senpy"
+  script:
+  - cat ${KUBECONFIG} > $KUBECONFIG_FILE
+  - kubectl version
+  - cd k8s/
+  - cat *.yaml *.tmpl 2>/dev/null | envsubst | kubectl --kubeconfig $KUBECONFIG_FILE apply --namespace ${KUBENS:-default} -f -
+  - kubectl --kubeconfig $KUBECONFIG_FILE get all,ing -l app=${KUBEAPP} --namespace=${KUBENS:-default}

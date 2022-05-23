@@ -1,21 +1,19 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: senpy-ingress
+  labels:
+    app: senpy
 spec:
   rules:
   - host: latest.senpy.gsi.upm.es
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: senpy-latest
-          servicePort: 5000
-  - host: latest.senpy.gsi.upm.es
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: senpy-latest
-          servicePort: 5000
+          service:
+            name: senpy-latest
+            port:
+              number: 5000

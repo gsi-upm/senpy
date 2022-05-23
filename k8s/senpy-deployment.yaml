@@ -9,7 +9,7 @@ spec:
     metadata:
       labels:
         role: senpy-latest
-        app: test
+        app: senpy
     spec:
       containers:
       - name: senpy-latest
