@@ -4,7 +4,7 @@ kind: Service
 metadata:
   name: senpy-latest
   labels:
-    app: senpy
+    app: senpy-latest
 spec:
   type: ClusterIP
   ports:

@@ -4,7 +4,7 @@ kind: Ingress
 metadata:
   name: senpy-ingress
   labels:
-    app: senpy
+    app: senpy-latest
 spec:
   rules:
   - host: latest.senpy.gsi.upm.es

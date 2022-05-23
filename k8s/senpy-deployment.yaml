@@ -1,15 +1,17 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: senpy-latest
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: senpy-latest
   template:
     metadata:
       labels:
-        role: senpy-latest
-        app: senpy
+        app: senpy-latest
     spec:
       containers:
       - name: senpy-latest
