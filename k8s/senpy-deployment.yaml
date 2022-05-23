@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: senpy-latest
+        role: senpy-latest
     spec:
       containers:
       - name: senpy-latest
