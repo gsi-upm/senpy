@@ -11,4 +11,4 @@ spec:
     - port: 5000
       protocol: TCP
   selector:
-    role: senpy-latest
+    app: senpy-latest
