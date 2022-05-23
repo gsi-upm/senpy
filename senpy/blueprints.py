@@ -204,8 +204,8 @@ def basic_api(f):
     return decorated_function
 
 
-@api_blueprint.route('/', defaults={'plugins': None}, methods=['POST', 'GET'])
-@api_blueprint.route('/<path:plugins>', methods=['POST', 'GET'])
+@api_blueprint.route('/', defaults={'plugins': None}, methods=['POST', 'GET'], strict_slashes=False)
+@api_blueprint.route('/<path:plugins>', methods=['POST', 'GET'], strict_slashes=False)
 @basic_api
 def api_root(plugins):
     if plugins:
