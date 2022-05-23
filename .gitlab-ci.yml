@@ -41,6 +41,7 @@ docker-latest:
   tags:
     - docker
   script:
+    - echo git.{CI_COMMIT_SHORT_SHA} > senpy/VERSION
     - sed "s/{{PYVERSION}}/$PYTHON_VERSION/" Dockerfile.template > Dockerfile
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"},\"https://index.docker.io/v1/\":{\"auth\":\"$HUB_AUTH\"}}}" > /kaniko/.docker/config.json
     # The skip-tls-verify flag is there because our registry certificate is self signed
