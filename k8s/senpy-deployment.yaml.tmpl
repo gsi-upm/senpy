@@ -18,6 +18,7 @@ spec:
       - name: senpy-latest
         image: $IMAGEWTAG
         imagePullPolicy: Always
+        args: ["--enable-cors"]
         resources:
           limits:
             memory: "512Mi"
