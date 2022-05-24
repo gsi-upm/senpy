@@ -200,6 +200,8 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         )
 
     def test(self, test_cases=None):
+        if not self.is_activated:
+            self._activate()
         if not test_cases:
             if not hasattr(self, 'test_cases'):
                 raise AttributeError(
