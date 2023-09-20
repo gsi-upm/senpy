@@ -1,0 +1,12 @@
+language: python
+python:
+  - "2.7"
+  - "3.4"
+env:
+  - PLUGIN=example-plugin
+  - PLUGIN=sentiText
+install:
+  - "pip install senpy pytest"
+  - "python -m senpy --only-install -f $PLUGIN"
+script: 
+  - "py.test $PLUGIN"

@@ -1,0 +1,24 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: senpy-$NAME-ingress
+  annotations:
+    ingress.kubernetes.io/proxy-body-size: 0m
+    ingress.kubernetes.io/proxy-buffer-size: "256k"
+spec:
+  rules:
+  - host: senpy.cluster.gsi.dit.upm.es
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: senpy-$NAME-latest
+          servicePort: 5000
+  - host: senpy.gsi.upm.es
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: senpy-$NAME-latest
+          servicePort: 5000

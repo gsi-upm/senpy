@@ -1,0 +1,3 @@
+FROM gsiupm/senpy:python{{PYVERSION}}
+
+MAINTAINER manuel.garcia-amado.sancho@alumnos.upm.es

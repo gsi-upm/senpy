@@ -1,0 +1,11 @@
+---
+module: emotion-anew
+requirements:
+- numpy
+- pandas
+- nltk
+- scipy
+- scikit-learn
+- textblob
+- pattern
+- lxml

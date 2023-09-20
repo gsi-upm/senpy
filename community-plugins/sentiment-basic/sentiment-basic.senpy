@@ -1,0 +1,7 @@
+---
+module: sentiment-basic
+requirements:
+- nltk>=3.0.5
+- scipy>=0.14.0
+- textblob
+

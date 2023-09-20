@@ -1,0 +1,36 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: senpy-$NAME-latest
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: $NAME-latest
+        app: test
+    spec:
+      containers:
+      - name: senpy-latest
+        image: $IMAGEWTAG
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "2048Mi"
+            cpu: "1000m"
+        ports:
+          - name: web
+            containerPort: 5000
+        volumeMounts:
+          # name must match the volume name below
+          - name: senpy-data
+            mountPath: "/data"
+            subPath: data
+        env:
+          - name: SENPY_DATA
+            value: '/data'
+      volumes:
+      - name: senpy-data
+        persistentVolumeClaim:
+          claimName: senpy-pvc

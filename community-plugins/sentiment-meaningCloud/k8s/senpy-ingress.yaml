@@ -1,0 +1,14 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ${NAME}
+spec:
+  rules:
+  - host: ${NAME}.senpy.cluster.gsi.dit.upm.es
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: ${NAME}
+          servicePort: 5000
