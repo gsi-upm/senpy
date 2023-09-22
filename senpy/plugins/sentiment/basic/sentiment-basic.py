@@ -39,7 +39,7 @@ class SentimentBasic(SentimentBox):
     pos_path = "unigram_spanish.pickle"
     maxPolarityValue = 1
     minPolarityValue = -1
-    nltk_resources = ['punkt','wordnet', 'omw']
+    nltk_resources = ['punkt','wordnet', 'omw', 'omw-1.4']
 
     with_polarity = False
 
