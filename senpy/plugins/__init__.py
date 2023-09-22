@@ -155,8 +155,11 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         return os.path.dirname(inspect.getfile(self.__class__))
 
     def _activate(self):
+        if self.is_activated:
+            return
         self.activate()
         self.is_activated = True
+        return self.is_activated
 
     def _deactivate(self):
         self.is_activated = False
@@ -262,11 +265,13 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         assert not should_fail
 
     def find_file(self, fname):
+        tried = []
         for p in self._data_paths:
-            alternative = os.path.join(p, fname)
+            alternative = os.path.abspath(os.path.join(p, fname))
             if os.path.exists(alternative):
                 return alternative
-        raise IOError('File does not exist: {}'.format(fname))
+            tried.append(alternative)
+        raise IOError(f'File does not exist: {fname}. Tried: {tried}')
 
     def path(self, fpath):
         if not os.path.isabs(fpath):
@@ -288,6 +293,20 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
 
 # For backwards compatibility
 SenpyPlugin = Plugin
+
+
+class FailedPlugin(Plugin):
+    """A plugin that has failed to initialize."""
+    version = 0
+
+    def __init__(self, info, function):
+        super().__init__(info)
+        a = info.get('name', info.get('module', self.name))
+        self['name'] == a
+        self._function = function
+
+    def retry(self):
+        return self._function()
 
 
 class Analyser(Plugin):
@@ -699,23 +718,31 @@ def missing_requirements(reqs):
         res = pool.apply_async(pkg_resources.get_distribution, (req,))
         queue.append((req, res))
     missing = []
+    installed = []
     for req, job in queue:
         try:
-            job.get(1)
+            installed.append(job.get(1))
         except Exception:
             missing.append(req)
-    return missing
+    return installed, missing
 
+def list_dependencies(*plugins):
+    '''List all dependencies (python and nltk) for the given list of plugins'''
+    nltk_resources = set()
+    missing = []
+    installed = []
+    for info in plugins:
+        reqs = info.get('requirements', [])
+        if reqs:
+            inst, miss= missing_requirements(reqs)
+            installed += inst
+            missing += miss
+        nltk_resources |= set(info.get('nltk_resources', []))
+    return installed, missing, nltk_resources
 
 def install_deps(*plugins):
+    _, requirements, nltk_resources = list_dependencies(*plugins)
     installed = False
-    nltk_resources = set()
-    requirements = []
-    for info in plugins:
-        requirements = info.get('requirements', [])
-        if requirements:
-            requirements += missing_requirements(requirements)
-        nltk_resources |= set(info.get('nltk_resources', []))
     if requirements:
         logger.info('Installing requirements: ' + str(requirements))
         pip_args = [sys.executable, '-m', 'pip', 'install']
@@ -729,8 +756,7 @@ def install_deps(*plugins):
         if exitcode != 0:
             raise models.Error(
                 "Dependencies not properly installed: {}".format(pip_args))
-    installed |= download(list(nltk_resources))
-    return installed
+    return installed or download(list(nltk_resources))
 
 
 is_plugin_file = re.compile(r'.*\.senpy$|senpy_[a-zA-Z0-9_]+\.py$|'
@@ -747,7 +773,7 @@ def find_plugins(folders):
                 yield fpath
 
 
-def from_path(fpath, install_on_fail=False, **kwargs):
+def from_path(fpath, **kwargs):
     logger.debug("Loading plugin from {}".format(fpath))
     if fpath.endswith('.py'):
         # We asume root is the dir of the file, and module is the name of the file
@@ -757,18 +783,18 @@ def from_path(fpath, install_on_fail=False, **kwargs):
             yield instance
     else:
         info = parse_plugin_info(fpath)
-        yield from_info(info, install_on_fail=install_on_fail, **kwargs)
-
+        yield from_info(info, **kwargs)
 
 def from_folder(folders, loader=from_path, **kwargs):
     plugins = []
     for fpath in find_plugins(folders):
         for plugin in loader(fpath, **kwargs):
-            plugins.append(plugin)
+            if plugin:
+                plugins.append(plugin)
     return plugins
 
 
-def from_info(info, root=None, install_on_fail=True, **kwargs):
+def from_info(info, root=None, strict=False, **kwargs):
     if any(x not in info for x in ('module', )):
         raise ValueError('Plugin info is not valid: {}'.format(info))
     module = info["module"]
@@ -780,8 +806,10 @@ def from_info(info, root=None, install_on_fail=True, **kwargs):
     try:
         return fun()
     except (ImportError, LookupError):
-        install_deps(info)
-        return fun()
+        if strict or not str(info.get("optional", "false")).lower() in ["True", "true", "t"]:
+            raise
+        print(f"Could not import plugin: { info }")
+        return FailedPlugin(info, fun)
 
 
 def parse_plugin_info(fpath):

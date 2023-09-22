@@ -31,7 +31,7 @@ pipeline = Pipeline([('cv', count_vec),
                     ('clf', clf3)])
 
 pipeline.fit(X_train, y_train)
-print('Feature names: {}'.format(count_vec.get_feature_names()))
+print('Feature names: {}'.format(count_vec.get_feature_names_out()))
 print('Class count: {}'.format(clf3.class_count_))
 
 

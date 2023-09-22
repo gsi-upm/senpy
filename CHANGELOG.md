@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+* The code of many senpy community plugins have been included by default. However, additional files (e.g., licensed data) and/or installing additional dependencies may be necessary for some plugins. Read each plugin's documentation for more information.
+
 ## [1.0.6]
 ### Fixed
 * Plugins now get activated for testing

@@ -19,7 +19,7 @@ COPY . /usr/src/app/
 RUN pip install --no-cache-dir --no-index --no-deps --editable .
 
 ONBUILD COPY . /senpy-plugins/
-ONBUILD RUN python -m senpy --only-install -f /senpy-plugins
+ONBUILD RUN python -m senpy -i --no-run -f /senpy-plugins
 ONBUILD WORKDIR /senpy-plugins/
 
 ENTRYPOINT ["python", "-m", "senpy", "-f", "/senpy-plugins/", "--host", "0.0.0.0"]

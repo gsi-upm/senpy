@@ -255,3 +255,9 @@ class ExtensionsTest(TestCase):
         self.senpy.analyse(r3)
         assert len(r3.entries[0].emotions) == 1
         r3.jsonld()
+
+    def testDefaultPlugins(self):
+        '''The default set of plugins should all load'''
+        self.app = Flask('test_extensions')
+        self.examples_dir = os.path.join(os.path.dirname(__file__), '..', 'example-plugins')
+        self.senpy = Senpy(app=self.app, default_plugins=False, strict=True)

@@ -33,6 +33,7 @@ class DepecheMood(EmotionBox):
     name = 'emotion-depechemood'
     version = '0.1'
     requirements = ['pandas']
+    optional = True
     nltk_resources = ["stopwords"]
 
     onyx__usesEmotionModel = 'wna:WNAModel'

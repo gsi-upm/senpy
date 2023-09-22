@@ -44,6 +44,8 @@ class Senpy(object):
                  app=None,
                  plugin_folder=".",
                  data_folder=None,
+                 install=False,
+                 strict=True,
                  default_plugins=False):
 
         default_data = os.path.join(os.getcwd(), 'senpy_data')
@@ -57,6 +59,8 @@ class Senpy(object):
                 raise
 
         self._default = None
+        self.strict = strict
+        self.install = install
         self._plugins = {}
         if plugin_folder:
             self.add_folder(plugin_folder)
@@ -148,7 +152,8 @@ class Senpy(object):
         logger.debug("Adding folder: %s", folder)
         if os.path.isdir(folder):
             new_plugins = plugins.from_folder([folder],
-                                              data_folder=self.data_folder)
+                                               data_folder=self.data_folder,
+                                               strict=self.strict)
             for plugin in new_plugins:
                 self.add_plugin(plugin)
         else:
@@ -173,7 +178,7 @@ class Senpy(object):
         logger.info('Installing dependencies')
         # If a plugin is activated, its dependencies should already be installed
         # Otherwise, it would've failed to activate.
-        plugins.install_deps(*self.plugins(is_activated=False))
+        plugins.install_deps(*self._plugins.values())
 
     def analyse(self, request, analyses=None):
         """
@@ -340,13 +345,13 @@ class Senpy(object):
         else:
             self._default = self._plugins[value.lower()]
 
-    def activate_all(self, sync=True, allow_fail=False):
+    def activate_all(self, sync=True):
         ps = []
         for plug in self._plugins.keys():
             try:
                 self.activate_plugin(plug, sync=sync)
             except Exception as ex:
-                if not allow_fail:
+                if self.strict:
                     raise
                 logger.error('Could not activate {}: {}'.format(plug, ex))
         return ps
@@ -358,15 +363,19 @@ class Senpy(object):
         return ps
 
     def _activate(self, plugin):
-        success = False
         with plugin._lock:
             if plugin.is_activated:
+                logger.info(f"Plugin is already activated: {plugin.name}")
                 return
-            plugin._activate()
-            msg = "Plugin activated: {}".format(plugin.name)
-            logger.info(msg)
-            success = plugin.is_activated
-        return success
+            try:
+                assert plugin._activate()
+                logger.info(f"Plugin activated: {plugin.name}")
+            except Exception as ex:
+                if getattr(plugin, "optional", False) and not self.strict:
+                    logger.info(f"Plugin could NOT be activated: {plugin.name}")
+                    return False
+                raise
+        return plugin.is_activated
 
     def activate_plugin(self, plugin_name, sync=True):
         plugin_name = plugin_name.lower()

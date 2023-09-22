@@ -23,6 +23,51 @@ from senpy.plugins import EmotionPlugin, SenpyPlugin
 from senpy.models import Results, EmotionSet, Entry, Emotion
 
 
+### BEGIN WORKAROUND FOR PATTERN
+# See: https://github.com/clips/pattern/issues/308
+
+import os.path
+
+import pattern.text
+
+from pattern.helpers import decode_string
+from codecs import BOM_UTF8
+
+BOM_UTF8 = BOM_UTF8.decode("utf-8")
+decode_utf8 = decode_string
+
+MODEL = "emoml:pad-dimensions_"
+VALENCE = f"{MODEL}_valence"
+AROUSAL = f"{MODEL}_arousal"
+DOMINANCE = f"{MODEL}_dominance"
+
+def _read(path, encoding="utf-8", comment=";;;"):
+    """Returns an iterator over the lines in the file at the given path,
+    strippping comments and decoding each line to Unicode.
+    """
+    if path:
+        if isinstance(path, str) and os.path.exists(path):
+            # From file path.
+            f = open(path, "r", encoding="utf-8")
+        elif isinstance(path, str):
+            # From string.
+            f = path.splitlines()
+        else:
+            # From file or buffer.
+            f = path
+        for i, line in enumerate(f):
+            line = line.strip(BOM_UTF8) if i == 0 and isinstance(line, str) else line
+            line = line.strip()
+            line = decode_utf8(line, encoding)
+            if not line or (comment and line.startswith(comment)):
+                continue
+            yield line
+
+
+pattern.text._read = _read
+## END WORKAROUND
+
+
 class ANEW(EmotionPlugin):
     description = "This plugin consists on an emotion classifier using ANEW lexicon dictionary. It averages the VAD (valence-arousal-dominance) value of each word in the text that is also in the ANEW dictionary. To obtain a categorical value (e.g., happy) use the emotion conversion API (e.g., `emotion-model=emoml:big6`)."
     author = "@icorcuera"
@@ -41,7 +86,7 @@ class ANEW(EmotionPlugin):
 
     anew_path_es = "Dictionary/Redondo(2007).csv"
     anew_path_en = "Dictionary/ANEW2010All.txt"
-    onyx__usesEmotionModel = "emoml:pad-dimensions"
+    onyx__usesEmotionModel = MODEL
     nltk_resources = ['stopwords']
 
     def activate(self, *args, **kwargs):
@@ -147,9 +192,9 @@ class ANEW(EmotionPlugin):
         emotions.id = "Emotions0"
 
         emotion1 = Emotion(id="Emotion0")
-        emotion1["emoml:pad-dimensions_pleasure"] = feature_set['V']
-        emotion1["emoml:pad-dimensions_arousal"] = feature_set['A']
-        emotion1["emoml:pad-dimensions_dominance"] = feature_set['D']
+        emotion1[VALENCE] = feature_set['V']
+        emotion1[AROUSAL] = feature_set['A']
+        emotion1[DOMINANCE] = feature_set['D']
 
         emotion1.prov(activity)
         emotions.prov(activity)
@@ -159,7 +204,6 @@ class ANEW(EmotionPlugin):
 
         yield entry
 
-    ontology = "http://gsi.dit.upm.es/ontologies/wnaffect/ns#"
     test_cases = [
         {
             'name': 'anger with VAD=(2.12, 6.95, 5.05)',
@@ -167,9 +211,9 @@ class ANEW(EmotionPlugin):
             'expected': {
                 'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 6.95,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 5.05,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 2.12,
+                        AROUSAL: 6.95,
+                        DOMINANCE: 5.05,
+                        VALENCE: 2.12,
                     }]
                 }]
             }
@@ -178,9 +222,7 @@ class ANEW(EmotionPlugin):
             'expected': {
                 'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 4.13,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 3.45,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 1.61,
+                        f"{MODEL}_arousal": 4.13,
 
                     }]
                 }]
@@ -191,9 +233,9 @@ class ANEW(EmotionPlugin):
             'expected': {
                 'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 6.49,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 6.63,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 8.21,
+                        AROUSAL: 6.49,
+                        DOMINANCE: 6.63,
+                        VALENCE: 8.21,
                     }]
                 }]
             }
@@ -203,9 +245,9 @@ class ANEW(EmotionPlugin):
             'expected': {
                 'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                    "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 5.8100000000000005,
-                    "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 4.33,
-                    "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 5.050000000000001,
+                    AROUSAL: 5.8100000000000005,
+                    DOMINANCE: 4.33,
+                    VALENCE: 5.050000000000001,
 
                     }]
                 }]
@@ -216,9 +258,9 @@ class ANEW(EmotionPlugin):
             'expected': {
                 'onyx:hasEmotionSet': [{
                     'onyx:hasEmotion': [{
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal": 5.09,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance": 4.4,
-                        "http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence": 5.109999999999999,
+                        AROUSAL: 5.09,
+                        DOMINANCE: 4.4,
+                        VALENCE: 5.109999999999999,
 
                     }]
                 }]

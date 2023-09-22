@@ -44,6 +44,10 @@ def check_template(indict, template):
                 raise models.Error(('Element not found.'
                                    '\nExpected: {}\nIn: {}').format(pprint.pformat(e),
                                                                     pprint.pformat(indict)))
+    elif isinstance(template, float) and isinstance(indict, float):
+        diff = abs(indict - template)
+        if (diff > 0) and diff/(abs(indict+template)) > 0.05:
+            raise models.Error('Differences greater than 10% found.\n')
     else:
         if indict != template:
             raise models.Error(('Differences found.\n'

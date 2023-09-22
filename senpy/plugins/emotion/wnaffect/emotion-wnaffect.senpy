@@ -1,5 +1,6 @@
 ---
 module: emotion-wnaffect
+optional: true
 requirements:
 - nltk>=3.0.5
 - lxml>=3.4.2

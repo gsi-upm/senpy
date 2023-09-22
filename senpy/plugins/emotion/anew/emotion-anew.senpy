@@ -1,5 +1,6 @@
 ---
 module: emotion-anew
+optional: true
 requirements:
 - numpy
 - pandas

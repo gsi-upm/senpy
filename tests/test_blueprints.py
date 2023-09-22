@@ -209,8 +209,8 @@ class BlueprintsTest(TestCase):
         """
         # First, we split by sentence twice. Each call should generate 3 additional entries
         # (one per sentence in the original).
-        resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.'
-                               '\nA new paragraph&delimiter=sentence&verbose')
+        resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.%0A'
+                               'A new paragraph&delimiter=sentence&verbose')
         js = parse_resp(resp)
         assert len(js['activities']) == 2
         assert len(js['entries']) == 7
@@ -218,9 +218,8 @@ class BlueprintsTest(TestCase):
         # Now, we split by sentence. This produces 3 additional entries.
         # Then, we split by paragraph. This should create 2 additional entries (One per paragraph
         # in the original text)
-        resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.'
-                               '\nA new paragraph&0.delimiter=sentence'
-                               '&1.delimiter=paragraph&verbose')
+        resp = self.client.get('/api/split/split?i=The first sentence. The second sentence.%0AA new paragraph'
+                               '&0.delimiter=sentence&1.delimiter=paragraph&verbose')
         # Calling dummy twice, should return the same string
         self.assertCode(resp, 200)
         js = parse_resp(resp)

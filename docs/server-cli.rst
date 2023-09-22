@@ -10,8 +10,8 @@ The senpy server is launched via the `senpy` command:
 
     usage: senpy [-h] [--level logging_level] [--log-format log_format] [--debug]
                 [--no-default-plugins] [--host HOST] [--port PORT]
-                [--plugins-folder PLUGINS_FOLDER] [--only-install] [--only-test]
-                [--test] [--only-list] [--data-folder DATA_FOLDER]
+                [--plugins-folder PLUGINS_FOLDER] [--install]
+                [--test] [--no-run] [--data-folder DATA_FOLDER]
                 [--no-threaded] [--no-deps] [--version] [--allow-fail]
 
     Run a Senpy server
@@ -28,10 +28,9 @@ The senpy server is launched via the `senpy` command:
       --port PORT, -p PORT  Port to listen on.
       --plugins-folder PLUGINS_FOLDER, -f PLUGINS_FOLDER
                             Where to look for plugins.
-      --only-install, -i    Do not run a server, only install plugin dependencies
-      --only-test           Do not run a server, just test all plugins
+      --install, -i         Install plugin dependencies before launching the server.
       --test, -t            Test all plugins before launching the server
-      --only-list, --list   Do not run a server, only list plugins found
+      --no-run 	            Do not launch the server
       --data-folder DATA_FOLDER, --data DATA_FOLDER
                             Where to look for data. It be set with the SENPY_DATA
                             environment variable as well.

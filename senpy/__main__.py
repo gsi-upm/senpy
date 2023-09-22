@@ -22,6 +22,7 @@ the server.
 from flask import Flask
 from senpy.extensions import Senpy
 from senpy.utils import easy_test
+from senpy.plugins import list_dependencies
 
 import logging
 import os
@@ -81,16 +82,21 @@ def main():
         action='append',
         help='Where to look for plugins.')
     parser.add_argument(
-        '--only-install',
+        '--install',
         '-i',
         action='store_true',
         default=False,
-        help='Do not run a server, only install plugin dependencies')
+        help='Install plugin dependencies before running.')
     parser.add_argument(
-        '--only-test',
+        '--dependencies',
         action='store_true',
         default=False,
-        help='Do not run a server, just test all plugins')
+        help='List plugin dependencies')
+    parser.add_argument(
+        '--strict',
+        action='store_true',
+        default=False,
+        help='Fail if optional plugins cannot be loaded.')
     parser.add_argument(
         '--test',
         '-t',
@@ -98,11 +104,10 @@ def main():
         default=False,
         help='Test all plugins before launching the server')
     parser.add_argument(
-        '--only-list',
-        '--list',
+        '--no-run',
         action='store_true',
         default=False,
-        help='Do not run a server, only list plugins found')
+        help='Do not launch the server.')
     parser.add_argument(
         '--data-folder',
         '--data',
@@ -156,6 +161,8 @@ def main():
     sp = Senpy(app,
                plugin_folder=None,
                default_plugins=not args.no_default_plugins,
+               install=args.install,
+               strict=args.strict,
                data_folder=args.data_folder)
     folders = list(args.plugins_folder) if args.plugins_folder else []
     if not folders:
@@ -175,17 +182,43 @@ def main():
                                                                   fpath,
                                                                   maxname=maxname,
                                                                   maxversion=maxversion))
-    if args.only_list:
-        return
-    if not args.no_deps:
+    if args.dependencies:
+        print('Listing dependencies')
+        missing = []
+        installed = []
+        for plug in sp.plugins(is_activated=False).values():
+            inst, miss, nltkres = list_dependencies(plug)
+            if not any([inst, miss, nltkres]):
+                continue
+            print(f'Plugin: {plug.id}')
+            for m in miss:
+                missing.append(f'{m} # {plug.id}')
+            for i in inst:
+                installed.append(f'{i} # {plug.id}')
+        if installed:
+            print('Installed packages:')
+            for i in installed:
+                print(f'\t{i}')
+        if missing:
+            print('Missing packages:')
+            for m in missing:
+                print(f'\t{m}')
+
+    if args.install:
         sp.install_deps()
-    if args.only_install:
+
+    if args.test:
+        sp.activate_all(sync=True)
+        easy_test(sp.plugins(is_activated=True), debug=args.debug)
+
+    if args.no_run:
         return
-    sp.activate_all(allow_fail=args.allow_fail)
-    if args.test or args.only_test:
-        easy_test(sp.plugins(), debug=args.debug)
-        if args.only_test:
-            return
+
+    sp.activate_all(sync=True)
+    if sp.strict:
+        inactive = sp.plugins(is_activated=False)
+        assert not inactive
+
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
                                                             args.port))
