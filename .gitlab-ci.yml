@@ -127,7 +127,7 @@ latest-demo:
     KUBEAPP: "senpy"
   script:
   - echo "${KUBECONFIG_RAW}" > $KUBECONFIG
-  - kubectl version
+  - kubectl --kubeconfig $KUBECONFIG version
   - cd k8s/
   - cat *.yaml *.tmpl 2>/dev/null | envsubst | kubectl --kubeconfig $KUBECONFIG apply --namespace ${KUBENS:-default} -f -
   - kubectl --kubeconfig $KUBECONFIG get all,ing -l app=${KUBEAPP} --namespace=${KUBENS:-default}
