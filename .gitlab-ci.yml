@@ -54,6 +54,8 @@ docker-latest:
       - master
 
 testimage:
+  only:
+    - tags
   tags:
     - docker
   stage: test_image
