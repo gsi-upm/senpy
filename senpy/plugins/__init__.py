@@ -311,9 +311,17 @@ class FailedPlugin(Plugin):
         a = info.get('name', info.get('module', self.name))
         self['name'] == a
         self._function = function
+        self.is_activated = False
 
     def retry(self):
         return self._function()
+
+    def test(self):
+        '''
+        A module that failed to load cannot be tested. But non-optional
+        plugins should not fail to load in strict mode.
+        '''
+        assert self.optional and not config.strict
 
 
 class Analyser(Plugin):
