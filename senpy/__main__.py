@@ -186,7 +186,7 @@ def main():
         print('Listing dependencies')
         missing = []
         installed = []
-        for plug in sp.plugins(is_activated=False).values():
+        for plug in sp.plugins(is_activated=False):
             inst, miss, nltkres = list_dependencies(plug)
             if not any([inst, miss, nltkres]):
                 continue
