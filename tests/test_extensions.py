@@ -22,9 +22,8 @@ import logging
 
 from functools import partial
 from senpy.extensions import Senpy
-from senpy import plugins
+from senpy import plugins, config, api
 from senpy.models import Error, Results, Entry, EmotionSet, Emotion, Plugin
-from senpy import api
 from flask import Flask
 from unittest import TestCase
 
@@ -260,4 +259,4 @@ class ExtensionsTest(TestCase):
         '''The default set of plugins should all load'''
         self.app = Flask('test_extensions')
         self.examples_dir = os.path.join(os.path.dirname(__file__), '..', 'example-plugins')
-        self.senpy = Senpy(app=self.app, default_plugins=False, strict=True)
+        self.senpy = Senpy(app=self.app, default_plugins=False)

@@ -20,6 +20,7 @@ It orchestrates plugin (de)activation and analysis.
 from future import standard_library
 standard_library.install_aliases()
 
+from . import config
 from . import plugins, api
 from .models import Error, AggregatedEvaluation
 from .plugins import AnalysisPlugin
@@ -45,8 +46,9 @@ class Senpy(object):
                  plugin_folder=".",
                  data_folder=None,
                  install=False,
-                 strict=True,
+                 strict=None,
                  default_plugins=False):
+
 
         default_data = os.path.join(os.getcwd(), 'senpy_data')
         self.data_folder = data_folder or os.environ.get('SENPY_DATA', default_data)
@@ -59,7 +61,7 @@ class Senpy(object):
                 raise
 
         self._default = None
-        self.strict = strict
+        self.strict = strict if strict is not None else config.strict
         self.install = install
         self._plugins = {}
         if plugin_folder:
