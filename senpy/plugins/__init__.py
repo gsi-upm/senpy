@@ -46,6 +46,7 @@ from .. import models, utils
 from .. import api
 from .. import gsitk_compat
 from .. import testing
+from .. import config
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ class PluginMeta(models.BaseMeta):
         cls = super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
 
         if alias in mcs._classes:
-            if os.environ.get('SENPY_TESTING', ""):
+            if config.testing:
                 raise Exception(
                     ('The type of plugin {} already exists. '
                      'Please, choose a different name').format(name))
@@ -123,7 +124,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
             os.path.dirname(inspect.getfile(self.__class__)))
 
         if not data_folder:
-            data_folder = os.environ['SENPY_DATA']
+            data_folder = config.data_folder
         if not data_folder:
             data_folder = os.getcwd()
 

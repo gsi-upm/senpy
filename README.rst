@@ -58,7 +58,7 @@ Its code is pure Python, and the only limitations are imposed by its dependencie
 
 Currently, the CI/CD pipeline tests the code on:
 
-* GNU/Linux with Python versions 3.4, 3.5, 3.6 and 3.7
+* GNU/Linux with Python versions 3.7+ (3.10+ recommended for all plugins)
 * MacOS and homebrew's python3
 * Windows 10 and chocolatey's python3
 

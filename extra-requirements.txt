@@ -2,5 +2,5 @@ gsitk>0.1.9.1
 flask_cors==3.0.10
 Pattern==3.6
 lxml==4.9.3
-pandas~=2
+pandas==2.1.1
 textblob==0.17.1

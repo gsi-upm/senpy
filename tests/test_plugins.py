@@ -27,6 +27,7 @@ from senpy.models import Results, Entry, EmotionSet, Emotion, Plugins
 from senpy import plugins
 from senpy.plugins.postprocessing.emotion.centroids import CentroidConversion
 from senpy.gsitk_compat import GSITK_AVAILABLE
+from senpy import config
 
 import pandas as pd
 
@@ -386,7 +387,7 @@ class PluginsTest(TestCase):
 
 def make_mini_test(fpath):
     def mini_test(self):
-        for plugin in plugins.from_path(fpath, install=True):
+        for plugin in plugins.from_path(fpath, install=True, strict=config.strict):
             plugin.test()
     return mini_test
 

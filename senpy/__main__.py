@@ -23,6 +23,7 @@ from flask import Flask
 from senpy.extensions import Senpy
 from senpy.utils import easy_test
 from senpy.plugins import list_dependencies
+from senpy import config
 
 import logging
 import os
@@ -95,7 +96,7 @@ def main():
     parser.add_argument(
         '--strict',
         action='store_true',
-        default=False,
+        default=config.strict,
         help='Fail if optional plugins cannot be loaded.')
     parser.add_argument(
         '--test',

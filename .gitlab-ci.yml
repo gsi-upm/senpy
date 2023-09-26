@@ -7,12 +7,14 @@
 stages:
   - test
   - publish
+  - test_image
   - deploy
 
 variables:
   KUBENS: senpy
   LATEST_IMAGE: "${HUB_REPO}:${CI_COMMIT_SHORT_SHA}"
   SENPY_DATA: "/senpy-data/" # This is configured in the CI job
+  NLTK_DATA: "/senpy-data/nltk" # Store NLTK downloaded data
 
 docker:
   stage: publish
@@ -51,18 +53,30 @@ docker-latest:
     refs:
       - master
 
+testimage:
+  tags:
+    - docker
+  stage: test_image
+  image: "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+  script:
+    - python -m senpy --no-run --test
+
 testpy37:
   tags:
     - docker
+  variables:
+    SENPY_STRICT: "false"
   image: python:3.7
   stage: test
   script:
-    - pip install -r requirements.txt -r test-requirements.txt -r extra-requirements.txt
+    - pip install -r requirements.txt -r test-requirements.txt
     - python setup.py test
 
 testpy310:
   tags:
     - docker
+  variables:
+    SENPY_STRICT: "true"
   image: python:3.10
   stage: test
   script:
@@ -74,7 +88,7 @@ push_pypi:
     - tags
   tags:
     - docker
-  image: python:3.7
+  image: python:3.10
   stage: publish
   script:
     - echo $CI_COMMIT_TAG > senpy/VERSION
@@ -87,7 +101,7 @@ check_pypi:
     - tags
   tags:
     - docker
-  image: python:3.7
+  image: python:3.10
   stage: deploy
   script:
     - pip install senpy==$CI_COMMIT_TAG
