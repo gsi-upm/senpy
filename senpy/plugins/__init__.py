@@ -122,7 +122,13 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         self._directory = os.path.abspath(
             os.path.dirname(inspect.getfile(self.__class__)))
 
-        data_folder = data_folder or os.getcwd()
+        if not data_folder:
+            data_folder = os.environ['SENPY_DATA']
+        if not data_folder:
+            data_folder = os.getcwd()
+
+
+        data_folder = os.path.abspath(data_folder)
         subdir = os.path.join(data_folder, self.name)
 
         self._data_paths = [
@@ -652,11 +658,17 @@ class ShelfMixin(object):
     def shelf_file(self, value):
         self._shelf_file = value
 
-    def save(self):
-        self.log.debug('Saving pickle')
-        if hasattr(self, '_sh') and self._sh is not None:
-            with self.open(self.shelf_file, 'wb') as f:
-                pickle.dump(self._sh, f)
+    def save(self, ignore_errors=False):
+        try:
+            self.log.debug('Saving pickle')
+            if hasattr(self, '_sh') and self._sh is not None:
+                with self.open(self.shelf_file, 'wb') as f:
+                    pickle.dump(self._sh, f)
+        except Exception as ex:
+            self.log.warning("Could not save shelf state. Check folder permissions for: "
+                             f" {self.shelf_file}. Error: { ex }")
+            if not ignore_errors:
+                raise
 
 
 def pfilter(plugins, plugin_type=Analyser, **kwargs):

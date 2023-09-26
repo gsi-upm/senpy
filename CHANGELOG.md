@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 * The code of many senpy community plugins have been included by default. However, additional files (e.g., licensed data) and/or installing additional dependencies may be necessary for some plugins. Read each plugin's documentation for more information.
+* `--strict` flag, to fail and not start when a 
+* `optional` attribute in plugins. Optional plugins may fail to load or activate but the server will be started regardless, unless running in strict mode
+* Option in shelf plugins to ignore pickling errors
+### Removed
+* `--only-install`, `--only-test` and `--only-list` flags were removed in favor of `--no-run` + `--install`/`--test`/`--dependencies`
+### Changed
+* data directory selection logic is slightly modified, and will choose one of the following (in this order): `data_folder` (argument), `$SENPY_DATA` or `$CWD`
 
 ## [1.0.6]
 ### Fixed

@@ -12,6 +12,7 @@ stages:
 variables:
   KUBENS: senpy
   LATEST_IMAGE: "${HUB_REPO}:${CI_COMMIT_SHORT_SHA}"
+  SENPY_DATA: "/senpy-data/" # This is configured in the CI job
 
 docker:
   stage: publish

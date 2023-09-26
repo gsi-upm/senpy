@@ -117,7 +117,7 @@ class WNAffect(EmotionPlugin, ShelfMixin):
 
 
     def deactivate(self, *args, **kwargs):
-        self.save()
+        self.save(ignore_errors=True)
 
     def _my_preprocessor(self, text):
 

@@ -175,8 +175,5 @@ class DepecheMood(EmotionBox):
 
 
 if __name__ == '__main__':
-    from senpy.utils import easy, easy_load, easy_test
-    # sp, app = easy_load()
-    # for plug in sp.analysis_plugins:
-    #     plug.test()
+    from senpy.utils import easy_test
     easy_test(debug=False)

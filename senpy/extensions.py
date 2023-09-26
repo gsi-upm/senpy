@@ -365,9 +365,10 @@ class Senpy(object):
     def _activate(self, plugin):
         with plugin._lock:
             if plugin.is_activated:
-                logger.info(f"Plugin is already activated: {plugin.name}")
                 return
             try:
+                logger.info("Activating plugin: {}".format(plugin.name))
+
                 assert plugin._activate()
                 logger.info(f"Plugin activated: {plugin.name}")
             except Exception as ex:
