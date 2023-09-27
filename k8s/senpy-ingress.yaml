@@ -7,6 +7,16 @@ metadata:
     app: senpy-latest
 spec:
   rules:
+  - host: senpy-latest.gsi.upm.es
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: senpy-latest
+            port:
+              number: 5000
   - host: latest.senpy.gsi.upm.es
     http:
       paths:
