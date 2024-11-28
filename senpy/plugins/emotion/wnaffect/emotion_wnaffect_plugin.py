@@ -31,11 +31,16 @@ class WNAffect(EmotionPlugin, ShelfMixin):
           'options': ['en',]
         }
     }
+    optional = True
+    requirements = [
+            "nltk>=3.0.5",
+            "lxml>=3.4.2"
+            ]
     synsets_path = "a-synsets.xml"
     hierarchy_path = "a-hierarchy.xml"
     wn16_path = "wordnet1.6/dict"
     onyx__usesEmotionModel = "emoml:big6"
-    nltk_resources = ['stopwords', 'averaged_perceptron_tagger', 'wordnet']
+    nltk_resources = ['stopwords', 'averaged_perceptron_tagger_eng', 'wordnet']
 
     def _load_synsets(self, synsets_path):
         """Returns a dictionary POS tag -> synset offset -> emotion (str -> int -> str)."""

@@ -777,7 +777,8 @@ def install_deps(*plugins):
         if exitcode != 0:
             raise models.Error(
                 "Dependencies not properly installed: {}".format(pip_args))
-    return installed or download(list(nltk_resources))
+    installed_nltk = download(list(nltk_resources))
+    return installed or installed_nltk
 
 
 is_plugin_file = re.compile(r'.*\.senpy$|senpy_[a-zA-Z0-9_]+\.py$|'
@@ -826,10 +827,10 @@ def from_info(info, root=None, strict=False, **kwargs):
     fun = partial(one_from_module, module, root=root, info=info, **kwargs)
     try:
         return fun()
-    except (ImportError, LookupError):
-        if strict or not str(info.get("optional", "false")).lower() in ["True", "true", "t"]:
+    except (ImportError, LookupError) as ex:
+        if strict or str(info.get("optional", "false")).lower() not in ["true", "t"]:
             raise
-        print(f"Could not import plugin: { info }")
+        print(f"Could not import plugin: { info }: {ex}", file=sys.stderr)
         return FailedPlugin(info, fun)
 
 

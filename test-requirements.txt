@@ -3,3 +3,4 @@ pytest-cov
 pytest
 pandas
 noop
+gsitk

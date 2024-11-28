@@ -77,6 +77,8 @@ class Senpy(object):
         if app is not None:
             self.init_app(app)
         self._conversion_candidates = {}
+        if self.install:
+            self.install_deps()
 
     def init_app(self, app):
         """ Initialise a flask app to add plugins to its context """

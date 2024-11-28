@@ -31,6 +31,7 @@ from senpy import config
 
 import pandas as pd
 
+ROOT = os.path.join(os.path.dirname(__file__), '..')
 
 class ShelfDummyPlugin(plugins.SentimentPlugin, plugins.ShelfMixin):
     '''Dummy plugin for tests.'''
@@ -332,6 +333,18 @@ class PluginsTest(TestCase):
         res = c._backwards_conversion(e)
         assert res["onyx:hasEmotionCategory"] == "c2"
 
+    def test_installation(self):
+        sentiment = next(plugins.from_path('senpy/plugins/sentiment/basic/sentiment_basic_plugin.py'))
+        assert sentiment
+        inst, missing, nltk_deps = plugins.list_dependencies(sentiment)
+        assert 'punkt_tab' in nltk_deps
+
+        emotion = next(plugins.from_path('senpy/plugins/emotion/wnaffect/emotion_wnaffect_plugin.py'))
+        assert emotion
+        inst, missing, nltk_deps = plugins.list_dependencies(emotion)
+        assert 'averaged_perceptron_tagger_eng' in nltk_deps
+
+
     def _test_evaluation(self):
         testdata = []
         for i in range(50):
@@ -387,15 +400,15 @@ class PluginsTest(TestCase):
 
 def make_mini_test(fpath):
     def mini_test(self):
-        for plugin in plugins.from_path(fpath, install=True, strict=config.strict):
+        for plugin in plugins.from_path(fpath, strict=True):
+            plugins.install_deps(plugin)
             plugin.test()
     return mini_test
 
 
 def _add_tests():
-    root = os.path.join(os.path.dirname(__file__), '..')
-    print(root)
-    for fpath in plugins.find_plugins([root, ]):
+    print(ROOT)
+    for fpath in plugins.find_plugins([ROOT, ]):
         pass
         t_method = make_mini_test(fpath)
         t_method.__name__ = 'test_plugin_{}'.format(fpath)

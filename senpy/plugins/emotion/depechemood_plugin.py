@@ -10,6 +10,8 @@ import sys
 import string
 import numpy as np
 from six.moves import urllib
+import nltk
+
 from nltk.corpus import stopwords
 
 from senpy import EmotionBox, models

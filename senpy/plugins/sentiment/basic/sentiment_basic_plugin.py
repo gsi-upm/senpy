@@ -39,8 +39,9 @@ class SentimentBasic(SentimentBox):
     pos_path = "unigram_spanish.pickle"
     maxPolarityValue = 1
     minPolarityValue = -1
-    nltk_resources = ['punkt','wordnet', 'omw', 'omw-1.4']
-
+    nltk_resources = ['punkt_tab','wordnet', 'omw', 'omw-1.4']
+    optional = True
+    requirements = ['nltk>=3.0.5', 'scipy>=0.14.0', 'textblob==0.17']
     with_polarity = False
 
     def _load_swn(self):

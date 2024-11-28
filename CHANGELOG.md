@@ -5,10 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+* Tests now use strict mode to detect errors on optional plugins
 ### Added
 * The code of many senpy community plugins have been included by default. However, additional files (e.g., licensed data) and/or installing additional dependencies may be necessary for some plugins. Read each plugin's documentation for more information.
-* `--strict` flag, to fail and not start when a 
 * `optional` attribute in plugins. Optional plugins may fail to load or activate but the server will be started regardless, unless running in strict mode
+* `--strict` flag to set strict mode. In this mode, the server will not start when optional plugins fail to load
 * Option in shelf plugins to ignore pickling errors
 ### Removed
 * `--only-install`, `--only-test` and `--only-list` flags were removed in favor of `--no-run` + `--install`/`--test`/`--dependencies`

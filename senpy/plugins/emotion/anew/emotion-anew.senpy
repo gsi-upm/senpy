@@ -1,5 +1,5 @@
 ---
-module: emotion-anew
+module: emotion_anew_plugin
 optional: true
 requirements:
 - numpy
@@ -8,5 +8,5 @@ requirements:
 - scipy
 - scikit-learn
 - textblob
-- pattern
+- 'git+https://github.com/uob-vil/pattern.git'
 - lxml
