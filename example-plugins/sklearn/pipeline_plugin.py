@@ -22,8 +22,8 @@ from mypipeline import pipeline
 class PipelineSentiment(SentimentBox):
     '''This is a pipeline plugin that wraps a classifier defined in another module
 (mypipeline).'''
-    author = '@balkian'
-    version = 0.1
+    author: str = '@balkian'
+    version: str = 0.1
     maxPolarityValue = 1
     minPolarityValue = -1
 
@@ -32,7 +32,7 @@ class PipelineSentiment(SentimentBox):
             return [1, 0, 0]
         return [0, 0, 1]
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'input': 'The sentiment for senpy should be positive :)',
             'polarity': 'marl:Positive'

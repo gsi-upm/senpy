@@ -21,7 +21,7 @@ from senpy.plugins import SentimentPlugin
 class NoOp(SentimentPlugin):
     '''This plugin does nothing. Literally nothing.'''
 
-    version = 0
+    version: str = 0
 
     def analyse_entry(self, entry, *args, **kwargs):
         yield entry

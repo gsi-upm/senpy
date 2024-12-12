@@ -35,16 +35,14 @@ ROOT = os.path.join(os.path.dirname(__file__), '..')
 
 class ShelfDummyPlugin(plugins.SentimentPlugin, plugins.ShelfMixin):
     '''Dummy plugin for tests.'''
-    name = 'Shelf'
-    version = 0
-    author = 'the senpy community'
+    name: str = 'Shelf'
+    version: str = '0'
+    author: str = 'the senpy community'
 
-    def activate(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if 'counter' not in self.sh:
             self.sh['counter'] = 0
-        self.save()
-
-    def deactivate(self, *args, **kwargs):
         self.save()
 
     def analyse(self, *args, **kwargs):
@@ -53,6 +51,7 @@ class ShelfDummyPlugin(plugins.SentimentPlugin, plugins.ShelfMixin):
         e.nif__isString = self.sh['counter']
         r = Results()
         r.entries.append(e)
+        self.save()
         return r
 
 
@@ -82,7 +81,6 @@ class PluginsTest(TestCase):
             info={'name': 'default_shelve_file',
                   'description': 'Dummy plugin for tests',
                   'version': 'test'})
-        a.activate()
         assert os.path.isfile(a.shelf_file)
         os.remove(a.shelf_file)
 
@@ -114,8 +112,6 @@ class PluginsTest(TestCase):
             'version': 'test',
             'shelf_file': newfile
         })
-        assert a.sh == {}
-        a.activate()
         assert a.sh == {'counter': 0}
         assert a.shelf_file == newfile
 
@@ -137,12 +133,10 @@ class PluginsTest(TestCase):
             'shelf_file': self.shelf_file,
             'version': 'test'
         })
-        a.activate()
 
         assert a.shelf_file == self.shelf_file
         res1 = a.analyse(input=1)
         assert res1.entries[0].nif__isString == 100
-        a.deactivate()
         del a
 
         with open(self.shelf_file, 'rb') as f:
@@ -190,7 +184,6 @@ class PluginsTest(TestCase):
             'version': 'test',
             'shelf_file': self.shelf_file
         })
-        a.activate()
         print('Shelf file: %s' % a.shelf_file)
         a.sh['a'] = 'fromA'
         a.save()
@@ -201,7 +194,6 @@ class PluginsTest(TestCase):
             'version': 'test',
             'shelf_file': self.shelf_file
         })
-        b.activate()
         assert b.sh['a'] == 'fromA'
         b.sh['a'] = 'fromB'
         assert b.sh['a'] == 'fromB'
@@ -228,8 +220,8 @@ class PluginsTest(TestCase):
         class MyBox(plugins.Box):
             ''' Vague description'''
 
-            author = 'me'
-            version = 0
+            author: str = 'me'
+            version: str = 0
 
             def to_features(self, entry, **kwargs):
                 return entry.text.split()
@@ -243,7 +235,7 @@ class PluginsTest(TestCase):
                     entry.myAnnotation = 'DETECTED'
                 return entry
 
-            test_cases = [
+            test_cases: list[dict] = [
                 {
                     'input': "nothing here",
                     'expected': {'myAnnotation': 'DETECTED'},
@@ -260,8 +252,8 @@ class PluginsTest(TestCase):
         class SentimentBox(plugins.SentimentBox):
             ''' Vague description'''
 
-            author = 'me'
-            version = 0
+            author: str = 'me'
+            version: str = 0
 
             def predict_one(self, features, **kwargs):
                 text = ' '.join(features)
@@ -269,7 +261,7 @@ class PluginsTest(TestCase):
                     return [1, 0, 0]
                 return [0, 0, 1]
 
-            test_cases = [
+            test_cases: list[dict] = [
                 {
                     'input': 'a happy face :)',
                     'polarity': 'marl:Positive'
@@ -355,7 +347,7 @@ class PluginsTest(TestCase):
 
         class DummyPlugin(plugins.SentimentBox):
             description = 'Plugin to test evaluation'
-            version = 0
+            version: str = 0
 
             classes = ['marl:Positive', 'marl:Negative']
 
@@ -365,7 +357,7 @@ class PluginsTest(TestCase):
 
         class SmartPlugin(plugins.SentimentBox):
             description = 'Plugin to test evaluation'
-            version = 0
+            version: str = 0
 
             classes = ['marl:Positive', 'marl:Negative']
 

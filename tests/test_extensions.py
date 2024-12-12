@@ -23,7 +23,8 @@ import logging
 from functools import partial
 from senpy.extensions import Senpy
 from senpy import plugins, config, api
-from senpy.models import Error, Results, Entry, EmotionSet, Emotion, Plugin
+from senpy.models import Results, Entry, EmotionSet, Emotion, Plugin
+from senpy.errors import Error
 from flask import Flask
 from unittest import TestCase
 
@@ -41,8 +42,7 @@ class ExtensionsTest(TestCase):
         self.senpy = Senpy(plugin_folder=self.examples_dir,
                            app=self.app,
                            default_plugins=False)
-        self.senpy.deactivate_all()
-        self.senpy.activate_plugin("Dummy", sync=True)
+        self.senpy.default_plugin = "Dummy"
         self.app.config['TESTING'] = True  # Tell Flask not to catch Exceptions
 
     def test_init(self):
@@ -62,9 +62,9 @@ class ExtensionsTest(TestCase):
         '''Should be able to add and delete new plugins. '''
         new = plugins.Analyser(name='new', description='new', version=0)
         self.senpy.add_plugin(new)
-        assert new in self.senpy.plugins(is_activated=False)
+        assert new in self.senpy.plugins()
         self.senpy.delete_plugin(new)
-        assert new not in self.senpy.plugins(is_activated=False)
+        assert new not in self.senpy.plugins()
 
     def test_adding_folder(self):
         """ It should be possible for senpy to look for plugins in more folders. """
@@ -74,7 +74,7 @@ class ExtensionsTest(TestCase):
                       default_plugins=False)
         assert not senpy.analysis_plugins()
         senpy.add_folder(self.examples_dir)
-        assert senpy.plugins(plugin_type=plugins.Analyser, is_activated=False)
+        assert senpy.plugins(plugin_type=plugins.Analyser)
         self.assertRaises(AttributeError, senpy.add_folder, 'DOES NOT EXIST')
 
     def test_installing(self):
@@ -94,9 +94,8 @@ class ExtensionsTest(TestCase):
 
     def test_enabling(self):
         """ Enabling a plugin """
-        self.senpy.activate_all(sync=True)
         assert len(self.senpy.plugins()) >= 3
-        assert self.senpy.get_plugin("Sleep").is_activated
+        assert self.senpy.get_plugin("Sleep")
 
     def test_installing_nonexistent(self):
         """ Fail if the dependencies cannot be met """
@@ -110,23 +109,14 @@ class ExtensionsTest(TestCase):
         with self.assertRaises(Error):
             plugins.install_deps(info)
 
-    def test_disabling(self):
-        """ Disabling a plugin """
-        self.senpy.deactivate_all(sync=True)
-        assert not self.senpy.get_plugin("dummy").is_activated
-        assert not self.senpy.get_plugin("sleep").is_activated
-
     def test_default(self):
         """ Default plugin should be set """
         assert self.senpy.default_plugin
         assert self.senpy.default_plugin.name == "dummy"
-        self.senpy.deactivate_all(sync=True)
-        logging.debug("Default: {}".format(self.senpy.default_plugin))
-        assert self.senpy.default_plugin is None
 
     def test_noplugin(self):
         """ Don't analyse if there isn't any plugin installed """
-        self.senpy.deactivate_all(sync=True)
+        nosenpy = Senpy(default_plugins=False, plugin_folders=[])
         self.assertRaises(Error, partial(analyse, self.senpy, input="tupni"))
 
     def test_analyse(self):
@@ -177,7 +167,7 @@ class ExtensionsTest(TestCase):
 
     def test_analyse_error(self):
         class ErrorPlugin(plugins.Analyser):
-            author = 'nobody'
+            author: str = 'nobody'
             version = 0
             ex = Error()
 
@@ -205,17 +195,12 @@ class ExtensionsTest(TestCase):
         """ Filtering plugins """
         assert len(self.senpy.plugins(name="Dummy")) > 0
         assert not len(self.senpy.plugins(name="NotDummy"))
-        assert self.senpy.plugins(name="Dummy", is_activated=True)
-        self.senpy.deactivate_plugin("Dummy", sync=True)
-        assert not len(self.senpy.plugins(name="Dummy",
-                                          is_activated=True))
 
     def test_load_default_plugins(self):
         senpy = Senpy(plugin_folder=self.examples_dir, default_plugins=True)
-        assert len(senpy.plugins(is_activated=False)) > 1
+        assert len(senpy.plugins()) > 1
 
     def test_convert_emotions(self):
-        self.senpy.activate_all(sync=True)
         plugin = Plugin({
             'id': 'imaginary',
             'onyx:usesEmotionModel': 'emoml:fsre-dimensions'

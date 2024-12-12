@@ -42,12 +42,10 @@ class SemanticsTest(TestCase):
         """Set up only once, and re-use in every individual test"""
         cls.app = Flask("test_extensions")
         cls.client = cls.app.test_client()
-        cls.senpy = Senpy(default_plugins=True)
+        cls.senpy = Senpy(plugin_folder=None, default_plugins=True)
         cls.senpy.init_app(cls.app)
-        cls.dir = os.path.join(os.path.dirname(__file__), "..")
-        cls.senpy.add_folder(cls.dir)
-        cls.senpy.activate_all()
-        cls.senpy.default_plugin = 'Dummy'
+        #cls.dir = os.path.join(os.path.dirname(__file__), "..")
+        #cls.senpy.add_folder(cls.dir)
 
     def setUp(self):
         self.app.config['TESTING'] = True  # Tell Flask not to catch Exceptions
@@ -57,10 +55,10 @@ class SemanticsTest(TestCase):
 
     def test_sentiment(self):
         """
-        A sentiment analysis call in JSON-LD
+        a sentiment analysis call in json-ld
         """
-        # We use expanded JSON-LD and ignore the context, because in general
-        # the context is a URIS to the service  and that URI is not
+        # we use expanded json-ld and ignore the context, because in general
+        # the context is a uris to the service  and that uri is not
         # available outside of self.client
         params = {
             'input': 'hello',
@@ -69,28 +67,28 @@ class SemanticsTest(TestCase):
             'expanded': True,
             'prefix': 'http://default.example/#'
         }
-        resp = self.client.get("/api/basic?{}".format(urlencode(params)))
+        resp = self.client.get("/api/sentiment-basic?{}".format(urlencode(params)))
         self.assertCode(resp, 200)
         g = parse_resp(resp, fmt='json-ld')
+        print('Got this graph: ', g.serialize(format='ttl'))
         assert g
         qres = g.query("""
-    PREFIX prov: <http://www.w3.org/ns/prov#>
-    PREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>
-    PREFIX nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>
-    PREFIX onyx: <http://www.gsi.upm.es/ontologies/onyx/ns#>
-    PREFIX senpy: <http://www.gsi.upm.es/onto/senpy/ns#>
+    prefix prov: <http://www.w3.org/ns/prov#>
+    prefix marl: <http://www.gsi.upm.es/ontologies/marl/ns#>
+    prefix nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>
+    prefix onyx: <http://www.gsi.upm.es/ontologies/onyx/ns#>
+    prefix senpy: <http://www.gsi.upm.es/ontologies/senpy/ns#>
 
-    SELECT DISTINCT ?entry ?text ?sentiment
-       WHERE {
-          ?entry a senpy:Entry .
-          ?entry marl:hasOpinion ?o .
-          ?entry nif:isString ?text .
-          ?o marl:hasPolarity ?sentiment .
-      }""")
-        assert len(qres) == 1
+    SELECT distinct ?entry ?text ?sentiment
+    WHERE {
+       ?entry a senpy:Entry .
+       ?entry marl:hasOpinion ?o .
+       ?entry nif:isString ?text .
+       ?o marl:hasPolarity ?sentiment .
+    }""")
+        assert len(qres) == 1, "There should only be one result"
         entry, text, sentiment = list(qres)[0]
-        assert entry
-        assert str(text) == 'hello'
+        assert str(text) == 'hello', "The returned text does not match the input text."
         assert str(sentiment) in ['marl:Positive', 'marl:Neutral', 'marl:Negative']
 
     def test_sentiment_turtle(self):
@@ -104,25 +102,75 @@ class SemanticsTest(TestCase):
             'expanded': True,
             'prefix': 'http://default.example/#'
         }
-        resp = self.client.get("/api/basic?{}".format(urlencode(params)))
+        resp = self.client.get("/api/sentiment-basic?{}".format(urlencode(params)))
         self.assertCode(resp, 200)
         g = parse_resp(resp, 'ttl')
+        print('Got this graph: ', g.serialize(format='ttl'))
         qres = g.query("""
     PREFIX prov: <http://www.w3.org/ns/prov#>
     PREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>
     PREFIX nif: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#>
     PREFIX onyx: <http://www.gsi.upm.es/ontologies/onyx/ns#>
-    PREFIX senpy: <http://www.gsi.upm.es/onto/senpy/ns#>
+    PREFIX senpy: <http://www.gsi.upm.es/ontologies/senpy/ns#>
 
     SELECT DISTINCT ?entry ?text ?sentiment
        WHERE {
-          ?entry a senpy:Entry .
-          ?entry marl:hasOpinion ?o .
-          ?entry nif:isString ?text .
-          ?o marl:hasPolarity ?sentiment .
+          ?entry a senpy:Entry ;
+                 nif:isString ?text ;
+                 marl:hasOpinion [
+                    marl:hasPolarity ?sentiment
+                 ] .
       }""")
+        assert len(qres) == 1, "There should only be one row in the result"
+        entry, text, sentiment = list(qres)[0]
+        assert str(text) == 'hello', "Returned text does not match input text"
+        assert str(sentiment) in ['marl:Positive', 'marl:Neutral', 'marl:Negative']
+
+    def test_moral(self):
+        """
+        An example of a moral analysis, adapted from the examples for the AMOR project:
+        http://www.gsi.upm.es/ontologies/amor/examples
+        """
+        # we use expanded json-ld and ignore the context, because in general
+        # the context is a uris to the service  and that uri is not
+        # available outside of self.client
+        params = {
+            'input': 'hello',
+            'in-headers': True,
+            'outformat': 'json-ld',
+            'expanded': True,
+            'prefix': 'http://default.example/#'
+        }
+        resp = self.client.get("/api/sentiment-basic?{}".format(urlencode(params)))
+        self.assertCode(resp, 200)
+        g = parse_resp(resp, fmt='json-ld')
+        print('Got this graph: ', g.serialize(format='ttl'))
+        assert g
+        qres = g.query("""
+        prefix : <http://www.gsi.upm.es/ontologies/amor/examples#>
+        prefix amor: <http://www.gsi.upm.es/ontologies/amor/ns#>
+        prefix amor-bhv: <http://www.gsi.upm.es/ontologies/amor/models/bhv/ns#>
+        prefix amor-mft: <http://www.gsi.upm.es/ontologies/amor/models/mft/ns#>
+        prefix bhv: <http://www.gsi.upm.es/ontologies/bhv#>
+        prefix mft: <http://www.gsi.upm.es/ontologies/mft/ns#>
+        prefix mls: <http://www.w3.org/ns/mls#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix prov: <http://www.w3.org/ns/prov#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix schema: <http://schema.org/>
+
+        SELECT ?analysis ?agent ?model ?annotation ?origin ?category
+        WHERE {
+            ?analysis a amor:MoralValueAnalysis ;
+                prov:wasAssociatedWith ?agent ;
+                amor:usedMoralValueModel ?model ;
+                amor:analysed ?origin ;
+                prov:generated ?annotation .
+            ?annotation a amor:MoralValueAnnotation ;
+                        amor:hasMoralValueCategory ?category .
+        }""")
         assert len(qres) == 1
         entry, text, sentiment = list(qres)[0]
         assert entry
         assert str(text) == 'hello'
-        assert str(sentiment) in ['marl:Positive', 'marl:Neutral', 'marl:Negative']
+        assert str(sentiment) in ['marl:positive', 'marl:neutral', 'marl:negative']

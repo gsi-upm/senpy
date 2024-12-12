@@ -24,11 +24,10 @@ import basic
 
 class ParameterizedDictionary(plugins.SentimentPlugin):
     '''This is a basic self-contained plugin'''
+    author: str = '@balkian'
+    version: str = '0.2'
 
-    author = '@balkian'
-    version = '0.2'
-
-    extra_params = {
+    extra_params: dict = {
         'positive-words': {
             'description': 'Comma-separated list of words that are considered positive',
             'aliases': ['positive'],
@@ -56,7 +55,7 @@ class ParameterizedDictionary(plugins.SentimentPlugin):
         entry.sentiments.append(s)
         yield entry
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'input': 'Hello :)',
             'polarity': 'marl:Positive',

@@ -13,7 +13,8 @@ from scipy.interpolate import interp1d
 from os import path
 
 from senpy.plugins import SentimentBox, SenpyPlugin
-from senpy.models import Results, Entry, Sentiment, Error
+from senpy.models import Results, Entry, Sentiment
+from senpy.errors import Error
 
 if sys.version_info[0] >= 3:
     unicode = str
@@ -24,9 +25,9 @@ class SentimentBasic(SentimentBox):
     Sentiment classifier using rule-based classification for Spanish. Based on english to spanish translation and SentiWordNet sentiment knowledge. This is a demo plugin that uses only some features from the TASS 2015 classifier. To use the entirely functional classifier you can use the service in: http://senpy.cluster.gsi.dit.upm.es.
     '''
     name = "sentiment-basic"
-    author = "github.com/nachtkatze"
-    version = "0.1.1"
-    extra_params = {
+    author: str = "github.com/nachtkatze"
+    version: str = "0.1.1"
+    extra_params: dict = {
         "language": {
             "description": "language of the text",
             "aliases": ["language", "l"],
@@ -36,28 +37,29 @@ class SentimentBasic(SentimentBox):
         }
     }
     sentiword_path = "SentiWordNet_3.0.txt"
-    pos_path = "unigram_spanish.pickle"
     maxPolarityValue = 1
     minPolarityValue = -1
     nltk_resources = ['punkt_tab','wordnet', 'omw', 'omw-1.4']
     optional = True
     requirements = ['nltk>=3.0.5', 'scipy>=0.14.0', 'textblob==0.17']
     with_polarity = False
+    _pos_path = "unigram_spanish.pickle"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._swn = self._load_swn()
+        self._pos_tagger = self._load_pos_tagger()
 
     def _load_swn(self):
-        self.swn_path = self.find_file(self.sentiword_path)
-        swn = SentiWordNet(self.swn_path)
+        self._swn_path = self.find_file(self.sentiword_path)
+        swn = SentiWordNet(self._swn_path)
         return swn
 
     def _load_pos_tagger(self):
-        self.pos_path = self.find_file(self.pos_path)
-        with open(self.pos_path, 'rb') as f:
+        self._pos_path = self.find_file(self._pos_path)
+        with open(self._pos_path, 'rb') as f:
             tagger = pickle.load(f)
         return tagger
-
-    def activate(self, *args, **kwargs):
-        self._swn = self._load_swn()
-        self._pos_tagger = self._load_pos_tagger()
 
     def _remove_punctuation(self, tokens):
         return [t for t in tokens if t not in string.punctuation]
@@ -156,7 +158,7 @@ class SentimentBasic(SentimentBox):
             return [0, 1, 0]
 
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'input': 'Odio ir al cine',
             'params': {'language': 'es'},

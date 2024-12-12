@@ -26,14 +26,14 @@ from senpy.models import (Analysis,
                           EmotionAnalysis,
                           EmotionSet,
                           Entry,
-                          Error,
+                          ErrorResponse,
                           Results,
                           Sentiment,
                           SentimentPlugin,
                           Plugins,
                           from_string,
-                          from_dict,
-                          subtypes)
+                          from_dict)
+from senpy.errors import Error
 from senpy import plugins
 from pprint import pprint
 
@@ -117,7 +117,7 @@ class ModelsTest(TestCase):
 
     def test_plugins(self):
         self.assertRaises(Error, plugins.Plugin)
-        p = plugins.SentimentPlugin({"name": "dummy",
+        p = plugins.SentimentPlugin.parse_obj({"name": "dummy",
                                      "description": "I do nothing",
                                      "version": 0,
                                      "extra_params": {
@@ -151,11 +151,6 @@ class ModelsTest(TestCase):
         r.activities.append(p)
         s = str(r)
         assert "_testing" not in s
-
-    def test_serialize(self):
-        for k, v in subtypes().items():
-            e = v()
-            e.serialize()
 
     def test_turtle(self):
         """Any model should be serializable as a turtle file"""

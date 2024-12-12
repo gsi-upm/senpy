@@ -137,7 +137,7 @@ def main():
         '--fail',
         action='store_true',
         default=False,
-        help='Do not exit if some plugins fail to activate')
+        help='Do not exit if some plugins can not be instantiated')
     parser.add_argument(
         '--enable-cors',
         '--cors',
@@ -165,13 +165,14 @@ def main():
                install=args.install,
                strict=args.strict,
                data_folder=args.data_folder)
+
     folders = list(args.plugins_folder) if args.plugins_folder else []
     if not folders:
         folders.append(".")
     for p in folders:
         sp.add_folder(p)
 
-    plugins = sp.plugins(plugin_type=None, is_activated=False)
+    plugins = sp.plugins(plugin_type=None)
     maxname = max(len(x.name) for x in plugins)
     maxversion = max(len(str(x.version)) for x in plugins)
     print('Found {} plugins:'.format(len(plugins)))
@@ -187,7 +188,7 @@ def main():
         print('Listing dependencies')
         missing = []
         installed = []
-        for plug in sp.plugins(is_activated=False):
+        for plug in sp.plugins():
             inst, miss, nltkres = list_dependencies(plug)
             if not any([inst, miss, nltkres]):
                 continue
@@ -209,16 +210,10 @@ def main():
         sp.install_deps()
 
     if args.test:
-        sp.activate_all(sync=True)
-        easy_test(sp.plugins(is_activated=True), debug=args.debug)
+        easy_test(sp.plugins(), debug=args.debug)
 
     if args.no_run:
         return
-
-    sp.activate_all(sync=True)
-    if sp.strict:
-        inactive = sp.plugins(is_activated=False)
-        assert not inactive
 
     print('Senpy version {}'.format(senpy.__version__))
     print('Server running on port %s:%d. Ctrl+C to quit' % (args.host,
@@ -238,8 +233,6 @@ def main():
                 debug=app.debug)
     except KeyboardInterrupt:
         print('Bye!')
-    sp.deactivate_all()
-
 
 if __name__ == '__main__':
     main()

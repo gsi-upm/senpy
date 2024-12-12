@@ -16,7 +16,7 @@
 from __future__ import print_function
 
 import sys
-from .models import Error
+from .errors import Error
 from .extensions import Senpy
 from . import api
 
@@ -49,11 +49,6 @@ def main_function(argv):
     sp = Senpy(default_plugins=default_plugins, plugin_folder=plugin_folder)
     request = api.parse_call(params)
     algos = sp.get_plugins(request.parameters.get('algorithm', None))
-    if algos:
-        for algo in algos:
-            sp.activate_plugin(algo.name)
-    else:
-        sp.activate_all()
     res = sp.analyse(request)
     return res
 

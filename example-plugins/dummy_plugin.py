@@ -19,15 +19,15 @@ from senpy import AnalysisPlugin, easy
 
 class Dummy(AnalysisPlugin):
     '''This is a dummy self-contained plugin'''
-    author = '@balkian'
-    version = '0.1'
+    author: str = '@balkian'
+    version: str = '0.1'
 
     def analyse_entry(self, entry, params):
-        entry['nif:isString'] = entry['nif:isString'][::-1]
+        entry.text = entry.text[::-1]
         entry.reversed = entry.get('reversed', 0) + 1
         yield entry
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'entry': {
             'nif:isString': 'Hello',
         },

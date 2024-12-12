@@ -15,7 +15,8 @@
 #
 
 from future.utils import iteritems
-from .models import Error, Results, Entry, from_string
+from .models import Results, Entry, from_string
+from .errors import Error, InvalidParams
 import logging
 logger = logging.getLogger(__name__)
 
@@ -169,7 +170,7 @@ EVAL_PARAMS = {
         "aliases": ["plug", "p", "plugins", "algorithms", 'algo', 'a', 'plugin'],
         "description": "Plugins to evaluate",
         "required": True,
-        "help": "See activated plugins in /plugins",
+        "help": "See plugins at /plugins",
         "processor": API_PARAMS['algorithm']['processor']
     },
     "dataset": {
@@ -294,12 +295,7 @@ def parse_params(indict, *specs):
                     wrong_params[param] = spec[param]
     if wrong_params:
         logger.debug("Error parsing: %s", wrong_params)
-        message = Error(
-            status=400,
-            message='Missing or invalid parameters',
-            parameters=outdict,
-            errors=wrong_params)
-        raise message
+        raise InvalidParams(wrong_params)
     return outdict
 
 
@@ -315,10 +311,9 @@ def get_all_params(plugins, *specs):
 def get_extra_params(plugins):
     '''Get a list of possible parameters given a list of plugins'''
     params = {}
-    extra_params = {}
+    extra_params: dict = {}
     for plugin in plugins:
-        this_params = plugin.get('extra_params', {})
-        for k, v in this_params.items():
+        for k, v in plugin.extra_params.items():
             if k not in extra_params:
                 extra_params[k] = {}
             extra_params[k][plugin.name] = v
@@ -372,7 +367,7 @@ def parse_analyses(params, plugins):
         if not plugin:
             continue
         this_params = filter_params(params, plugin, i)
-        parsed = parse_params(this_params, plugin.get('extra_params', {}))
+        parsed = parse_params(this_params, plugin.extra_params)
         analysis = plugin.activity(parsed)
         analysis_list.append(analysis)
     return analysis_list
@@ -414,7 +409,7 @@ def parse_call(params):
     params = parse_params(params, NIF_PARAMS)
     if params['informat'] == 'text':
         results = Results()
-        entry = Entry(nif__isString=params['input'], id='prefix:')  # Use @base
+        entry = Entry(text=params['input'], id='prefix:')  # Use @base
         results.entries.append(entry)
     elif params['informat'] == 'json-ld':
         results = from_string(params['input'], cls=Results)

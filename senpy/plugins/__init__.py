@@ -16,10 +16,7 @@
 #    limitations under the License.
 #
 
-from future import standard_library
-standard_library.install_aliases()
-
-from future.utils import with_metaclass
+from typing import *
 from functools import partial
 
 import os.path
@@ -28,6 +25,8 @@ import re
 import pickle
 import logging
 import pprint
+
+import deprecation
 
 import inspect
 import sys
@@ -38,59 +37,21 @@ import threading
 import multiprocessing
 import pkg_resources
 from nltk import download
-from textwrap import dedent
 from sklearn.base import TransformerMixin, BaseEstimator
 from itertools import product
 
 from .. import models, utils
+from ..errors import Error
 from .. import api
 from .. import gsitk_compat
 from .. import testing
 from .. import config
+from .. import ns
 
 logger = logging.getLogger(__name__)
 
 
-class PluginMeta(models.BaseMeta):
-    _classes = {}
-
-    def __new__(mcs, name, bases, attrs, **kwargs):
-        plugin_type = set()
-        for base in bases:
-            if hasattr(base, '_plugin_type'):
-                plugin_type |= base._plugin_type
-        plugin_type.add(name)
-        alias = attrs.get('name', name).lower()
-        attrs['_plugin_type'] = plugin_type
-        logger.debug('Adding new plugin class: %s %s %s %s', name, bases, attrs, plugin_type)
-        attrs['name'] = alias
-        if 'description' not in attrs:
-            doc = attrs.get('__doc__', None)
-            if doc:
-                attrs['description'] = dedent(doc)
-            else:
-                logger.warning(
-                    ('Plugin {} does not have a description. '
-                     'Please, add a short summary to help other developers'
-                     ).format(name))
-        cls = super(PluginMeta, mcs).__new__(mcs, name, bases, attrs)
-
-        if alias in mcs._classes:
-            if config.testing:
-                raise Exception(
-                    ('The type of plugin {} already exists. '
-                     'Please, choose a different name').format(name))
-            else:
-                logger.warning('Overloading plugin class: {}'.format(alias))
-        mcs._classes[alias] = cls
-        return cls
-
-    @classmethod
-    def for_type(cls, ptype):
-        return cls._classes[ptype]
-
-
-class Plugin(with_metaclass(PluginMeta, models.Plugin)):
+class Plugin(models.Plugin):
     '''
     Base class for all plugins in senpy.
     A plugin must provide at least these attributes:
@@ -103,23 +64,16 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
 
     '''
 
-    _terse_keys = ['name', '@id', '@type', 'author', 'description',
-                   'extra_params', 'is_activated', 'url', 'version']
+    data_folder: str = "."
+    test_cases: List[Dict] = []
 
-    def __init__(self, info=None, data_folder=None, **kwargs):
+
+    def __init__(self, *, data_folder=None, **data):
         """
         Provides a canonical name for plugins and serves as base for other
         kinds of plugins.
         """
-        logger.debug("Initialising %s", info)
-        super(Plugin, self).__init__(**kwargs)
-        if info:
-            self.update(info)
-        self.validate()
-        self.id = 'endpoint:plugins/{}_{}'.format(self['name'],
-                                                  self['version'])
-        self.is_activated = False
-        self._lock = threading.Lock()
+        super().__init__(**data)
         self._directory = os.path.abspath(
             os.path.dirname(inspect.getfile(self.__class__)))
 
@@ -127,7 +81,6 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
             data_folder = config.data_folder
         if not data_folder:
             data_folder = os.getcwd()
-
 
         data_folder = os.path.abspath(data_folder)
         subdir = os.path.join(data_folder, self.name)
@@ -149,34 +102,8 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     def log(self):
         return self._log
 
-    def validate(self):
-        missing = []
-        for x in ['name', 'description', 'version']:
-            if x not in self:
-                missing.append(x)
-        if missing:
-            raise models.Error(
-                'Missing configuration parameters: {}'.format(missing))
-
     def get_folder(self):
         return os.path.dirname(inspect.getfile(self.__class__))
-
-    def _activate(self):
-        if self.is_activated:
-            return
-        self.activate()
-        self.is_activated = True
-        return self.is_activated
-
-    def _deactivate(self):
-        self.is_activated = False
-        self.deactivate()
-
-    def activate(self):
-        pass
-
-    def deactivate(self):
-        pass
 
     def process(self, request, activity, **kwargs):
         """
@@ -195,7 +122,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
             if inspect.isgenerator(results):
                 for result in results:
                     yield result
-            else:
+            elif results:
                 yield results
 
     def process_entry(self, entry, activity):
@@ -210,8 +137,6 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
         )
 
     def test(self, test_cases=None):
-        if not self.is_activated:
-            self._activate()
         if not test_cases:
             if not hasattr(self, 'test_cases'):
                 raise AttributeError(
@@ -235,7 +160,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
     def test_case(self, case, mock=testing.MOCK_REQUESTS):
         if 'entry' not in case and 'input' in case:
             entry = models.Entry(_auto_id=False)
-            entry.nif__isString = case['input']
+            entry.text = case['input']
             case['entry'] = entry
         entry = models.Entry(case['entry'])
         given_parameters = case.get('params', case.get('parameters', {}))
@@ -265,7 +190,7 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
                 expected = [expected]
             utils.check_template(res.entries, expected)
             res.validate()
-        except models.Error:
+        except Error:
             if should_fail:
                 return
             raise
@@ -302,38 +227,16 @@ class Plugin(with_metaclass(PluginMeta, models.Plugin)):
 SenpyPlugin = Plugin
 
 
-class FailedPlugin(Plugin):
-    """A plugin that has failed to initialize."""
-    version = 0
-
-    def __init__(self, info, function):
-        super().__init__(info)
-        a = info.get('name', info.get('module', self.name))
-        self['name'] == a
-        self._function = function
-        self.is_activated = False
-
-    def retry(self):
-        return self._function()
-
-    def test(self):
-        '''
-        A module that failed to load cannot be tested. But non-optional
-        plugins should not fail to load in strict mode.
-        '''
-        assert self.optional and not config.strict
-
-
 class Analyser(Plugin):
     '''
     A subclass of Plugin that analyses text and provides an annotation.
     '''
 
-    # Deprecated
+    @deprecation.deprecated(details="Use process instead")
     def analyse(self, request, activity):
         return super(Analyser, self).process(request, activity)
 
-    # Deprecated
+    @deprecation.deprecated(details="Use process_entries instead")
     def analyse_entries(self, entries, activity):
         for i in super(Analyser, self).process_entries(entries, activity):
             yield i
@@ -402,14 +305,12 @@ class Evaluable(Plugin):
         return evaluate([self], *args, **kwargs)
 
 
-class SentimentPlugin(Analyser, Evaluable, models.SentimentPlugin):
+class SentimentPlugin(Analyser, Evaluable):
     '''
     Sentiment plugins provide sentiment annotation (using Marl)
     '''
-    minPolarityValue = 0
-    maxPolarityValue = 1
-
-    _terse_keys = Analyser._terse_keys + ['minPolarityValue', 'maxPolarityValue']
+    minPolarityValue: float = 0
+    maxPolarityValue: float = 1
 
     def test_case(self, case):
         if 'polarity' in case:
@@ -441,7 +342,7 @@ class SentimentPlugin(Analyser, Evaluable, models.SentimentPlugin):
         for feat in X:
             if isinstance(feat, list):
                 feat = ' '.join(feat)
-            entries.append(models.Entry(nif__isString=feat))
+            entries.append(models.Entry(text=feat))
         labels = []
         for e in self.process_entries(entries, activity):
             sent = e.sentiments[0].polarity
@@ -458,10 +359,27 @@ class EmotionPlugin(Analyser, models.EmotionPlugin):
     '''
     Emotion plugins provide emotion annotation (using Onyx)
     '''
-    minEmotionValue = 0
-    maxEmotionValue = 1
+    minEmotionValue: float = 0
+    maxEmotionValue: float = 1
 
-    _terse_keys = Analyser._terse_keys + ['minEmotionValue', 'maxEmotionValue']
+
+class AnnotationPlugin(AnalysisPlugin):
+    def process_entry(self, entry, activity, **kwargs):
+        for annotation in self.annotate(entry):
+             annotation.add_provenance(entry, activity)
+        yield entry
+
+    def annotate(self, entry, **kwargs):
+        raise NotImplemented("this should be implemented in subclasses")
+
+
+class MoralityPlugin(AnnotationPlugin):
+    moralValueModel: str = ns.amor_mft['MoralFoundationTHeory']
+
+    def activity(self, parameters=None):
+        return models.MoralityAnalysis(plugin=self,
+                                       usedMLModel=None,
+                                       usedMoralValueModel=self.model)
 
 
 class EmotionConversion(Conversion):
@@ -545,7 +463,7 @@ class TextBox(Box):
     '''A black box plugin that takes only text as input'''
 
     def to_features(self, entry, activity):
-        return [entry['nif:isString']]
+        return [entry.text]
 
 
 class SentimentBox(TextBox, SentimentPlugin):
@@ -553,14 +471,14 @@ class SentimentBox(TextBox, SentimentPlugin):
     A box plugin where the output is only a polarity label or a tuple (polarity, polarityValue)
     '''
 
-    classes = ['marl:Positive', 'marl:Neutral', 'marl:Negative']
-    binary = True
+    classes: List[str] = ['marl:Positive', 'marl:Neutral', 'marl:Negative']
+    binary: bool = True
 
     def to_entry(self, features, entry, activity, **kwargs):
 
         if len(features) != len(self.classes):
-            raise models.Error('The number of features ({}) does not match the classes '
-                               '(plugin.classes ({})'.format(len(features), len(self.classes)))
+            raise Error('The number of features ({}) does not match the classes '
+                        '(plugin.classes ({})'.format(len(features), len(self.classes)))
 
         minValue = activity.param('marl:minPolarityValue', 0)
         maxValue = activity.param('marl:minPolarityValue', 1)
@@ -590,8 +508,8 @@ class EmotionBox(TextBox, EmotionPlugin):
     A box plugin where the output is only an a tuple of emotion labels
     '''
 
-    EMOTIONS = []
-    with_intensity = True
+    EMOTIONS: List[str] = []
+    with_intensity: bool = True
 
     def to_entry(self, features, entry, activity, **kwargs):
         s = models.EmotionSet()
@@ -697,7 +615,7 @@ def pfilter(plugins, plugin_type=Analyser, **kwargs):
             logger.debug('Class: {}'.format(pclass))
             candidates = filter(lambda x: isinstance(x, pclass), plugins)
         except KeyError:
-            raise models.Error('{} is not a valid type'.format(plugin_type))
+            raise Error('{} is not a valid type'.format(plugin_type))
     else:
         candidates = plugins
 
@@ -775,7 +693,7 @@ def install_deps(*plugins):
         exitcode = process.wait()
         installed = True
         if exitcode != 0:
-            raise models.Error(
+            raise Error(
                 "Dependencies not properly installed: {}".format(pip_args))
     installed_nltk = download(list(nltk_resources))
     return installed or installed_nltk
@@ -855,7 +773,7 @@ def from_module(module, **kwargs):
 def one_from_module(module, root, info, **kwargs):
     if '@type' in info:
         cls = PluginMeta.from_type(info['@type'])
-        return cls(info=info, **kwargs)
+        return cls(**info, **kwargs)
     instance = next(
         from_module(module=module, root=root, info=info, **kwargs), None)
     if not instance:
@@ -888,7 +806,7 @@ def _from_module_name(module, root, info=None, **kwargs):
 
 def _from_loaded_module(module, info=None, **kwargs):
     for cls in _classes_in_module(module):
-        yield cls(info=info, **kwargs)
+        yield cls(**(info or {}), **kwargs)
     for instance in _instances_in_module(module):
         yield instance
 
@@ -899,7 +817,7 @@ cached_evs = {}
 def evaluate(plugins, datasets, **kwargs):
     for plug in plugins:
         if not hasattr(plug, 'as_pipe'):
-            raise models.Error('Plugin {} cannot be evaluated'.format(plug.name))
+            raise Error('Plugin {} cannot be evaluated'.format(plug.name))
 
     if not isinstance(datasets, dict):
         datasets = gsitk_compat.prepare(datasets, download=True)
@@ -961,12 +879,11 @@ def evaluations_to_JSONLD(results, flatten=False):
 
 
 class ScikitWrapper(BaseEstimator, TransformerMixin):
-    def __init__(self, plugin=None):
+    def __init__(self, plugin=None, **data):
+        super().__init__(**data)
         self.plugin = plugin
 
     def fit(self, X=None, y=None):
-        if self.plugin is not None and not self.plugin.is_activated:
-            self.plugin.activate()
         return self
 
     def transform(self, X):

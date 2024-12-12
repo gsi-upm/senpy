@@ -38,11 +38,8 @@ class BlueprintsTest(TestCase):
         """Set up only once, and re-use in every individual test"""
         cls.app = Flask("test_extensions")
         cls.client = cls.app.test_client()
-        cls.senpy = Senpy(default_plugins=True, strict=False) # Ignore any optional plugins
-        cls.senpy.init_app(cls.app)
         cls.dir = os.path.join(os.path.dirname(__file__), "..")
-        cls.senpy.add_folder(cls.dir)
-        cls.senpy.activate_all()
+        cls.senpy = Senpy(default_plugins=True, app=cls.app, plugin_folders=[cls.dir, "."], strict=False) # Ignore any optional plugins
         cls.senpy.default_plugin = 'Dummy'
 
     def setUp(self):

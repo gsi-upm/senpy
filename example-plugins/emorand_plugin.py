@@ -22,11 +22,11 @@ from senpy.models import EmotionSet, Emotion, Entry
 
 class EmoRand(EmotionPlugin):
     '''A sample plugin that returns a random emotion annotation'''
-    name = 'emotion-random'
-    author = '@balkian'
-    version = '0.1'
-    url = "https://github.com/gsi-upm/senpy-plugins-community"
-    onyx__usesEmotionModel = "emoml:big6"
+    name: str = 'emotion-random'
+    author: str = '@balkian'
+    version: str = '0.1'
+    url: str = "https://github.com/gsi-upm/senpy-plugins-community"
+    usesEmotionModel: str = "emoml:big6"
 
     def analyse_entry(self, entry, activity):
         category = "emoml:big6happiness"

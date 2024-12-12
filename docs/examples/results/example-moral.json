@@ -1,0 +1,42 @@
+{
+  "@context": "http://senpy.gsi.upm.es/api/contexts/YXBpP2FsZ289ZW1",
+  "@id": ":Result1",
+  "@type": "results",
+  "activities": [
+    {
+      "@id": ":MoralAnalysis1_Activity",
+      "@type": "amor:MoralValueAnalysis",
+      "prov:wasAssociatedWith": ":MoralAnalysis1",
+      "amor:usedMoralValueModel": "amor-mft:MoralFoundationsTheory",
+      "amor:analysed": "news1",
+      "amor:usedMLModel": ":model1",
+      "prov:generated": ":annotation3"
+    }
+  ],
+  "entries": [
+    {
+      "@id": "http://micro.blog/status1",
+      "@type": [
+        "nif:RFC5147String",
+        "nif:Context"
+      ],
+      "nif:isString": "Dear Microsoft, put your Windows Phone on your newest #open technology program. You'll be awesome. #opensource",
+      "morality": [
+        {
+          "@id": ":annotation3",
+	  "@type": "amor:MoralValueAnnotation",
+	  "nif:beginIndex": 80,
+          "nif:endIndex": 97,
+	  "amor:hasMoralValueCategory": "mft:Authority",
+	  "amor:confidence": 0.75,
+	  "amor-mft:hasPolarityIntensity": 0.2,
+	  "amor:annotated": "http://micro.blog/status1",
+          "nif:anchorOf": "You'll be awesome.",
+          "prov:wasGeneratedBy": ":MoralAnalysis1_Activity"
+        }
+      ],
+      "emotions": [
+      ]
+    }
+  ]
+}

@@ -25,8 +25,8 @@ import basic
 class Basic(SentimentBox):
     '''Provides sentiment annotation using a lexicon'''
 
-    author = '@balkian'
-    version = '0.1'
+    author: str = '@balkian'
+    version: str = '0.1'
 
     def predict_one(self, features, **kwargs):
         output = basic.get_polarity(features[0])
@@ -36,7 +36,7 @@ class Basic(SentimentBox):
             return [0, 1, 0]
         return [0, 0, 1]
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'input': u'Hello :)',
         'polarity': 'marl:Positive'
     }, {

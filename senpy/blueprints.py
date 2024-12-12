@@ -20,7 +20,8 @@ Blueprints for Senpy
 """
 from flask import (Blueprint, request, current_app, render_template, url_for,
                    jsonify, redirect)
-from .models import Error, Response, Help, Plugins, read_schema, dump_schema, Datasets
+from .models import BASE_CONTEXT, Help, Plugins, Datasets
+from .errors import Error
 from . import api
 from .version import __version__
 from functools import wraps
@@ -102,7 +103,7 @@ def index():
 
 @api_blueprint.route('/contexts/<code>')
 def context(code=''):
-    context = Response._context
+    context = BASE_CONTEXT
     context['@base'] = url_for('api.decode', code=code, _external=True)
     context['endpoint'] = url_for('api.api_root', _external=True)
     return jsonify({"@context": context})
@@ -113,22 +114,58 @@ def decode(code):
     try:
         return redirect(decoded_url(code))
     except Exception:
-        return Error('invalid URL').flask()
+        return to_flask(Error('invalid URL'))
 
 
 @ns_blueprint.route('/')  # noqa: F811
 def index():
-    context = Response._context.copy()
+    context = BASE_CONTEXT.copy()
     context['endpoint'] = url_for('api.api_root', _external=True)
     return jsonify({"@context": context})
 
 
-@api_blueprint.route('/schemas/<schema>')
-def schema(schema="definitions"):
-    try:
-        return dump_schema(read_schema(schema))
-    except Exception as ex:  # Should be FileNotFoundError, but it's missing from py2
-        return Error(message="Schema not found: {}".format(ex), status=404).flask()
+# from .models import read_schema, dump_schema
+#@api_blueprint.route('/schemas/<schema>')
+#def schema(schema="definitions"):
+#    try:
+#        return dump_schema(read_schema(schema))
+#    except Exception as ex:  # Should be FileNotFoundError, but it's missing from py2
+#        return Error(message="Schema not found: {}".format(ex), status=404).flask()
+
+def to_flask(resp,
+             in_headers=False,
+             headers=None,
+             outformat='json-ld',
+             **kwargs):
+    """
+    Return the values and error to be used in flask.
+    So far, it returns a fixed context. We should store/generate different
+    contexts if the plugin adds more aliases.
+    """
+    headers = headers or {}
+    if isinstance(resp, Error):
+        status = resp.code
+        resp = resp.to_response()
+    else:
+        status = 200
+
+    kwargs["with_context"] = not in_headers
+    content, mimetype = resp.serialize(format=outformat,
+                                       with_mime=True,
+                                       **kwargs)
+
+    if outformat == 'json-ld' and in_headers:
+        headers.update({
+            "Link":
+            ('<%s>;'
+                'rel="http://www.w3.org/ns/json-ld#context";'
+                ' type="application/ld+json"' % kwargs.get('context_uri'))
+        })
+    return FlaskResponse(
+        response=content,
+        status=status,
+        headers=headers,
+        mimetype=mimetype)
 
 
 def basic_api(f):
@@ -171,20 +208,20 @@ def basic_api(f):
             prefix = params.get('prefix')
             code = encode_url(prefix)
 
-            return response.flask(
-                in_headers=params['in-headers'],
-                headers=headers,
-                prefix=prefix or url_for_code(code),
-                base=prefix,
-                context_uri=url_for('api.context',
-                                    code=code,
-                                    _external=True),
-                outformat=outformat,
-                expanded=params['expanded-jsonld'],
-                template=params.get('template'),
-                verbose=params['verbose'],
-                aliases=params['aliases'],
-                fields=params.get('fields'))
+            return to_flask(response,
+                            in_headers=params['in-headers'],
+                            headers=headers,
+                            prefix=prefix or url_for_code(code),
+                            base=prefix,
+                            context_uri=url_for('api.context',
+                                                code=code,
+                                                _external=True),
+                            outformat=outformat,
+                            expanded=params['expanded-jsonld'],
+                            template=params.get('template'),
+                            verbose=params['verbose'],
+                            aliases=params['aliases'],
+                            fields=params.get('fields'))
 
         except (Exception) as ex:
             if current_app.debug or current_app.config['TESTING']:
@@ -195,11 +232,10 @@ def basic_api(f):
             response = ex
             response.parameters = raw_params
             logger.exception(ex)
-            return response.flask(
-                outformat=outformat,
-                expanded=params['expanded-jsonld'],
-                verbose=params.get('verbose', True),
-            )
+            return to_flask(response,
+                            outformat=outformat,
+                            expanded=params['expanded-jsonld'],
+                            verbose=params.get('verbose', True))
 
     return decorated_function
 

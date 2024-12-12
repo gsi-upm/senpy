@@ -25,8 +25,8 @@ import basic
 class Dictionary(plugins.SentimentPlugin):
     '''Sentiment annotation using a configurable lexicon'''
 
-    author = '@balkian'
-    version = '0.2'
+    author: str = '@balkian'
+    version: str = '0.2'
 
     dictionaries = [basic.emojis, basic.emoticons]
 
@@ -42,7 +42,7 @@ class Dictionary(plugins.SentimentPlugin):
         entry.sentiments.append(s)
         yield entry
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'input': 'Hello :)',
         'polarity': 'marl:Positive'
     }, {
@@ -61,7 +61,7 @@ class EmojiOnly(Dictionary):
     '''Sentiment annotation with a basic lexicon of emojis'''
     dictionaries = [basic.emojis]
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'input': 'Hello :)',
         'polarity': 'marl:Neutral'
     }, {
@@ -80,7 +80,7 @@ class EmoticonsOnly(Dictionary):
     '''Sentiment annotation with a basic lexicon of emoticons'''
     dictionaries = [basic.emoticons]
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'input': 'Hello :)',
         'polarity': 'marl:Positive'
     }, {
@@ -102,7 +102,7 @@ class Salutes(Dictionary):
         'marl:Negative': ['Good bye', ]
     }]
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'input': 'Hello :)',
         'polarity': 'marl:Positive'
     }, {

@@ -12,9 +12,9 @@ class VaderSentimentPlugin(SentimentBox):
     '''
     name = "sentiment-vader"
     module = "sentiment-vader"
-    author = "@icorcuera"
-    version = "0.1.1"
-    extra_params = {
+    author: str = "@icorcuera"
+    version: str = "0.1.1"
+    extra_params: dict = {
         "language": {
           "description": "language of the input",
           "@id": "lang_rand",
@@ -51,9 +51,9 @@ class VaderSentimentPlugin(SentimentBox):
 
         return sentiments
 
-    test_cases = []
+    test_cases: list[dict] = []
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'input': 'I am tired :(',
             'polarity': 'marl:Negative'

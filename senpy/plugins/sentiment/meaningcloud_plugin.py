@@ -34,7 +34,8 @@ import os
 from os import path
 import time
 from senpy.plugins import SentimentPlugin
-from senpy.models import Results, Entry, Entity, Topic, Sentiment, Error
+from senpy.models import Results, Entry, Entity, Topic, Sentiment
+from senpy.errors import Error
 from senpy.utils import check_template
 
 
@@ -49,13 +50,13 @@ class MeaningCloudPlugin(SentimentPlugin):
 
     http://senpy.cluster.gsi.dit.upm.es/api/?algo=meaningCloud&language=en&apiKey=YOUR_API_KEY&input=I%20love%20Madrid.
     '''
-    name = 'sentiment-meaningcloud'
-    author = 'GSI UPM'
-    version = "1.1"
-    maxPolarityValue = 1
-    minPolarityValue = -1
+    name: str = 'sentiment-meaningcloud'
+    author: str = 'GSI UPM'
+    version: str = "1.1"
+    maxPolarityValue: float = 1
+    minPolarityValue: float = -1
 
-    extra_params = {
+    extra_params: dict = {
         "language": {
             "description": "language of the input",
             "aliases": ["language", "l"],
@@ -86,7 +87,7 @@ class MeaningCloudPlugin(SentimentPlugin):
     def analyse_entry(self, entry, activity):
         params = activity.params
 
-        txt = entry['nif:isString']
+        txt = entry.text
         api = 'http://api.meaningcloud.com/'
         lang = params.get("language")
         model = "general"
@@ -175,7 +176,7 @@ class MeaningCloudPlugin(SentimentPlugin):
                     entry['senpy:hasTopic'].append(concept)
         yield entry
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'params': {
                 'algo': 'sentiment-meaningCloud',

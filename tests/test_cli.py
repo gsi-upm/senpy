@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 from unittest import TestCase
 from senpy.cli import main_function
-from senpy.models import Error
+from senpy.errors import Error
 
 
 class CLITest(TestCase):

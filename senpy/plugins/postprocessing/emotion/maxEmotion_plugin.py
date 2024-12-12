@@ -19,15 +19,15 @@ from senpy import PostProcessing, easy_test
 
 class MaxEmotion(PostProcessing):
     '''Plugin to extract the emotion with highest value from an EmotionSet'''
-    author = '@dsuarezsouto'
-    version = '0.1'
+    author: str = '@dsuarezsouto'
+    version: str = '0.1'
 
     def process_entry(self, entry, activity):
         if len(entry.emotions) < 1:
             yield entry
             return
 
-        set_emotions = entry.emotions[0]['onyx:hasEmotion']
+        set_emotions = entry.emotions[0].hasEmotion
 
         # If there is only one emotion, do not modify it
         if len(set_emotions) < 2:
@@ -38,17 +38,16 @@ class MaxEmotion(PostProcessing):
 
         # Extract max emotion from the set emotions (emotion with highest intensity)
         for tmp_emotion in set_emotions:
-            if tmp_emotion['onyx:hasEmotionIntensity'] > max_emotion[
-                    'onyx:hasEmotionIntensity']:
+            if tmp_emotion.hasEmotionIntensity > max_emotion.hasEmotionIntensity:
                 max_emotion = tmp_emotion
 
-        if max_emotion['onyx:hasEmotionIntensity'] == 0:
-            max_emotion['onyx:hasEmotionCategory'] = "neutral"
-            max_emotion['onyx:hasEmotionIntensity'] = 1.0
+        if max_emotion.hasEmotionIntensity == 0:
+            max_emotion.hasEmotionCategory = "neutral"
+            max_emotion.hasEmotionIntensity = 1.0
 
-        entry.emotions[0]['onyx:hasEmotion'] = [max_emotion]
+        entry.emotions[0].hasEmotion = [max_emotion]
 
-        entry.emotions[0]['prov:wasGeneratedBy'] = activity.id
+        entry.emotions[0].wasGeneratedBy = activity.id
         yield entry
 
     def check(self, request, plugins):
@@ -57,7 +56,7 @@ class MaxEmotion(PostProcessing):
     # Test Cases:
     #   1 Normal Situation.
     #   2 Case to return a Neutral Emotion.
-    test_cases = [
+    test_cases: list[dict] = [
         {
             "name": "If there are several emotions within an emotion set, reduce it to one.",
             "entry": {

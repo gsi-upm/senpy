@@ -19,9 +19,9 @@ from senpy import AnalysisPlugin, easy
 
 class DummyRequired(AnalysisPlugin):
     '''This is a dummy self-contained plugin'''
-    author = '@balkian'
-    version = '0.1'
-    extra_params = {
+    author: str = '@balkian'
+    version: str = '0.1'
+    extra_params: dict = {
         'example': {
             'description': 'An example parameter',
             'required': True,
@@ -30,11 +30,11 @@ class DummyRequired(AnalysisPlugin):
     }
 
     def analyse_entry(self, entry, params):
-        entry['nif:isString'] = entry['nif:isString'][::-1]
+        entry.text = entry.text[::-1]
         entry.reversed = entry.get('reversed', 0) + 1
         yield entry
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'entry': {
             'nif:isString': 'Hello',
         },

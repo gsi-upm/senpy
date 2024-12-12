@@ -14,8 +14,11 @@
 #    limitations under the License.
 #
 
+from typing import *
+
 from senpy.plugins import EmotionConversionPlugin
-from senpy.models import EmotionSet, Emotion, Error
+from senpy.models import EmotionSet, Emotion, EmotionConversion
+from senpy.errors import Error
 
 import logging
 logger = logging.getLogger(__name__)
@@ -27,16 +30,16 @@ class CentroidConversion(EmotionConversionPlugin):
     categorical one, and vice versa. The centroids used in the conversion
     are configurable and appear in the semantic description of the plugin.
     '''
-    def __init__(self, info, *args, **kwargs):
-        if 'centroids' not in info:
-            raise Error('Centroid conversion plugins should provide '
-                        'the centroids in their senpy file')
-        if 'onyx:doesConversion' not in info:
-            if 'centroids_direction' not in info:
-                raise Error('Please, provide centroids direction')
 
-            cf, ct = info['centroids_direction']
-            info['onyx:doesConversion'] = [{
+    centroids: Dict
+    centroids_direction: tuple[str, str]
+    aliases: Dict[str, str] ={}
+
+    def __super__(self, centroids, centroids_direction, doesConversion=None, aliases={}, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cf, ct = centroids_direction
+        if doesConversion is None:
+            doesConversion = [{
                 'onyx:conversionFrom': cf,
                 'onyx:conversionTo': ct
             }, {
@@ -44,17 +47,16 @@ class CentroidConversion(EmotionConversionPlugin):
                 'onyx:conversionTo': cf
             }]
 
-        if 'aliases' in info:
-            aliases = info['aliases']
+
+        if aliases:
             ncentroids = {}
-            for k1, v1 in info['centroids'].items():
+            for k1, v1 in centroids.items():
                 nv1 = {}
                 for k2, v2 in v1.items():
                     nv1[aliases.get(k2, k2)] = v2
                 ncentroids[aliases.get(k1, k1)] = nv1
-            info['centroids'] = ncentroids
-
-        super(CentroidConversion, self).__init__(info, *args, **kwargs)
+            centroids = centroids
+        self.centroids = centroids
 
         self.dimensions = set()
         for c in self.centroids.values():
@@ -152,7 +154,7 @@ class CentroidConversion(EmotionConversionPlugin):
                 "centroids_direction": ["emoml:big6", "emoml:fsre-dimensions"]
             }
 
-        c = CentroidConversion(info)
+        c = CentroidConversion.parse_obj(info)
 
         es1 = EmotionSet()
         e1 = Emotion()

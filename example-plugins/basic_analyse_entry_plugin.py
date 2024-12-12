@@ -24,8 +24,8 @@ import basic
 class BasicAnalyseEntry(plugins.SentimentPlugin):
     '''Equivalent to Basic, implementing the analyse_entry method'''
 
-    author = '@balkian'
-    version = '0.1'
+    author: str = '@balkian'
+    version: str = '0.1'
 
     mappings = {
         'pos': 'marl:Positive',
@@ -43,7 +43,7 @@ class BasicAnalyseEntry(plugins.SentimentPlugin):
         entry.sentiments.append(s)
         yield entry
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'input': 'Hello :)',
         'polarity': 'marl:Positive'
     }, {

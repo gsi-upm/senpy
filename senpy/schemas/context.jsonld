@@ -1,16 +1,26 @@
 {
   "@context": {
-    "@vocab": "http://www.gsi.upm.es/onto/senpy/ns#",
+    "@vocab": "http://www.gsi.upm.es/ontologies/senpy/ns#",
+    "amor": "http://www.gsi.upm.es/ontologies/amor/ns#",
+    "amor-bhv": "http://www.gsi.upm.es/ontologies/amor/models/bhv/ns#",
+    "amor-mft": "http://www.gsi.upm.es/ontologies/amor/models/mft/ns#",
+    "bhv": "http://www.gsi.upm.es/ontologies/bhv#",
     "dc": "http://dublincore.org/2012/06/14/dcelements#",
-    "senpy": "http://www.gsi.upm.es/onto/senpy/ns#",
-    "prov": "http://www.w3.org/ns/prov#",
-    "nif": "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#",
-    "marl": "http://www.gsi.upm.es/ontologies/marl/ns#",
-    "onyx": "http://www.gsi.upm.es/ontologies/onyx/ns#",
-    "wna": "http://www.gsi.upm.es/ontologies/wnaffect/ns#",
     "emoml": "http://www.gsi.upm.es/ontologies/onyx/vocabularies/emotionml/ns#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "fam": "http://vocab.fusepool.info/fam#",
+    "marl": "http://www.gsi.upm.es/ontologies/marl/ns#",
+    "mft": "http://www.gsi.upm.es/ontologies/mft/ns#",
+    "mls": "http://www.w3.org/ns/mls#",
+    "nif": "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#",
+    "onyx": "http://www.gsi.upm.es/ontologies/onyx/ns#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "prov": "http://www.w3.org/ns/prov#",
+    "prov": "http://www.w3.org/ns/prov#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schema": "http://schema.org/",
+    "senpy": "http://www.gsi.upm.es/onto/senpy/ns#",
+    "wna": "http://www.gsi.upm.es/ontologies/wnaffect/ns#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "topics": {
       "@id": "nif:topic",
       "@container": "@set"
@@ -71,7 +81,6 @@
     },
     "errors": {
         "@type": "ParameterError"
-    },
-    "prefix": "http://senpy.invalid/"
+    }
   }
 }

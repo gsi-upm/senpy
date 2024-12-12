@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+from typing import *
 import re
 import nltk
 import os
@@ -19,10 +20,11 @@ class WNAffect(EmotionPlugin, ShelfMixin):
     of each emotion. This plugin classifies among 6 emotions: anger,fear,disgust,joy,sadness
     or neutral. The only available language is English (en)
     '''
-    name = 'emotion-wnaffect'
-    author = ["@icorcuera", "@balkian"]
-    version = '0.2'
-    extra_params = {
+    name: str = 'emotion-wnaffect'
+    author: List[str] = ["@icorcuera", "@balkian"]
+    version: str = '0.2'
+
+    extra_params: Dict[str, Dict] = {
       'language': {
           "@id": 'lang_wnaffect',
           'description': 'language of the input',
@@ -31,6 +33,7 @@ class WNAffect(EmotionPlugin, ShelfMixin):
           'options': ['en',]
         }
     }
+
     optional = True
     requirements = [
             "nltk>=3.0.5",
@@ -42,42 +45,8 @@ class WNAffect(EmotionPlugin, ShelfMixin):
     onyx__usesEmotionModel = "emoml:big6"
     nltk_resources = ['stopwords', 'averaged_perceptron_tagger_eng', 'wordnet']
 
-    def _load_synsets(self, synsets_path):
-        """Returns a dictionary POS tag -> synset offset -> emotion (str -> int -> str)."""
-        tree = ET.parse(synsets_path)
-        root = tree.getroot()
-        pos_map = {"noun": "NN", "adj": "JJ", "verb": "VB", "adv": "RB"}
-
-        synsets = {}
-        for pos in ["noun", "adj", "verb", "adv"]:
-            tag = pos_map[pos]
-            synsets[tag] = {}
-            for elem in root.findall(
-                    ".//{0}-syn-list//{0}-syn".format(pos, pos)):
-                offset = int(elem.get("id")[2:])
-                if not offset: continue
-                if elem.get("categ"):
-                    synsets[tag][offset] = Emo.emotions[elem.get(
-                        "categ")] if elem.get(
-                            "categ") in Emo.emotions else None
-                elif elem.get("noun-id"):
-                    synsets[tag][offset] = synsets[pos_map["noun"]][int(
-                        elem.get("noun-id")[2:])]
-        return synsets
-
-    def _load_emotions(self, hierarchy_path):
-        """Loads the hierarchy of emotions from the WordNet-Affect xml."""
-
-        tree = ET.parse(hierarchy_path)
-        root = tree.getroot()
-        for elem in root.findall("categ"):
-            name = elem.get("name")
-            if name == "root":
-                Emo.emotions["root"] = Emo("root")
-            else:
-                Emo.emotions[name] = Emo(name, elem.get("isa"))
-
-    def activate(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self._stopwords = stopwords.words('english')
         self._wnlemma = wordnet.WordNetLemmatizer()
@@ -119,10 +88,42 @@ class WNAffect(EmotionPlugin, ShelfMixin):
 
         self._wn16_path = self.wn16_path
         self._wn16 = WordNetCorpusReader(self.find_file(self._wn16_path), nltk.data.find(self.find_file(self._wn16_path)))
+        self.save()
 
+    def _load_synsets(self, synsets_path):
+        """Returns a dictionary POS tag -> synset offset -> emotion (str -> int -> str)."""
+        tree = ET.parse(synsets_path)
+        root = tree.getroot()
+        pos_map = {"noun": "NN", "adj": "JJ", "verb": "VB", "adv": "RB"}
 
-    def deactivate(self, *args, **kwargs):
-        self.save(ignore_errors=True)
+        synsets = {}
+        for pos in ["noun", "adj", "verb", "adv"]:
+            tag = pos_map[pos]
+            synsets[tag] = {}
+            for elem in root.findall(
+                    ".//{0}-syn-list//{0}-syn".format(pos, pos)):
+                offset = int(elem.get("id")[2:])
+                if not offset: continue
+                if elem.get("categ"):
+                    synsets[tag][offset] = Emo.emotions[elem.get(
+                        "categ")] if elem.get(
+                            "categ") in Emo.emotions else None
+                elif elem.get("noun-id"):
+                    synsets[tag][offset] = synsets[pos_map["noun"]][int(
+                        elem.get("noun-id")[2:])]
+        return synsets
+
+    def _load_emotions(self, hierarchy_path):
+        """Loads the hierarchy of emotions from the WordNet-Affect xml."""
+
+        tree = ET.parse(hierarchy_path)
+        root = tree.getroot()
+        for elem in root.findall("categ"):
+            name = elem.get("name")
+            if name == "root":
+                Emo.emotions["root"] = Emo("root")
+            else:
+                Emo.emotions[name] = Emo(name, elem.get("isa"))
 
     def _my_preprocessor(self, text):
 
@@ -268,7 +269,6 @@ class WNAffect(EmotionPlugin, ShelfMixin):
                   'language': 'en',
                   'algorithm': 'emotion-wnaffect'}
         
-        self.activate()
         texts = {'I hate you': 'anger',
                  'i am sad': 'sadness',
                  'i am happy with my marks': 'joy',

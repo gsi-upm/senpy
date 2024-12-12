@@ -20,12 +20,12 @@ from senpy import SentimentPlugin, Sentiment, Entry
 
 class RandSent(SentimentPlugin):
     '''A sample plugin that returns a random sentiment annotation'''
-    name = 'sentiment-random'
-    author = "@balkian"
-    version = '0.1'
-    url = "https://github.com/gsi-upm/senpy-plugins-community"
-    marl__maxPolarityValue = '1'
-    marl__minPolarityValue = "-1"
+    name: str = 'sentiment-random'
+    author: str = "@balkian"
+    version: str = '0.1'
+    url: str = "https://github.com/gsi-upm/senpy-plugins-community"
+    maxPolarityValue: float = 1
+    minPolarityValue: float = -1
 
     def analyse_entry(self, entry, activity):
         polarity_value = max(-1, min(1, random.gauss(0.2, 0.2)))

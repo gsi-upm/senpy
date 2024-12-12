@@ -83,7 +83,6 @@ def easy_load(app=None, plugin_list=None, plugin_folder=None, **kwargs):
     for plugin in plugin_list:
         sp.add_plugin(plugin)
     sp.install_deps()
-    sp.activate_all()
     return sp, app
 
 

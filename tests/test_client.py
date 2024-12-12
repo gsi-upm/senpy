@@ -18,7 +18,8 @@ from unittest import TestCase
 
 from senpy.testing import patch_requests
 from senpy.client import Client
-from senpy.models import Results, Plugins, Error
+from senpy.models import Results, Plugins
+from senpy.errors import Error
 from senpy.plugins import AnalysisPlugin
 
 

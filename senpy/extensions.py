@@ -15,14 +15,15 @@
 #
 """
 Main class for Senpy.
-It orchestrates plugin (de)activation and analysis.
+It orchestrates plugin discovery, creation and analysis.
 """
 from future import standard_library
 standard_library.install_aliases()
 
 from . import config
 from . import plugins, api
-from .models import Error, AggregatedEvaluation
+from .models import AggregatedEvaluation
+from .errors import Error
 from .plugins import AnalysisPlugin
 from .blueprints import api_blueprint, demo_blueprint, ns_blueprint
 
@@ -43,7 +44,7 @@ class Senpy(object):
 
     def __init__(self,
                  app=None,
-                 plugin_folder=".",
+                 plugin_folders=[".", ],
                  data_folder=None,
                  install=False,
                  strict=None,
@@ -62,16 +63,18 @@ class Senpy(object):
 
         self._default = None
         self.strict = strict if strict is not None else config.strict
+        self.strict = True # TODO: remove this after tests pass
         self.install = install
         self._plugins = {}
-        if plugin_folder:
-            self.add_folder(plugin_folder)
+        self.plugin_folders = plugin_folders
+        for folder in plugin_folders:
+            self._add_folder(folder)
 
         if default_plugins:
-            self.add_folder('plugins', from_root=True)
+            self._add_folder('plugins', from_root=True)
         else:
             # Add only conversion plugins
-            self.add_folder(os.path.join('plugins', 'postprocessing'),
+            self._add_folder(os.path.join('plugins', 'postprocessing'),
                             from_root=True)
         self.app = app
         if app is not None:
@@ -98,17 +101,18 @@ class Senpy(object):
         app.register_blueprint(demo_blueprint, url_prefix="/")
 
     def add_plugin(self, plugin):
-        self._plugins[plugin.name.lower()] = plugin
+        name = plugin.name.lower()
+        assert name
+        self._plugins[name] = plugin
         self._conversion_candidates = {}
 
     def delete_plugin(self, plugin):
         del self._plugins[plugin.name.lower()]
 
-    def plugins(self, plugin_type=None, is_activated=True, **kwargs):
+    def plugins(self, plugin_type=None, **kwargs):
         """ Return the plugins registered for a given application. Filtered by criteria  """
         return sorted(plugins.pfilter(self._plugins,
                                       plugin_type=plugin_type,
-                                      is_activated=is_activated,
                                       **kwargs),
                       key=lambda x: x.id)
 
@@ -149,7 +153,7 @@ class Senpy(object):
         candidates = self.plugins(**kwargs)
         return list(plugins.pfilter(candidates, plugin_type=AnalysisPlugin))
 
-    def add_folder(self, folder, from_root=False):
+    def _add_folder(self, folder, from_root=False):
         """ Find plugins in this folder and add them to this instance """
         if from_root:
             folder = os.path.join(os.path.dirname(__file__), folder)
@@ -163,25 +167,21 @@ class Senpy(object):
         else:
             raise AttributeError("Not a folder or does not exist: %s", folder)
 
-    def _process(self, req, pending, done=None):
+    def _process(self, req, pending):
         """
         Recursively process the entries with the first plugin in the list, and pass the results
         to the rest of the plugins.
         """
-        done = done or []
         if not pending:
             return req
 
         analysis = pending[0]
         results = analysis.run(req)
         results.activities.append(analysis)
-        done += analysis
-        return self._process(results, pending[1:], done)
+        return self._process(results, pending[1:])
 
     def install_deps(self):
         logger.info('Installing dependencies')
-        # If a plugin is activated, its dependencies should already be installed
-        # Otherwise, it would've failed to activate.
         plugins.install_deps(*self._plugins.values())
 
     def analyse(self, request, analyses=None):
@@ -263,6 +263,7 @@ class Senpy(object):
             i.emotions = newemotions
             newentries.append(i)
         resp.entries = newentries
+        resp.activities.extend(done)
         return resp
 
     def _conversion_candidate(self, fromModel, toModel):
@@ -330,7 +331,7 @@ class Senpy(object):
 
     @property
     def default_plugin(self):
-        if not self._default or not self._default.is_activated:
+        if not self._default:
             candidates = self.analysis_plugins()
             if len(candidates) > 0:
                 self._default = candidates[0]
@@ -342,84 +343,10 @@ class Senpy(object):
     @default_plugin.setter
     def default_plugin(self, value):
         if isinstance(value, plugins.Plugin):
-            if not value.is_activated:
-                raise AttributeError('The default plugin has to be activated.')
             self._default = value
 
         else:
             self._default = self._plugins[value.lower()]
-
-    def activate_all(self, sync=True):
-        ps = []
-        for plug in self._plugins.keys():
-            try:
-                self.activate_plugin(plug, sync=sync)
-            except Exception as ex:
-                if self.strict:
-                    raise
-                logger.error('Could not activate {}: {}'.format(plug, ex))
-        return ps
-
-    def deactivate_all(self, sync=True):
-        ps = []
-        for plug in self._plugins.keys():
-            ps.append(self.deactivate_plugin(plug, sync=sync))
-        return ps
-
-    def _activate(self, plugin):
-        with plugin._lock:
-            if plugin.is_activated:
-                return
-            try:
-                logger.info("Activating plugin: {}".format(plugin.name))
-
-                assert plugin._activate()
-                logger.info(f"Plugin activated: {plugin.name}")
-            except Exception as ex:
-                if getattr(plugin, "optional", False) and not self.strict:
-                    logger.info(f"Plugin could NOT be activated: {plugin.name}")
-                    return False
-                raise
-        return plugin.is_activated
-
-    def activate_plugin(self, plugin_name, sync=True):
-        plugin_name = plugin_name.lower()
-        if plugin_name not in self._plugins:
-            raise Error(
-                message="Plugin not found: {}".format(plugin_name), status=404)
-        plugin = self._plugins[plugin_name]
-
-        logger.info("Activating plugin: {}".format(plugin.name))
-
-        if sync or not getattr(plugin, 'async', True) or getattr(
-                plugin, 'sync', False):
-            return self._activate(plugin)
-        else:
-            th = Thread(target=partial(self._activate, plugin))
-            th.start()
-            return th
-
-    def _deactivate(self, plugin):
-        with plugin._lock:
-            if not plugin.is_activated:
-                return
-            plugin._deactivate()
-            logger.info("Plugin deactivated: {}".format(plugin.name))
-
-    def deactivate_plugin(self, plugin_name, sync=True):
-        plugin_name = plugin_name.lower()
-        if plugin_name not in self._plugins:
-            raise Error(
-                message="Plugin not found: {}".format(plugin_name), status=404)
-        plugin = self._plugins[plugin_name]
-
-        if sync or not getattr(plugin, 'async', True) or not getattr(
-                plugin, 'sync', False):
-            plugin._deactivate()
-        else:
-            th = Thread(target=plugin.deactivate)
-            th.start()
-            return th
 
     def teardown(self, exception):
         pass

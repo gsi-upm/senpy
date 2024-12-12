@@ -70,11 +70,11 @@ pattern.text._read = _read
 
 class ANEW(EmotionPlugin):
     description = "This plugin consists on an emotion classifier using ANEW lexicon dictionary. It averages the VAD (valence-arousal-dominance) value of each word in the text that is also in the ANEW dictionary. To obtain a categorical value (e.g., happy) use the emotion conversion API (e.g., `emotion-model=emoml:big6`)."
-    author = "@icorcuera"
-    version = "0.5.2"
+    author: str = "@icorcuera"
+    version: str = "0.5.2"
     name = "emotion-anew"
 
-    extra_params = {
+    extra_params: dict = {
         "language": {
             "description": "language of the input",
             "aliases": ["language", "l"],
@@ -89,7 +89,8 @@ class ANEW(EmotionPlugin):
     onyx__usesEmotionModel = MODEL
     nltk_resources = ['stopwords']
 
-    def activate(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self._stopwords = stopwords.words('english')
         dictionary={}
         dictionary['es'] = {}
@@ -204,7 +205,7 @@ class ANEW(EmotionPlugin):
 
         yield entry
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'name': 'anger with VAD=(2.12, 6.95, 5.05)',
             'input': 'I hate you',

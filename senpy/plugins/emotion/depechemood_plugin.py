@@ -31,14 +31,15 @@ class DepecheMood(EmotionBox):
     DepecheMood is an emotion lexicon automatically generated from news articles where users expressed their associated emotions. It contains two languages (English and Italian), as well as three types of word representations (token, lemma and lemma#PoS). For English, the lexicon contains 165k tokens, while the Italian version contains 116k. Unsupervised techniques can be applied to generate simple but effective baselines. To learn more, please visit https://github.com/marcoguerini/DepecheMood and http://www.depechemood.eu/
     '''
 
-    author = 'Oscar Araque'
-    name = 'emotion-depechemood'
-    version = '0.1'
+    author: str = 'Oscar Araque'
+    name: str = 'emotion-depechemood'
+    version: str = '0.1'
     requirements = ['pandas']
     optional = True
+    usesEmotionModel: str = 'wna:WNAModel'
+
     nltk_resources = ["stopwords"]
 
-    onyx__usesEmotionModel = 'wna:WNAModel'
 
     EMOTIONS =  ['wna:negative-fear',
                  'wna:amusement',
@@ -50,16 +51,12 @@ class DepecheMood(EmotionBox):
                  'wna:sadness']
 
     DM_EMOTIONS = ['AFRAID', 'AMUSED', 'ANGRY', 'ANNOYED', 'DONT_CARE', 'HAPPY', 'INSPIRED', 'SAD',]
+    LEXICON_URL = "https://github.com/marcoguerini/DepecheMood/raw/master/DepecheMood%2B%2B/DepecheMood_english_token_full.tsv"
 
-    def __init__(self, *args, **kwargs):
-        super(DepecheMood, self).__init__(*args, **kwargs)
-        self.LEXICON_URL = "https://github.com/marcoguerini/DepecheMood/raw/master/DepecheMood%2B%2B/DepecheMood_english_token_full.tsv"
+    def __init__(self, **data):
+        super().__init__(**data)
         self._denoise = ignore(set(string.punctuation)|set('«»'))
         self._stop_words = []
-        self._lex_vocab = None
-        self._lex = None
-
-    def activate(self):
         self._lex = self.download_lex()
         self._lex_vocab = set(list(self._lex.keys()))
         self._stop_words = stopwords.words('english') + ['']
@@ -127,7 +124,7 @@ class DepecheMood(EmotionBox):
         estimation = self.estimate_all_emotions(tokens)
         return estimation
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'entry': {
                 'nif:isString': 'My cat is very happy',

@@ -24,8 +24,8 @@ import basic
 class BasicBox(SentimentBox):
     ''' A modified version of Basic that also does converts annotations manually'''
 
-    author = '@balkian'
-    version = '0.1'
+    author: str = '@balkian'
+    version: str = '0.1'
 
     def predict_one(self, features, **kwargs):
         output = basic.get_polarity(features[0])
@@ -35,7 +35,7 @@ class BasicBox(SentimentBox):
             return [0, 0, 1]
         return [0, 1, 0]
 
-    test_cases = [{
+    test_cases: list[dict] = [{
         'input': 'Hello :)',
         'polarity': 'marl:Positive'
     }, {

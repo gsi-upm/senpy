@@ -29,12 +29,12 @@ class Split(Transformation):
     (or paragraphs) is required.
     '''
 
-    author = ["@militarpancho", '@balkian']
-    version = '0.3'
+    author: str = ["@militarpancho", '@balkian']
+    version: str = '0.3'
     url = "https://github.com/gsi-upm/senpy"
     nltk_resources = ['punkt']
 
-    extra_params = {
+    extra_params: dict = {
         'delimiter': {
             'description': 'Split text into paragraphs or sentences.',
             'aliases': ['type', 't'],
@@ -47,7 +47,7 @@ class Split(Transformation):
     def analyse_entry(self, entry, activity):
         yield entry
         chunker_type = activity.params["delimiter"]
-        original_text = entry['nif:isString']
+        original_text = entry.text
         if chunker_type == "sentence":
             tokenizer = PunktSentenceTokenizer()
         if chunker_type == "paragraph":
@@ -59,12 +59,12 @@ class Split(Transformation):
         for i, chunk in enumerate(chars):
             start, end = chunk
             e = Entry()
-            e['nif:isString'] = original_text[start:end]
+            e.text = original_text[start:end]
             if entry.id:
                 e.id = entry.id + "#char={},{}".format(start, end)
             yield e
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'entry': {
                 'nif:isString': 'Hello. World.'

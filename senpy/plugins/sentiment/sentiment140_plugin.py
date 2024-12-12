@@ -25,10 +25,10 @@ ENDPOINT = 'http://www.sentiment140.com/api/bulkClassifyJson'
 class Sentiment140(SentimentBox):
     '''Connects to the sentiment140 free API: http://sentiment140.com'''
 
-    author = "@balkian"
-    version = '0.2'
+    author: str = "@balkian"
+    version: str = '0.2'
     url = "https://github.com/gsi-upm/senpy-plugins-community"
-    extra_params = {
+    extra_params: dict = {
         'language': {
             "@id": 'lang_sentiment140',
             'description': 'language of the text',
@@ -66,7 +66,7 @@ class Sentiment140(SentimentBox):
                 continue
             yield [0, 1, 0]
 
-    test_cases = [
+    test_cases: list[dict] = [
         {
             'entry': {
                 'nif:isString': 'I love Titanic'

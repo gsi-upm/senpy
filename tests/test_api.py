@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 from unittest import TestCase
 from senpy.api import (boolean, parse_params, get_extra_params, parse_analyses,
                        API_PARAMS, NIF_PARAMS, WEB_PARAMS)
-from senpy.models import Error, Plugin
+from senpy.errors import Error
+from senpy.models import Plugin
 
 
 class APITest(TestCase):
@@ -72,7 +73,7 @@ class APITest(TestCase):
         in2 = {
             'apikey': 25
         }
-        extra_params = {
+        extra_params: dict = {
             "apikey": {
                 "aliases": [
                     "apikey",
@@ -110,7 +111,7 @@ class APITest(TestCase):
     def test_parse_analyses(self):
         '''The API should parse user parameters and return them in a format that plugins can use'''
         plugins = [
-            Plugin({
+            Plugin.parse_obj({
                 'name': 'plugin1',
                 'extra_params': {
                     # Incompatible parameter
@@ -133,7 +134,7 @@ class APITest(TestCase):
                         'options': ['value2_1', 'value2_2', 'value3_3']
                     }
                 }
-            }), Plugin({
+            }), Plugin.parse_obj({
                 'name': 'plugin2',
                 'extra_params': {
                     'param0': {
@@ -186,7 +187,7 @@ class APITest(TestCase):
     def test_get_extra_params(self):
         '''The API should return the list of valid parameters for a set of plugins'''
         plugins = [
-            Plugin({
+            Plugin.parse_obj({
                 'name': 'plugin1',
                 'extra_params': {
                     # Incompatible parameter
@@ -208,7 +209,7 @@ class APITest(TestCase):
                         'options': ['value2_1', 'value2_2', 'value3_3']
                     }
                 }
-            }), Plugin({
+            }), Plugin.parse_obj({
                 'name': 'plugin2',
                 'extra_params': {
                     'param0': {
@@ -234,14 +235,14 @@ class APITest(TestCase):
 
         expected = {
             # Overlapping parameters
-            'plugin1.param0': plugins[0]['extra_params']['param0'],
-            'plugin1.param1': plugins[0]['extra_params']['param1'],
-            'plugin2.param0': plugins[1]['extra_params']['param0'],
-            'plugin2.param1': plugins[1]['extra_params']['param1'],
+            'plugin1.param0': plugins[0].extra_params['param0'],
+            'plugin1.param1': plugins[0].extra_params['param1'],
+            'plugin2.param0': plugins[1].extra_params['param0'],
+            'plugin2.param1': plugins[1].extra_params['param1'],
 
             # Non-overlapping parameters
-            'param2': plugins[0]['extra_params']['param2'],
-            'param3': plugins[1]['extra_params']['param3'],
+            'param2': plugins[0].extra_params['param2'],
+            'param3': plugins[1].extra_params['param3'],
 
             # Intersection of overlapping parameters
             'param1': {

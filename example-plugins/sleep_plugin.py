@@ -20,10 +20,10 @@ from time import sleep
 
 class Sleep(AnalysisPlugin):
     '''Dummy plugin to test async'''
-    author = "@balkian"
-    version = "0.2"
+    author: str = "@balkian"
+    version: str = "0.2"
     timeout = 0.05
-    extra_params = {
+    extra_params: dict = {
         "timeout": {
             "@id": "timeout_sleep",
             "aliases": ["timeout", "to"],
@@ -32,7 +32,8 @@ class Sleep(AnalysisPlugin):
         }
     }
 
-    def activate(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         sleep(self.timeout)
 
     def analyse_entry(self, entry, params):

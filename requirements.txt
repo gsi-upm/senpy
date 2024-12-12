@@ -13,3 +13,4 @@ scipy
 scikit-learn>=0.20
 responses
 jmespath
+deprecation==2.1.0
